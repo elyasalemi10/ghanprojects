@@ -1,0 +1,22 @@
+# Robots.txt for Ghan Projects
+# https://ghanprojects.com.au
+
+User-agent: *
+Allow: /
+
+# Sitemap
+Sitemap: https://ghanprojects.com.au/sitemap.xml
+
+# Disallow admin pages
+Disallow: /admin
+
+# Allow all other pages
+Allow: /
+Allow: /about
+Allow: /services
+Allow: /projects
+Allow: /insights
+Allow: /insights/*
+Allow: /contact
+Allow: /resources
+Allow: /book-consultation
