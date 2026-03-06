@@ -96,9 +96,10 @@ export default function Resources() {
   return (
     <div className="bg-background">
       <SEO 
-        title="Free Resources"
+        title="Free Property Development Resources & Guides"
         url="/resources"
-        description="Download free property development resources including feasibility checklists, financial templates, and investment guides from Ghan Projects."
+        description="Download free property development resources including feasibility checklists, financial templates, and property investment guides. Expert tools for Melbourne property investors and developers."
+        keywords="property development resources, property feasibility checklist, investment property guides, property development templates, free property resources Melbourne"
       />
       {/* Hero */}
       <section className="relative py-32 lg:py-48 px-6 lg:px-12 bg-primary text-white overflow-hidden">

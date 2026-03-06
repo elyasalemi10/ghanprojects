@@ -9,13 +9,15 @@ interface SEOProps {
   publishedTime?: string;
   author?: string;
   noindex?: boolean;
+  keywords?: string;
 }
 
 const SITE_NAME = 'Ghan Projects';
-const DEFAULT_TITLE = 'Ghan Projects | Strategic Property Development & Investment Melbourne';
-const DEFAULT_DESCRIPTION = "Melbourne's leading property advisory and development firm. We help investors identify, structure, and deliver high-value projects through strategic acquisition and joint ventures.";
+const DEFAULT_TITLE = 'Ghan Projects | Property Development & Investment Consulting Melbourne';
+const DEFAULT_DESCRIPTION = "Melbourne's leading property development and investment consulting firm. Expert property advisory, joint venture structuring, buyer's agent services, and strategic property investment guidance.";
 const DEFAULT_IMAGE = 'https://ghanprojects.com.au/images/ghan-projects-logo-blue.webp';
 const BASE_URL = 'https://ghanprojects.com.au';
+const DEFAULT_KEYWORDS = 'property development Melbourne, property investment consulting, property advisory Melbourne, joint venture property development, buyer\'s agent Melbourne, Ghan Projects, Ghan Property Group, property consulting Melbourne';
 
 export function SEO({
   title,
@@ -26,6 +28,7 @@ export function SEO({
   publishedTime,
   author = 'Ghan Projects',
   noindex = false,
+  keywords = DEFAULT_KEYWORDS,
 }: SEOProps) {
   const fullTitle = title ? `${title} | ${SITE_NAME}` : DEFAULT_TITLE;
   const fullUrl = url ? `${BASE_URL}${url}` : BASE_URL;
@@ -36,6 +39,7 @@ export function SEO({
       {/* Basic Meta Tags */}
       <title>{fullTitle}</title>
       <meta name="description" content={description} />
+      <meta name="keywords" content={keywords} />
       {noindex && <meta name="robots" content="noindex, nofollow" />}
       <link rel="canonical" href={fullUrl} />
 
@@ -45,6 +49,8 @@ export function SEO({
       <meta property="og:title" content={fullTitle} />
       <meta property="og:description" content={description} />
       <meta property="og:image" content={fullImage} />
+      <meta property="og:image:width" content="1200" />
+      <meta property="og:image:height" content="630" />
       <meta property="og:site_name" content={SITE_NAME} />
       <meta property="og:locale" content="en_AU" />
 

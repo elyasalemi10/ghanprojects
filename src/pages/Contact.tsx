@@ -57,9 +57,10 @@ export default function Contact() {
   return (
     <div className="bg-background">
       <SEO 
-        title="Contact Us"
+        title="Contact Property Development Consultants Melbourne"
         url="/contact"
-        description="Get in touch with Ghan Projects for property advisory, joint ventures, or strategic acquisitions in Melbourne. Contact our team today."
+        description="Contact Ghan Projects for expert property development consulting, investment advisory, and joint venture opportunities in Melbourne. Schedule your consultation today."
+        keywords="contact property consultant Melbourne, property development enquiry, investment property consultation, Ghan Projects contact, property advisory Melbourne"
       />
       {/* Hero */}
       <section className="relative min-h-[calc(100vh-80px)] flex items-center px-6 lg:px-12 bg-primary text-white overflow-hidden">

@@ -169,8 +169,9 @@ export default function Home() {
     <div className="overflow-hidden">
       <SEO 
         url="/"
-        description="Melbourne's leading property advisory and development firm. We help investors identify, structure, and deliver high-value projects through strategic acquisition and joint ventures."
+        description="Melbourne's leading property development and investment consulting firm. Expert property advisory, joint venture structuring, buyer's agent services, and strategic property investment guidance."
         image="/images/hero-home.png"
+        keywords="property development Melbourne, property investment consulting, property advisory Melbourne, joint venture property development, buyer's agent Melbourne, Ghan Projects, Ghan Property Group, property consulting Melbourne, real estate investment Victoria"
       />
       {/* SECTION 1: HERO */}
       <section ref={heroRef} className="relative h-screen flex items-center px-6 lg:px-12 bg-primary overflow-hidden">

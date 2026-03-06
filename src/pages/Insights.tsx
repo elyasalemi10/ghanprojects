@@ -132,9 +132,10 @@ export default function Insights() {
   return (
     <div className="bg-background">
       <SEO 
-        title="Property Insights"
+        title="Property Development & Investment Insights"
         url="/insights"
-        description="Strategic analysis, market updates, and expert guides for Melbourne's property development sector. Stay informed with the latest industry insights."
+        description="Expert property development insights, market analysis, and investment guides for Melbourne. Strategic advice on property investment, development feasibility, and market trends."
+        keywords="property investment insights, Melbourne property market analysis, property development guides, investment property advice, real estate market trends Victoria, property feasibility insights, development strategy Melbourne"
       />
       {/* Hero */}
       <section className="relative min-h-[calc(100vh-80px)] flex items-center px-6 lg:px-12 bg-primary text-white overflow-hidden text-center">

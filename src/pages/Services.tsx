@@ -157,9 +157,10 @@ export default function Services() {
   return (
     <div className="bg-background">
       <SEO 
-        title="Services"
+        title="Property Development & Investment Services"
         url="/services"
-        description="End-to-end property advisory, acquisition, JV structuring, and delivery management tailored for the Melbourne market. Expert guidance for investors, landowners, and developers."
+        description="Comprehensive property development consulting services in Melbourne. Property advisory, buyer's agent services, joint venture structuring, and project delivery management for investors and developers."
+        keywords="property advisory services Melbourne, buyer's agent Melbourne, joint venture property development, property consulting services, property feasibility analysis, property acquisition services, development management Melbourne, investment property consulting"
       />
       {/* Hero */}
       <section className="relative min-h-[calc(100vh-80px)] flex items-center px-6 lg:px-12 bg-primary text-white overflow-hidden">
@@ -170,11 +171,12 @@ export default function Services() {
             muted 
             loop 
             playsInline
-            className="w-full h-full object-cover opacity-30"
+            className="w-full h-full object-cover"
+            ref={(el) => { if (el) el.playbackRate = 0.8; }}
           >
             <source src="/images/construction.webm" type="video/webm" />
           </video>
-          <div className="absolute inset-0 bg-gradient-to-r from-primary via-primary/90 to-primary/70" />
+          <div className="absolute inset-0 bg-gradient-to-r from-primary/70 via-primary/50 to-primary/40" />
         </div>
         <div className="max-w-7xl mx-auto relative z-10 w-full py-16">
           <motion.div

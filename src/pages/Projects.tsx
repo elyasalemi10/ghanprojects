@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from '@tanstack/react-router';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
@@ -7,6 +7,15 @@ import { cn } from '@/lib/utils';
 import { SEO } from '@/components/shared/SEO';
 
 const categories = ['All', 'Townhouses', 'Subdivision', 'Residential', 'Commercial', 'Advisory'];
+
+const portfolioImages = [
+  '/portfolio/1.jpg',
+  '/portfolio/2.jpg',
+  '/portfolio/3.jpg',
+  '/portfolio/4.jpg',
+  '/portfolio/5.jpg',
+  '/portfolio/6.jpg',
+];
 
 const projects = [
   {
@@ -67,6 +76,14 @@ const projects = [
 
 export default function Projects() {
   const [activeCat, setActiveCat] = useState('All');
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentImageIndex((prev) => (prev + 1) % portfolioImages.length);
+    }, 4000);
+    return () => clearInterval(interval);
+  }, []);
 
   const filteredProjects = activeCat === 'All' 
     ? projects 
@@ -75,13 +92,29 @@ export default function Projects() {
   return (
     <div className="bg-background">
       <SEO 
-        title="Our Portfolio"
+        title="Property Development Portfolio Melbourne"
         url="/projects"
-        description="A showcase of strategic acquisitions and successfully delivered property developments across Melbourne. Townhouses, subdivisions, residential and commercial projects."
+        description="Explore our successful property development projects across Melbourne. Townhouse developments, subdivisions, residential and commercial property investments delivered with strategic expertise."
         image="/images/townhouse-berwick.avif"
+        keywords="property development projects Melbourne, townhouse development Victoria, subdivision development, commercial property development, residential property investment, property portfolio Melbourne, Ghan Projects portfolio"
       />
       {/* Hero */}
       <section className="relative min-h-[calc(100vh-80px)] flex items-center px-6 lg:px-12 bg-primary text-white overflow-hidden">
+        {/* Background Slideshow */}
+        <div className="absolute inset-0 z-0">
+          {portfolioImages.map((img, index) => (
+            <motion.img
+              key={img}
+              src={img}
+              alt=""
+              initial={{ opacity: 0 }}
+              animate={{ opacity: index === currentImageIndex ? 1 : 0 }}
+              transition={{ duration: 1 }}
+              className="absolute inset-0 w-full h-full object-cover"
+            />
+          ))}
+          <div className="absolute inset-0 bg-gradient-to-r from-primary/80 via-primary/60 to-primary/50" />
+        </div>
         <div className="max-w-7xl mx-auto relative z-10 w-full py-16">
           <motion.div
             initial={{ opacity: 0, y: 20 }}

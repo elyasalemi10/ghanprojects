@@ -12,10 +12,11 @@ export default function About() {
   return (
     <div className="bg-background">
       <SEO 
-        title="About Us"
+        title="About Ghan Projects - Property Development Experts"
         url="/about"
-        description="Learn about Ghan Projects - Melbourne's strategic property development partner. Our mission, values, and approach to delivering exceptional property outcomes."
+        description="Learn about Ghan Projects - Melbourne's trusted property development and investment consulting firm. Our mission, values, and expert approach to delivering exceptional property outcomes."
         image="/images/founder-portrait.avif"
+        keywords="about Ghan Projects, Ghan Property Group, Melbourne property developers, property consulting firm Melbourne, property investment experts Victoria"
       />
       {/* Hero */}
       <section className="relative py-32 lg:py-48 px-6 lg:px-12 bg-primary text-white overflow-hidden">

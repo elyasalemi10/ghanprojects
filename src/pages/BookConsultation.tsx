@@ -62,9 +62,10 @@ export default function BookConsultation() {
   return (
     <div className="bg-background min-h-screen">
       <SEO 
-        title="Book a Consultation"
+        title="Book Property Consultation Melbourne"
         url="/book-consultation"
-        description="Schedule a free consultation with Ghan Projects. Discuss your property investment, development, or joint venture opportunities in Melbourne."
+        description="Schedule a free property development consultation with Ghan Projects. Discuss your property investment strategy, development opportunities, or joint venture partnerships in Melbourne."
+        keywords="property consultation Melbourne, book property consultant, free property advice, property investment consultation, development consultation Melbourne"
       />
       {/* Hero */}
       <section className="relative py-24 lg:py-32 px-6 lg:px-12 bg-primary text-white overflow-hidden text-center">
