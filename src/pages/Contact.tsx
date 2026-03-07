@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
+import { useSearch } from '@tanstack/react-router';
 import { Button } from '@/components/ui/button';
 import { 
   Phone, 
@@ -19,16 +20,33 @@ const API_URL = import.meta.env.PROD ? '' : 'http://localhost:3001';
 
 export default function Contact() {
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [messageValue, setMessageValue] = useState('');
+  const search = useSearch({ strict: false }) as { message?: string };
+  
+  useEffect(() => {
+    if (search.message) {
+      setMessageValue(search.message);
+    }
+  }, [search.message]);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    setIsSubmitting(true);
     
     const formData = new FormData(e.currentTarget);
+    const email = formData.get('email') as string;
+    const phone = formData.get('phone') as string;
+    
+    if (!email?.trim() && !phone?.trim()) {
+      toast.error('Please provide either an email address or phone number.');
+      return;
+    }
+    
+    setIsSubmitting(true);
+    
     const data = {
       name: formData.get('name'),
-      email: formData.get('email'),
-      phone: formData.get('phone'),
+      email,
+      phone,
       projectType: formData.get('projectType'),
       budget: formData.get('budget'),
       message: formData.get('message')
@@ -176,11 +194,10 @@ export default function Contact() {
                     />
                   </div>
                   <div className="space-y-2">
-                    <label className="text-[10px] uppercase tracking-widest font-bold text-primary">Email Address</label>
+                    <label className="text-[10px] uppercase tracking-widest font-bold text-primary">Email Address <span className="text-muted-foreground normal-case">(or phone)</span></label>
                     <input 
                       name="email" 
                       type="email" 
-                      required 
                       placeholder="jane@example.com"
                       className="w-full bg-white border border-border p-5 focus:outline-none focus:ring-2 focus:ring-accent transition-all text-sm font-medium"
                     />
@@ -188,10 +205,9 @@ export default function Contact() {
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                   <div className="space-y-2">
-                    <label className="text-[10px] uppercase tracking-widest font-bold text-primary">Phone Number</label>
+                    <label className="text-[10px] uppercase tracking-widest font-bold text-primary">Phone Number <span className="text-muted-foreground normal-case">(or email)</span></label>
                     <input 
                       name="phone" 
-                      required 
                       placeholder="+61 400 000 000"
                       className="w-full bg-white border border-border p-5 focus:outline-none focus:ring-2 focus:ring-accent transition-all text-sm font-medium"
                     />
@@ -223,6 +239,8 @@ export default function Contact() {
                     required 
                     rows={5}
                     placeholder="Tell us about your property goals..."
+                    value={messageValue}
+                    onChange={(e) => setMessageValue(e.target.value)}
                     className="w-full bg-white border border-border p-5 focus:outline-none focus:ring-2 focus:ring-accent transition-all text-sm font-medium resize-none"
                   ></textarea>
                 </div>

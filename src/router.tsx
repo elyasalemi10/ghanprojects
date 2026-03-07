@@ -5,7 +5,7 @@ import { Footer } from '@/components/layout/Footer';
 import Home from '@/pages/Home';
 import About from '@/pages/About';
 import Services from '@/pages/Services';
-import Projects from '@/pages/Projects';
+import Portfolio from '@/pages/Portfolio';
 import Insights from '@/pages/Insights';
 import InsightPost from '@/pages/InsightPost';
 import Resources from '@/pages/Resources';
@@ -70,10 +70,10 @@ const servicesRoute = createRoute({
   component: Services,
 });
 
-const projectsRoute = createRoute({
+const portfolioRoute = createRoute({
   getParentRoute: () => rootRoute,
-  path: '/projects',
-  component: Projects,
+  path: '/portfolio',
+  component: Portfolio,
 });
 
 const insightsRoute = createRoute({
@@ -116,7 +116,7 @@ const routeTree = rootRoute.addChildren([
   indexRoute,
   aboutRoute,
   servicesRoute,
-  projectsRoute,
+  portfolioRoute,
   insightsRoute,
   insightPostRoute,
   resourcesRoute,

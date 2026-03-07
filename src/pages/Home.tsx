@@ -1,5 +1,5 @@
 import React, { useRef } from 'react';
-import { Link } from '@tanstack/react-router';
+import { Link, useNavigate } from '@tanstack/react-router';
 import { motion, useScroll, useTransform } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { 
@@ -128,6 +128,7 @@ const HERO_IMAGE_URL = "/images/hero-home.webp";
 
 export default function Home() {
   const heroRef = useRef(null);
+  const navigate = useNavigate();
   const { scrollYProgress } = useScroll({
     target: heroRef,
     offset: ["start start", "end start"]
@@ -139,10 +140,18 @@ export default function Home() {
     
     const API_URL = import.meta.env.PROD ? '' : 'http://localhost:3001';
     const formData = new FormData(e.currentTarget);
+    const email = formData.get('email') as string;
+    const phone = formData.get('phone') as string;
+    
+    if (!email?.trim() && !phone?.trim()) {
+      toast.error('Please provide either an email address or phone number.');
+      return;
+    }
+    
     const data = {
       fullName: formData.get('fullName'),
-      email: formData.get('email'),
-      phone: formData.get('phone'),
+      email,
+      phone,
       budgetRange: formData.get('budgetRange'),
       interestType: formData.get('interestType')
     };
@@ -201,7 +210,7 @@ export default function Home() {
                 <Link to="/book-consultation">Book Consultation</Link>
               </Button>
               <Button asChild size="lg" className="rounded-none px-8 py-7 text-lg font-heading font-bold uppercase tracking-wider bg-white text-primary hover:bg-white/90">
-                <Link to="/projects">View Projects</Link>
+                <Link to="/portfolio">View Portfolio</Link>
               </Button>
             </div>
             <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-white/60 font-medium uppercase tracking-[0.2em]">
@@ -276,7 +285,7 @@ export default function Home() {
             </FadeInWhenVisible>
             <FadeInWhenVisible delay={0.2}>
               <Button asChild variant="outline" className="rounded-none border-primary text-primary hover:bg-primary hover:text-white px-8 py-6">
-                <Link to="/projects">View All Projects</Link>
+                <Link to="/portfolio">View All Portfolio</Link>
               </Button>
             </FadeInWhenVisible>
           </div>
@@ -335,7 +344,13 @@ export default function Home() {
                       </li>
                     ))}
                   </ul>
-                  <Button className="w-full rounded-none bg-accent hover:bg-accent/90 text-white py-6 font-heading font-bold uppercase tracking-wider text-xs">
+                  <Button 
+                    onClick={() => navigate({ 
+                      to: '/contact', 
+                      search: { message: `I am interested in an investment pack opportunity for ${opp.title}` } 
+                    })}
+                    className="w-full rounded-none bg-accent hover:bg-accent/90 text-white py-6 font-heading font-bold uppercase tracking-wider text-xs"
+                  >
                     Request Investment Pack
                   </Button>
                 </div>
@@ -481,11 +496,10 @@ export default function Home() {
                       />
                     </div>
                     <div className="space-y-2">
-                      <label className="text-[10px] uppercase tracking-widest font-bold text-primary">Email Address</label>
+                      <label className="text-[10px] uppercase tracking-widest font-bold text-primary">Email Address <span className="text-muted-foreground normal-case">(or phone)</span></label>
                       <input 
                         name="email" 
                         type="email" 
-                        required 
                         placeholder="john@example.com"
                         className="w-full bg-white border border-border p-4 focus:outline-none focus:ring-2 focus:ring-accent transition-all"
                       />
@@ -493,10 +507,9 @@ export default function Home() {
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="space-y-2">
-                      <label className="text-[10px] uppercase tracking-widest font-bold text-primary">Phone Number</label>
+                      <label className="text-[10px] uppercase tracking-widest font-bold text-primary">Phone Number <span className="text-muted-foreground normal-case">(or email)</span></label>
                       <input 
                         name="phone" 
-                        required 
                         placeholder="+61 400 000 000"
                         className="w-full bg-white border border-border p-4 focus:outline-none focus:ring-2 focus:ring-accent transition-all"
                       />

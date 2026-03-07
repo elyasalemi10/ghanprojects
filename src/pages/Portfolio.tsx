@@ -1,10 +1,28 @@
 import React, { useState } from 'react';
-import { Link } from '@tanstack/react-router';
-import { motion } from 'framer-motion';
+import { Link, useNavigate } from '@tanstack/react-router';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
-import { MapPin } from 'lucide-react';
+import { MapPin, CheckCircle2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { SEO } from '@/components/shared/SEO';
+
+const opportunities = [
+  {
+    title: 'Development Site – Mount Waverley',
+    bullets: ['850sqm Corner Site', 'Plans for 3 Luxury Townhouses', 'DA Approved'],
+    status: 'High Demand',
+  },
+  {
+    title: 'Subdivision Opportunity – Ringwood',
+    bullets: ['Flat 1000sqm Allotment', 'Concept for 4 Units', 'Pre-market Sale'],
+    status: 'Strategic',
+  },
+  {
+    title: 'Townhouse Project – Bentleigh East',
+    bullets: ['3 Bed, 2.5 Bath Units', 'Construction Starting Q3', 'Fixed Price Build'],
+    status: 'Investor Ready',
+  },
+];
 
 const categories = ['All', 'Townhouses', 'Subdivision', 'Residential', 'Commercial', 'Advisory'];
 
@@ -66,8 +84,9 @@ const projects = [
   },
 ];
 
-export default function Projects() {
+export default function Portfolio() {
   const [activeCat, setActiveCat] = useState('All');
+  const navigate = useNavigate();
 
   const filteredProjects = activeCat === 'All' 
     ? projects 
@@ -77,7 +96,7 @@ export default function Projects() {
     <div className="bg-background">
       <SEO 
         title="Property Development Portfolio Melbourne"
-        url="/projects"
+        url="/portfolio"
         description="Explore our successful property development projects across Melbourne. Townhouse developments, subdivisions, residential and commercial property investments delivered with strategic expertise."
         image="/images/townhouse-berwick.webp"
         keywords="property development projects Melbourne, townhouse development Victoria, subdivision development, commercial property development, residential property investment, property portfolio Melbourne, Ghan Projects portfolio"
@@ -109,6 +128,51 @@ export default function Projects() {
               A showcase of strategic acquisitions and successfully delivered property developments across Melbourne.
             </p>
           </motion.div>
+        </div>
+      </section>
+
+      {/* Current Opportunities */}
+      <section className="py-24 bg-primary text-white px-6 lg:px-12 relative overflow-hidden">
+        <div className="absolute top-0 right-0 w-1/3 h-full bg-accent/5 -skew-x-12 transform translate-x-1/2" />
+        <div className="max-w-7xl mx-auto relative z-10">
+          <div className="mb-16 text-center">
+            <h2 className="text-4xl md:text-5xl font-heading font-bold mb-6 text-white">Current Property Opportunities</h2>
+            <p className="text-xl text-white/70 max-w-2xl mx-auto">Request an information pack for select off-market and strategic opportunities currently in our pipeline.</p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12">
+            {opportunities.map((opp, i) => (
+              <motion.div 
+                key={i}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                transition={{ delay: i * 0.1 }}
+                viewport={{ once: true }}
+                className="bg-white/5 backdrop-blur-sm border border-white/10 p-10 hover:bg-white/10 transition-all duration-500 group"
+              >
+                <div className="text-[10px] uppercase tracking-widest font-bold text-accent mb-4 px-2 py-1 bg-accent/10 inline-block">{opp.status}</div>
+                <h3 className="text-2xl font-heading font-bold mb-6 text-white group-hover:text-accent transition-colors">{opp.title}</h3>
+                <ul className="space-y-4 mb-10">
+                  {opp.bullets.map((bullet, idx) => (
+                    <li key={idx} className="flex items-center gap-3 text-white/70 text-sm">
+                      <CheckCircle2 size={16} className="text-accent shrink-0" />
+                      {bullet}
+                    </li>
+                  ))}
+                </ul>
+                <Button 
+                  onClick={() => navigate({ 
+                    to: '/contact', 
+                    search: { message: `I am interested in an investment pack opportunity for ${opp.title}` } 
+                  })}
+                  className="w-full rounded-none bg-accent hover:bg-accent/90 text-white py-6 font-heading font-bold uppercase tracking-wider text-xs"
+                >
+                  Request Investment Pack
+                </Button>
+              </motion.div>
+            ))}
+          </div>
+          <p className="text-center text-white/40 text-sm italic">Opportunities change frequently. Contact us for the latest availability.</p>
         </div>
       </section>
 

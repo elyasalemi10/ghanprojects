@@ -28,7 +28,7 @@ export function Footer() {
               <Link to="/" className="text-white/70 hover:text-accent transition-colors text-sm">Home</Link>
               <Link to="/about" className="text-white/70 hover:text-accent transition-colors text-sm">About</Link>
               <Link to="/services" className="text-white/70 hover:text-accent transition-colors text-sm">Services</Link>
-              <Link to="/projects" className="text-white/70 hover:text-accent transition-colors text-sm">Projects</Link>
+              <Link to="/portfolio" className="text-white/70 hover:text-accent transition-colors text-sm">Portfolio</Link>
             </nav>
           </div>
 
@@ -39,7 +39,7 @@ export function Footer() {
               <Link to="/insights" className="text-white/70 hover:text-accent transition-colors text-sm">Insights & Articles</Link>
               <Link to="/resources" className="text-white/70 hover:text-accent transition-colors text-sm">Resources</Link>
               <Link to="/book-consultation" className="text-white/70 hover:text-accent transition-colors text-sm">Investment Strategy</Link>
-              <Link to="/projects" className="text-white/70 hover:text-accent transition-colors text-sm">Market Analysis</Link>
+              <Link to="/portfolio" className="text-white/70 hover:text-accent transition-colors text-sm">Market Analysis</Link>
             </nav>
           </div>
 
