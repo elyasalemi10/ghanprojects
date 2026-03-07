@@ -61,6 +61,19 @@ app.post('/api/resources/unlock', async (req, res) => {
     
     if (result.error) return res.status(500).json({ error: 'Failed to send email' });
     await saveEmailSignup(email, 'resources');
+    
+    // Send Telegram notification
+    if (process.env.TELEGRAM_BOT_TOKEN && process.env.TELEGRAM_CHAT_ID) {
+      await fetch(`https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}/sendMessage`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          chat_id: process.env.TELEGRAM_CHAT_ID,
+          text: `RESOURCES ACCESS REQUEST\n\nEmail: ${email}`
+        })
+      });
+    }
+    
     res.json({ success: true });
   } catch {
     res.status(500).json({ error: 'Failed to send email' });
@@ -101,6 +114,19 @@ app.post('/api/consultation', async (req, res) => {
     
     if (result.error) return res.status(500).json({ error: 'Failed to send' });
     await saveEmailSignup(email, 'consultation');
+    
+    // Send Telegram notification
+    if (process.env.TELEGRAM_BOT_TOKEN && process.env.TELEGRAM_CHAT_ID) {
+      await fetch(`https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}/sendMessage`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          chat_id: process.env.TELEGRAM_CHAT_ID,
+          text: `CONSULTATION REQUEST\n\nName: ${name}\nEmail: ${email}\nPhone: ${phone || 'N/A'}\nInvestment Range: ${investmentRange || 'N/A'}\nPreferred Date: ${preferredDate || 'N/A'}${message ? `\nMessage: ${message}` : ''}`
+        })
+      });
+    }
+    
     res.json({ success: true });
   } catch {
     res.status(500).json({ error: 'Failed to send' });
@@ -122,6 +148,19 @@ app.post('/api/investor-network', async (req, res) => {
     
     if (result.error) return res.status(500).json({ error: 'Failed' });
     await saveEmailSignup(email, 'investor_network');
+    
+    // Send Telegram notification
+    if (process.env.TELEGRAM_BOT_TOKEN && process.env.TELEGRAM_CHAT_ID) {
+      await fetch(`https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}/sendMessage`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          chat_id: process.env.TELEGRAM_CHAT_ID,
+          text: `INVESTOR NETWORK SIGNUP\n\nEmail: ${email}`
+        })
+      });
+    }
+    
     res.json({ success: true });
   } catch {
     res.status(500).json({ error: 'Failed' });
@@ -290,6 +329,13 @@ async function checkAvailability(date) {
     return { error: true, message: "We are fully booked within the next 48 hours. Please check availability for a date at least 48 hours from now." };
   }
   
+  // Check if date is a weekend (Saturday=6, Sunday=0)
+  const dateObj = new Date(date);
+  const dayOfWeek = dateObj.getDay();
+  if (dayOfWeek === 0 || dayOfWeek === 6) {
+    return { error: true, message: "We're not available on weekends. Please choose a weekday (Monday to Friday)." };
+  }
+  
   if (!process.env.CAL_COM_API_KEY || !process.env.CAL_COM_EVENT_TYPE_ID) {
     return { error: true, message: "Calendar system not configured." };
   }
@@ -438,7 +484,7 @@ async function bookMeeting(name, email, phone, dateTime) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           chat_id: process.env.TELEGRAM_CHAT_ID,
-          text: `🗓 New Consultation Booked!\n\n👤 Name: ${name}\n📧 Email: ${email || 'N/A'}\n📱 Phone: ${phone || 'N/A'}\n⏰ Time: ${bookingTime}`,
+          text: `CHATBOT BOOKING\n\nName: ${name}\nEmail: ${email || 'N/A'}\nPhone: ${phone || 'N/A'}\nTime: ${bookingTime}`,
           parse_mode: 'HTML'
         })
       });
@@ -454,7 +500,7 @@ async function bookMeeting(name, email, phone, dateTime) {
   }
 }
 
-async function sendInquiry(name, email, phone, budget) {
+async function sendInquiry(name, email, phone, budget, message) {
   if (!email && !phone) {
     return { error: true, message: "Please provide either an email address or phone number." };
   }
@@ -468,7 +514,7 @@ async function sendInquiry(name, email, phone, budget) {
       from: process.env.RESEND_FROM_EMAIL,
       to: process.env.RESEND_TO_EMAIL,
       subject: `New Chatbot Inquiry: ${name}`,
-      html: `<h2>New Inquiry from Website Chatbot</h2><p><strong>Name:</strong> ${name}</p><p><strong>Email:</strong> ${email || 'Not provided'}</p><p><strong>Phone:</strong> ${phone || 'Not provided'}</p><p><strong>Budget:</strong> ${budget}</p>`
+      html: `<h2>New Inquiry from Website Chatbot</h2><p><strong>Name:</strong> ${name}</p><p><strong>Email:</strong> ${email || 'Not provided'}</p><p><strong>Phone:</strong> ${phone || 'Not provided'}</p><p><strong>Budget:</strong> ${budget}</p>${message ? `<p><strong>Message:</strong> ${message}</p>` : ''}`
     });
     
     if (result.error) {
@@ -483,7 +529,7 @@ async function sendInquiry(name, email, phone, budget) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           chat_id: process.env.TELEGRAM_CHAT_ID,
-          text: `📩 New Chatbot Inquiry!\n\n👤 Name: ${name}\n📧 Email: ${email || 'N/A'}\n📱 Phone: ${phone || 'N/A'}\n💰 Budget: ${budget}`
+          text: `CHATBOT INQUIRY\n\nName: ${name}\nEmail: ${email || 'N/A'}\nPhone: ${phone || 'N/A'}\nBudget: ${budget}${message ? `\nMessage: ${message}` : ''}`
         })
       });
     }
@@ -530,14 +576,15 @@ const chatTools = [
     type: "function",
     function: {
       name: "send_inquiry",
-      description: "Send a general inquiry. Collects name, contact info, and budget.",
+      description: "Send a general inquiry. Collects name, contact info, budget, and optional message.",
       parameters: {
         type: "object",
         properties: {
           name: { type: "string", description: "User's full name" },
           email: { type: "string", description: "User's email (optional if phone provided)" },
           phone: { type: "string", description: "User's phone (optional if email provided)" },
-          budget: { type: "string", description: "User's budget range" }
+          budget: { type: "string", description: "User's budget range" },
+          message: { type: "string", description: "Optional message or note from the user" }
         },
         required: ["name", "budget"]
       }
@@ -587,7 +634,8 @@ BOOKING FLOW:
 
 INQUIRY FLOW (user not ready to book):
 1. Get name, contact (email/phone), and budget
-2. Call send_inquiry tool
+2. Ask if they have any message or note they'd like to pass to the team (optional)
+3. Call send_inquiry tool
 
 Keep responses SHORT and friendly. Max 2-3 sentences.`;
 };
@@ -632,7 +680,7 @@ app.post('/api/chat', async (req, res) => {
             result = await bookMeeting(args.name, args.email, args.phone, args.dateTime);
             break;
           case 'send_inquiry':
-            result = await sendInquiry(args.name, args.email, args.phone, args.budget);
+            result = await sendInquiry(args.name, args.email, args.phone, args.budget, args.message);
             break;
           default:
             result = { error: true, message: 'Unknown tool' };
