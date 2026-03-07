@@ -474,20 +474,32 @@ async function bookMeeting(name, email, phone, dateTime) {
       return { error: true, message: "Unable to complete booking. The slot may no longer be available." };
     }
     
+    // Send Telegram notification
+    console.log('[Chatbot] Attempting Telegram notification for booking...');
+    console.log('[Chatbot] TELEGRAM_BOT_TOKEN set:', !!process.env.TELEGRAM_BOT_TOKEN);
+    console.log('[Chatbot] TELEGRAM_CHAT_ID set:', !!process.env.TELEGRAM_CHAT_ID);
+    
     if (process.env.TELEGRAM_BOT_TOKEN && process.env.TELEGRAM_CHAT_ID) {
       const bookingTime = new Date(dateTime).toLocaleString('en-AU', { 
         timeZone: 'Australia/Melbourne', weekday: 'long', day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit'
       });
       
-      await fetch(`https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}/sendMessage`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          chat_id: process.env.TELEGRAM_CHAT_ID,
-          text: `CHATBOT BOOKING\n\nName: ${name}\nEmail: ${email || 'N/A'}\nPhone: ${phone || 'N/A'}\nTime: ${bookingTime}`,
-          parse_mode: 'HTML'
-        })
-      });
+      try {
+        const telegramRes = await fetch(`https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}/sendMessage`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            chat_id: process.env.TELEGRAM_CHAT_ID,
+            text: `CHATBOT BOOKING\n\nName: ${name}\nEmail: ${email || 'N/A'}\nPhone: ${phone || 'N/A'}\nTime: ${bookingTime}`
+          })
+        });
+        const telegramData = await telegramRes.json();
+        console.log('[Chatbot] Telegram response:', JSON.stringify(telegramData));
+      } catch (telegramErr) {
+        console.error('[Chatbot] Telegram error:', telegramErr);
+      }
+    } else {
+      console.log('[Chatbot] Telegram not configured, skipping notification');
     }
     
     const confirmedTime = new Date(dateTime).toLocaleString('en-AU', { 
@@ -523,15 +535,28 @@ async function sendInquiry(name, email, phone, budget, message) {
     
     await saveEmailSignup(email || phone, 'chatbot_inquiry');
     
+    // Send Telegram notification
+    console.log('[Chatbot] Attempting Telegram notification for inquiry...');
+    console.log('[Chatbot] TELEGRAM_BOT_TOKEN set:', !!process.env.TELEGRAM_BOT_TOKEN);
+    console.log('[Chatbot] TELEGRAM_CHAT_ID set:', !!process.env.TELEGRAM_CHAT_ID);
+    
     if (process.env.TELEGRAM_BOT_TOKEN && process.env.TELEGRAM_CHAT_ID) {
-      await fetch(`https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}/sendMessage`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          chat_id: process.env.TELEGRAM_CHAT_ID,
-          text: `CHATBOT INQUIRY\n\nName: ${name}\nEmail: ${email || 'N/A'}\nPhone: ${phone || 'N/A'}\nBudget: ${budget}${message ? `\nMessage: ${message}` : ''}`
-        })
-      });
+      try {
+        const telegramRes = await fetch(`https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}/sendMessage`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            chat_id: process.env.TELEGRAM_CHAT_ID,
+            text: `CHATBOT INQUIRY\n\nName: ${name}\nEmail: ${email || 'N/A'}\nPhone: ${phone || 'N/A'}\nBudget: ${budget}${message ? `\nMessage: ${message}` : ''}`
+          })
+        });
+        const telegramData = await telegramRes.json();
+        console.log('[Chatbot] Telegram response:', JSON.stringify(telegramData));
+      } catch (telegramErr) {
+        console.error('[Chatbot] Telegram error:', telegramErr);
+      }
+    } else {
+      console.log('[Chatbot] Telegram not configured, skipping notification');
     }
     
     return { success: true, message: `Thank you ${name}! Your inquiry has been submitted. Our team will be in touch within 24 hours.` };
