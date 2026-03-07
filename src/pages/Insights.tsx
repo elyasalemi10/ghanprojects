@@ -30,7 +30,7 @@ const fallbackArticles: BlogPost[] = [
     date: '2023-10-12',
     read_time: '6 min read',
     excerpt: 'Identifying the right site is the most critical step in property development. Learn the key factors we analyze to ensure feasibility...',
-    thumbnail: '/images/property-analysis.avif',
+    thumbnail: '/images/property-analysis.webp',
     content: ''
   },
   {
@@ -40,7 +40,7 @@ const fallbackArticles: BlogPost[] = [
     date: '2023-09-28',
     read_time: '8 min read',
     excerpt: 'Joint ventures offer a powerful way to leverage capital and expertise. We break down the standard models and how to structure a fair deal...',
-    thumbnail: '/images/glen-waverley.avif',
+    thumbnail: '/images/glen-waverley.webp',
     content: ''
   },
   {
@@ -50,7 +50,7 @@ const fallbackArticles: BlogPost[] = [
     date: '2023-09-15',
     read_time: '5 min read',
     excerpt: 'Before a shovel hits the ground, the numbers must stack up. Discover the fundamental metrics every property developer needs to track...',
-    thumbnail: '/images/commercial-richmond.avif',
+    thumbnail: '/images/commercial-richmond.webp',
     content: ''
   }
 ];
@@ -217,7 +217,7 @@ export default function Insights() {
                       >
                         <div className="relative aspect-video overflow-hidden">
                           <img 
-                            src={a.thumbnail || '/images/hero-about.avif'} 
+                            src={a.thumbnail || '/images/hero-about.webp'} 
                             className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" 
                             alt={a.title}
                           />

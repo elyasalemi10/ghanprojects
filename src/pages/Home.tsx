@@ -70,19 +70,19 @@ const projects = [
     title: 'Townhouse Development – Berwick',
     tags: ['Townhouses', 'Residential'],
     result: '4 high-end townhouses delivered',
-    image: '/images/townhouse-berwick.avif',
+    image: '/images/townhouse-berwick.webp',
   },
   {
     title: 'Dual Occupancy – Glen Waverley',
     tags: ['Subdivision', 'Residential'],
     result: 'Premium side-by-side development',
-    image: '/images/glen-waverley.avif',
+    image: '/images/glen-waverley.webp',
   },
   {
     title: 'Strategic Acquisition – Richmond',
     tags: ['Commercial', 'Advisory'],
     result: 'Value-add investment strategy',
-    image: '/images/commercial-richmond.avif',
+    image: '/images/commercial-richmond.webp',
   },
 ];
 
@@ -124,7 +124,7 @@ const resources = [
   { title: 'JV Partnership Guide', type: 'PDF', size: '2.4 MB' },
 ];
 
-const HERO_IMAGE_URL = "/images/hero-home.png";
+const HERO_IMAGE_URL = "/images/hero-home.webp";
 
 export default function Home() {
   const heroRef = useRef(null);
@@ -170,7 +170,7 @@ export default function Home() {
       <SEO 
         url="/"
         description="Melbourne's leading property development and investment consulting firm. Expert property advisory, joint venture structuring, buyer's agent services, and strategic property investment guidance."
-        image="/images/hero-home.png"
+        image="/images/hero-home.webp"
         keywords="property development Melbourne, property investment consulting, property advisory Melbourne, joint venture property development, buyer's agent Melbourne, Ghan Projects, Ghan Property Group, property consulting Melbourne, real estate investment Victoria"
       />
       {/* SECTION 1: HERO */}
@@ -397,7 +397,7 @@ export default function Home() {
                 <FadeInWhenVisible key={i} delay={i * 0.1}>
                   <div className="group bg-background p-6 flex gap-6 items-center border hover:border-accent transition-all duration-300 shadow-sm cursor-pointer">
                     <div className="w-24 h-24 bg-secondary shrink-0 hidden sm:block overflow-hidden">
-                      <img src="/images/property-analysis.avif" className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" alt="" />
+                      <img src="/images/property-analysis.webp" className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" alt="" />
                     </div>
                     <div>
                       <div className="flex items-center gap-3 text-[10px] uppercase tracking-widest font-bold text-accent mb-2">

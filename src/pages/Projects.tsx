@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Link } from '@tanstack/react-router';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { MapPin } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -8,14 +8,6 @@ import { SEO } from '@/components/shared/SEO';
 
 const categories = ['All', 'Townhouses', 'Subdivision', 'Residential', 'Commercial', 'Advisory'];
 
-const portfolioImages = [
-  '/portfolio/1.jpg',
-  '/portfolio/2.jpg',
-  '/portfolio/3.jpg',
-  '/portfolio/4.jpg',
-  '/portfolio/5.jpg',
-  '/portfolio/6.jpg',
-];
 
 const projects = [
   {
@@ -25,7 +17,7 @@ const projects = [
     loc: 'Berwick, VIC',
     outcome: '4 High-end Townhouses',
     scope: 'Acquisition, JV Structuring, PM',
-    image: '/images/townhouse-berwick.avif',
+    image: '/images/townhouse-berwick.webp',
   },
   {
     id: 2,
@@ -34,7 +26,7 @@ const projects = [
     loc: 'Glen Waverley, VIC',
     outcome: 'Premium Side-by-Side',
     scope: 'Advisory, Feasibility, Delivery',
-    image: '/images/glen-waverley.avif',
+    image: '/images/glen-waverley.webp',
   },
   {
     id: 3,
@@ -43,7 +35,7 @@ const projects = [
     loc: 'Richmond, VIC',
     outcome: 'Commercial Yield +15%',
     scope: 'Buyer Agent, Strategic Analysis',
-    image: '/images/commercial-richmond.avif',
+    image: '/images/commercial-richmond.webp',
   },
   {
     id: 4,
@@ -52,7 +44,7 @@ const projects = [
     loc: 'Ringwood, VIC',
     outcome: '6 Unit Subdivision',
     scope: 'Off-market Sourcing, JV',
-    image: '/images/property-analysis.avif',
+    image: '/images/property-analysis.webp',
   },
   {
     id: 5,
@@ -61,7 +53,7 @@ const projects = [
     loc: 'Toorak, VIC',
     outcome: 'Bespoke Single Dwelling',
     scope: 'Construction Management',
-    image: '/images/luxury-toorak.avif',
+    image: '/images/luxury-toorak.webp',
   },
   {
     id: 6,
@@ -70,20 +62,12 @@ const projects = [
     loc: 'Box Hill, VIC',
     outcome: 'Modernized Workspace',
     scope: 'Advisory, Project Management',
-    image: '/images/commercial-richmond.avif',
+    image: '/images/commercial-richmond.webp',
   },
 ];
 
 export default function Projects() {
   const [activeCat, setActiveCat] = useState('All');
-  const [currentImageIndex, setCurrentImageIndex] = useState(0);
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setCurrentImageIndex((prev) => (prev + 1) % portfolioImages.length);
-    }, 4000);
-    return () => clearInterval(interval);
-  }, []);
 
   const filteredProjects = activeCat === 'All' 
     ? projects 
@@ -95,24 +79,23 @@ export default function Projects() {
         title="Property Development Portfolio Melbourne"
         url="/projects"
         description="Explore our successful property development projects across Melbourne. Townhouse developments, subdivisions, residential and commercial property investments delivered with strategic expertise."
-        image="/images/townhouse-berwick.avif"
+        image="/images/townhouse-berwick.webp"
         keywords="property development projects Melbourne, townhouse development Victoria, subdivision development, commercial property development, residential property investment, property portfolio Melbourne, Ghan Projects portfolio"
       />
       {/* Hero */}
       <section className="relative min-h-[calc(100vh-80px)] flex items-center px-6 lg:px-12 bg-primary text-white overflow-hidden">
-        {/* Background Slideshow */}
+        {/* Background Video */}
         <div className="absolute inset-0 z-0">
-          {portfolioImages.map((img, index) => (
-            <motion.img
-              key={img}
-              src={img}
-              alt=""
-              initial={{ opacity: 0 }}
-              animate={{ opacity: index === currentImageIndex ? 1 : 0 }}
-              transition={{ duration: 1 }}
-              className="absolute inset-0 w-full h-full object-cover"
-            />
-          ))}
+          <video 
+            autoPlay 
+            muted 
+            loop 
+            playsInline
+            poster="/images/portfolio-thumbnail.webp"
+            className="w-full h-full object-cover"
+          >
+            <source src="/images/portfolio.webm" type="video/webm" />
+          </video>
           <div className="absolute inset-0 bg-gradient-to-r from-primary/80 via-primary/60 to-primary/50" />
         </div>
         <div className="max-w-7xl mx-auto relative z-10 w-full py-16">

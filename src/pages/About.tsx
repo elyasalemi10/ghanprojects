@@ -6,7 +6,7 @@ import { Scale, Shield, Briefcase, TrendingUp, Target, Eye } from 'lucide-react'
 import { FadeInWhenVisible } from '@/components/shared/FadeInWhenVisible';
 import { SEO } from '@/components/shared/SEO';
 
-const FOUNDER_IMG = "/images/founder-portrait.avif";
+const FOUNDER_IMG = "/images/founder-portrait.webp";
 
 export default function About() {
   return (
@@ -15,14 +15,14 @@ export default function About() {
         title="About Ghan Projects - Property Development Experts"
         url="/about"
         description="Learn about Ghan Projects - Melbourne's trusted property development and investment consulting firm. Our mission, values, and expert approach to delivering exceptional property outcomes."
-        image="/images/founder-portrait.avif"
+        image="/images/founder-portrait.webp"
         keywords="about Ghan Projects, Ghan Property Group, Melbourne property developers, property consulting firm Melbourne, property investment experts Victoria"
       />
       {/* Hero */}
       <section className="relative py-32 lg:py-48 px-6 lg:px-12 bg-primary text-white overflow-hidden">
         <div className="absolute inset-0">
           <img
-            src="/images/hero-about.avif"
+            src="/images/hero-about.webp"
             className="w-full h-full object-cover opacity-20"
             alt=""
           />

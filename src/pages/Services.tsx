@@ -171,6 +171,7 @@ export default function Services() {
             muted 
             loop 
             playsInline
+            poster="/images/thumbnail.webp"
             className="w-full h-full object-cover"
             ref={(el) => { if (el) el.playbackRate = 0.8; }}
           >
