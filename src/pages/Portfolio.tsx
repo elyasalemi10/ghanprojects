@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from '@tanstack/react-router';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
-import { MapPin, CheckCircle2 } from 'lucide-react';
+import { MapPin, CheckCircle2, ChevronLeft, ChevronRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { SEO } from '@/components/shared/SEO';
 
@@ -24,73 +24,163 @@ const opportunities = [
   },
 ];
 
-const categories = ['All', 'Townhouses', 'Subdivision', 'Residential', 'Commercial', 'Advisory'];
-
-
-const projects = [
+const portfolioProjects = [
   {
     id: 1,
-    title: 'Townhouse Development – Berwick',
-    cat: 'Townhouses',
-    loc: 'Berwick, VIC',
-    outcome: '4 High-end Townhouses',
-    scope: 'Acquisition, JV Structuring, PM',
-    image: '/images/townhouse-berwick.webp',
+    title: 'Duplex',
+    tags: ['Duplex', 'Residential'],
+    suburb: 'Beaumaris',
+    value: '',
+    caption: 'Premium coastal duplex delivered',
+    folder: 'duplex',
+    images: ['main.webp', 'kitchen.webp', 'bathroom.webp', 'bathroom-2.webp', 'bathroom-3.webp', 'pool.webp', 'upstairs-living.webp'],
   },
   {
     id: 2,
-    title: 'Dual Occupancy – Glen Waverley',
-    cat: 'Subdivision',
-    loc: 'Glen Waverley, VIC',
-    outcome: 'Premium Side-by-Side',
-    scope: 'Advisory, Feasibility, Delivery',
-    image: '/images/glen-waverley.webp',
+    title: '3 Luxury Townhouses',
+    tags: ['Townhouse', 'Luxury', 'Residential'],
+    suburb: '',
+    value: '',
+    caption: 'Boutique luxury townhouse development',
+    folder: '3-luxury-townhouses-2',
+    images: ['main.webp', 'main-side.webp', 'aerial.webp', 'kitchen.webp', 'living-room.webp', 'living-room-2.webp', 'bedroom.webp', 'bathroom.webp', 'rooftop.webp', 'stairs.webp'],
   },
   {
     id: 3,
-    title: 'Strategic Acquisition – Richmond',
-    cat: 'Advisory',
-    loc: 'Richmond, VIC',
-    outcome: 'Commercial Yield +15%',
-    scope: 'Buyer Agent, Strategic Analysis',
-    image: '/images/commercial-richmond.webp',
+    title: '7 Luxury Townhouses',
+    tags: ['Townhouse', 'Luxury', 'Residential'],
+    suburb: 'Mordialloc',
+    value: '',
+    caption: '7 high-end townhouses delivered',
+    folder: '7-luxury-townhouses',
+    images: ['main.webp', 'main-side.webp', 'living room.webp', 'dining.webp', 'kitchen.webp', 'bedroom.webp', 'bedroom-2.webp', 'bathroom.webp', 'study.webp', 'cinema.webp', 'balcony.webp', 'pergola.webp', 'hallway.webp', 'stairs.webp', 'stairs-2.webp'],
   },
   {
     id: 4,
-    title: 'Multi-unit Site – Ringwood',
-    cat: 'Subdivision',
-    loc: 'Ringwood, VIC',
-    outcome: '6 Unit Subdivision',
-    scope: 'Off-market Sourcing, JV',
-    image: '/images/property-analysis.webp',
+    title: 'Duplex',
+    tags: ['Duplex', 'Residential'],
+    suburb: 'Mordialloc',
+    value: '',
+    caption: 'High-quality dual-occupancy project',
+    folder: 'duplex-2',
+    images: ['main.webp', 'main-2.webp', 'kitchen.webp', 'living-room.webp', 'dining.webp', 'bedroom.webp', 'bedroom-2.webp', 'bathroom.webp', 'backyard.webp'],
   },
   {
     id: 5,
-    title: 'Luxury Residence – Toorak',
-    cat: 'Residential',
-    loc: 'Toorak, VIC',
-    outcome: 'Bespoke Single Dwelling',
-    scope: 'Construction Management',
-    image: '/images/luxury-toorak.webp',
+    title: 'Duplex',
+    tags: ['Duplex', 'Residential'],
+    suburb: 'Bentleigh',
+    value: '',
+    caption: 'Premium side-by-side duplex build',
+    folder: 'duplex-3',
+    images: ['main.webp', 'kitchen.webp', 'dining.webp', 'pantry.webp', 'pergola.webp', 'stairs.webp'],
   },
   {
     id: 6,
-    title: 'Office Refurbishment – Box Hill',
-    cat: 'Commercial',
-    loc: 'Box Hill, VIC',
-    outcome: 'Modernized Workspace',
-    scope: 'Advisory, Project Management',
-    image: '/images/commercial-richmond.webp',
+    title: '6 Townhouses',
+    tags: ['Townhouse', 'Residential'],
+    suburb: 'Hampton Park',
+    value: '',
+    caption: '6-townhouse value-add development',
+    folder: '6-townhouses',
+    images: ['main.webp', 'living-room.webp', 'dining.webp', 'bedroom.webp', 'bathroom.webp', 'bathroom-2.webp', 'study.webp', 'backyard.webp', 'backyard-2.webp', 'backyard-3.webp'],
+  },
+  {
+    id: 7,
+    title: '4 Luxury Townhouses',
+    tags: ['Townhouse', 'Luxury', 'Residential'],
+    suburb: 'Berwick',
+    value: '',
+    caption: '4 luxury townhouses successfully delivered',
+    folder: '4-luxury-townhouses',
+    images: ['main.webp', 'main-side.webp', 'kitchen.webp', 'kitchen-2.webp', 'living-room.webp', 'living-room-2.webp', 'dining.webp', 'bedroom.webp', 'bedroom-2.webp', 'bedroom-3.webp', 'bathroom.webp', 'bathroom-2.webp', 'closet.webp', 'balcony.webp', 'pergola.webp'],
+  },
+  {
+    id: 8,
+    title: '3 Luxury Townhouses',
+    tags: ['Townhouse', 'Luxury', 'Residential'],
+    suburb: 'Narre Warren',
+    value: '',
+    caption: 'Boutique triple-townhouse development',
+    folder: '3-luxury-townhouses',
+    images: ['main.webp', 'street-view.webp', 'kitchen.webp', 'kitchen-2.webp', 'living.webp', 'living-2.webp', 'bedroom.webp', 'bathroom.webp', 'bathroom-2.webp', 'study.webp', 'pergola.webp'],
   },
 ];
+
+const categories = ['All', 'Townhouse', 'Duplex', 'Luxury', 'Residential'];
+
+function ImageGallery({ images, folder, title }: { images: string[], folder: string, title: string }) {
+  const [currentIndex, setCurrentIndex] = useState(0);
+
+  const nextImage = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setCurrentIndex((prev) => (prev + 1) % images.length);
+  };
+
+  const prevImage = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setCurrentIndex((prev) => (prev - 1 + images.length) % images.length);
+  };
+
+  return (
+    <div className="relative aspect-[4/5] overflow-hidden group/gallery">
+      <AnimatePresence mode="wait">
+        <motion.img
+          key={currentIndex}
+          src={`/portfolio/${folder}/${images[currentIndex]}`}
+          alt={`${title} - Image ${currentIndex + 1}`}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.3 }}
+          className="w-full h-full object-cover"
+        />
+      </AnimatePresence>
+      
+      {images.length > 1 && (
+        <>
+          <button
+            onClick={prevImage}
+            className="absolute left-3 top-1/2 -translate-y-1/2 w-10 h-10 bg-white/90 hover:bg-white rounded-full flex items-center justify-center text-primary opacity-0 group-hover/gallery:opacity-100 transition-all duration-300 shadow-lg z-10"
+          >
+            <ChevronLeft size={20} />
+          </button>
+          <button
+            onClick={nextImage}
+            className="absolute right-3 top-1/2 -translate-y-1/2 w-10 h-10 bg-white/90 hover:bg-white rounded-full flex items-center justify-center text-primary opacity-0 group-hover/gallery:opacity-100 transition-all duration-300 shadow-lg z-10"
+          >
+            <ChevronRight size={20} />
+          </button>
+          
+          <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-1.5 z-10">
+            {images.map((_, idx) => (
+              <button
+                key={idx}
+                onClick={(e) => { e.stopPropagation(); setCurrentIndex(idx); }}
+                className={cn(
+                  "w-2 h-2 rounded-full transition-all",
+                  idx === currentIndex ? "bg-white w-4" : "bg-white/50 hover:bg-white/80"
+                )}
+              />
+            ))}
+          </div>
+          
+          <div className="absolute top-4 right-4 px-2 py-1 bg-black/50 text-white text-xs font-medium rounded z-10">
+            {currentIndex + 1} / {images.length}
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
 
 export default function Portfolio() {
   const [activeCat, setActiveCat] = useState('All');
   const navigate = useNavigate();
 
   const filteredProjects = activeCat === 'All' 
-    ? projects 
-    : projects.filter(p => p.cat === activeCat);
+    ? portfolioProjects 
+    : portfolioProjects.filter(p => p.tags.some(tag => tag.toLowerCase() === activeCat.toLowerCase()));
 
   return (
     <div className="bg-background">
@@ -103,7 +193,6 @@ export default function Portfolio() {
       />
       {/* Hero */}
       <section className="relative min-h-[calc(100vh-80px)] flex items-center px-6 lg:px-12 bg-primary text-white overflow-hidden">
-        {/* Background Video */}
         <div className="absolute inset-0 z-0">
           <video 
             autoPlay 
@@ -196,7 +285,7 @@ export default function Portfolio() {
         </div>
       </section>
 
-      {/* Grid */}
+      {/* Portfolio Grid */}
       <section className="py-24 px-6 lg:px-12">
         <div className="max-w-7xl mx-auto">
           <motion.div 
@@ -204,9 +293,9 @@ export default function Portfolio() {
             className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-12"
           >
             <AnimatePresence mode="popLayout">
-              {filteredProjects.map((p) => (
+              {filteredProjects.map((project) => (
                 <motion.div
-                  key={p.id}
+                  key={project.id}
                   layout
                   initial={{ opacity: 0, scale: 0.9 }}
                   animate={{ opacity: 1, scale: 1 }}
@@ -214,39 +303,37 @@ export default function Portfolio() {
                   transition={{ duration: 0.4 }}
                   className="group bg-background border hover:border-accent transition-all duration-500 overflow-hidden shadow-sm hover:shadow-2xl"
                 >
-                  <div className="relative aspect-[4/5] overflow-hidden">
-                    <img 
-                      src={p.image} 
-                      className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" 
-                      alt={p.title}
-                    />
-                    <div className="absolute inset-0 bg-primary/20 opacity-0 group-hover:opacity-100 transition-opacity duration-500 flex items-center justify-center">
-                      <Button variant="outline" className="rounded-none border-white text-white hover:bg-white hover:text-primary font-bold uppercase tracking-widest text-[10px]">
-                        View Details
-                      </Button>
+                  <ImageGallery 
+                    images={project.images} 
+                    folder={project.folder} 
+                    title={project.title} 
+                  />
+                  
+                  <div className="p-8 space-y-4">
+                    <div className="flex flex-wrap gap-2">
+                      {project.tags.map(tag => (
+                        <span key={tag} className="px-2 py-1 bg-accent/10 text-accent text-[10px] font-bold uppercase tracking-widest">{tag}</span>
+                      ))}
                     </div>
-                    <div className="absolute top-6 left-6">
-                      <span className="px-3 py-1 bg-accent text-white text-[10px] font-bold uppercase tracking-widest">{p.cat}</span>
-                    </div>
-                  </div>
-                  <div className="p-8 space-y-6">
+                    
                     <div>
-                      <h3 className="text-2xl font-heading font-bold text-primary group-hover:text-accent transition-colors">{p.title}</h3>
-                      <div className="flex items-center gap-2 text-muted-foreground mt-2 text-xs font-medium">
-                        <MapPin size={14} className="text-accent" />
-                        {p.loc}
-                      </div>
+                      <h3 className="text-2xl font-heading font-bold text-primary group-hover:text-accent transition-colors">{project.title}</h3>
+                      {project.suburb && (
+                        <div className="flex items-center gap-2 text-muted-foreground mt-2 text-xs font-medium">
+                          <MapPin size={14} className="text-accent" />
+                          {project.suburb}, VIC
+                        </div>
+                      )}
                     </div>
-                    <div className="grid grid-cols-2 gap-4 pt-6 border-t">
-                      <div>
-                        <span className="block text-[10px] uppercase tracking-widest font-bold text-muted-foreground mb-1">Outcome</span>
-                        <span className="text-sm font-bold text-primary">{p.outcome}</span>
+                    
+                    <p className="text-sm text-muted-foreground italic">{project.caption}</p>
+                    
+                    {project.value && (
+                      <div className="pt-4 border-t">
+                        <span className="block text-[10px] uppercase tracking-widest font-bold text-muted-foreground mb-1">Project Value</span>
+                        <span className="text-lg font-bold text-primary">{project.value}</span>
                       </div>
-                      <div>
-                        <span className="block text-[10px] uppercase tracking-widest font-bold text-muted-foreground mb-1">Scope</span>
-                        <span className="text-sm font-bold text-primary">{p.scope}</span>
-                      </div>
-                    </div>
+                    )}
                   </div>
                 </motion.div>
               ))}

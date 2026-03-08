@@ -12,6 +12,7 @@ import Resources from '@/pages/Resources';
 import Contact from '@/pages/Contact';
 import BookConsultation from '@/pages/BookConsultation';
 import Admin from '@/pages/Admin';
+import NotFound from '@/pages/NotFound';
 
 function ScrollToTop() {
   const location = useLocation();
@@ -112,6 +113,12 @@ const adminRoute = createRoute({
   component: Admin,
 });
 
+const notFoundRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '*',
+  component: NotFound,
+});
+
 const routeTree = rootRoute.addChildren([
   indexRoute,
   aboutRoute,
@@ -123,6 +130,7 @@ const routeTree = rootRoute.addChildren([
   contactRoute,
   bookConsultationRoute,
   adminRoute,
+  notFoundRoute,
 ]);
 
 export const router = createRouter({ routeTree });

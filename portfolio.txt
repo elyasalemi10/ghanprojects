@@ -1,0 +1,60 @@
+Title: Duplex
+Tags: duplex, residential
+Images: duplex-1 folder
+Suburb: Beaumaris
+Value: 
+Caption: Premium coastal duplex delivered
+
+Title: 3 Luxury Townhouses
+Tags: townhouse, luxury, residential
+Images: 3-luxury-townhouses-2 folder
+Suburb: 
+Value: 
+Caption: Boutique luxury townhouse development
+
+Title: 7 Luxury Townhouses
+Tags: townhouse, luxury, residential
+Images: 7-luxury-townhouses folder
+Suburb: Mordialloc
+Value: 
+Caption: 7 high-end townhouses delivered
+
+Title: Duplex
+Tags: duplex, residential
+Images: duplex-2 folder
+Suburb: Mordialloc
+Value: 
+Caption: High-quality dual-occupancy project
+
+Title: Duplex
+Tags: duplex, residential
+Images: duplex-3 folder
+Suburb: Bentleigh
+Value: 
+Caption: Premium side-by-side duplex build
+
+Title: 6 Townhouses
+Tags: townhouse, residential
+Images: 6-townhouses folder
+Suburb: Hampton Park
+Value: 
+Caption: 6-townhouse value-add development
+
+Title: 4 Luxury Townhouses
+Tags: townhouse, luxury, residential
+Images: 4-luxury-townhouses folder
+Suburb: Berwick
+Value: 
+Caption: 4 luxury townhouses successfully delivered
+
+
+Title: 3 Luxury Townhouses
+Tags: townhouse, luxury, residential
+Images: 3-luxury-townhouses
+Suburb: Narre warren
+Value: 
+Caption: Boutique triple-townhouse development
+
+
+15 hastings avenue, 494 main mordialloc, 50-52 brisbane st berwick, 8 magnolia mordialloc, 8a ardwick, 96 summerville hampton park, mansfield, langcaster narre warren,
+ 50-54 marisa, 18 renver student, 49-51 wood street childcare

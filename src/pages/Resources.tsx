@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
-import { FileText, Download, Lock, CheckCircle2, ChevronRight, Mail, Unlock } from 'lucide-react';
+import { FileText, Download, Lock, CheckCircle2, ChevronRight, Mail, Unlock, Bot, ExternalLink } from 'lucide-react';
 import { toast } from 'sonner';
 import { SEO } from '@/components/shared/SEO';
 
@@ -52,6 +52,14 @@ const resources = [
     tags: ['Off-Market', 'Negotiation'],
   }
 ];
+
+const aiTool = {
+  title: 'AI Assistant for Property Developers',
+  desc: 'Use our AI-powered assistant to analyze development sites, run feasibility scenarios, and get instant answers to property development questions.',
+  cat: 'AI Tool',
+  tags: ['AI', 'Feasibility', 'Analysis'],
+  url: 'https://cruxlogic.ai/property-development'
+};
 
 const API_URL = import.meta.env.PROD ? '' : 'http://localhost:3001';
 
@@ -172,6 +180,47 @@ export default function Resources() {
               </>
             )}
           </motion.div>
+        </div>
+      </section>
+
+      {/* AI Tool Featured */}
+      <section className="py-16 px-6 lg:px-12 bg-primary">
+        <div className="max-w-7xl mx-auto">
+          <motion.a
+            href={aiTool.url}
+            target="_blank"
+            rel="noopener noreferrer"
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="group bg-white/5 backdrop-blur-sm border border-white/10 p-10 flex flex-col md:flex-row gap-10 hover:bg-white/10 transition-all duration-500 cursor-pointer block"
+          >
+            <div className="w-20 h-20 bg-accent/20 rounded-sm flex items-center justify-center text-accent shrink-0 group-hover:bg-accent group-hover:text-white transition-colors duration-500">
+              <Bot size={40} />
+            </div>
+            <div className="space-y-4 flex-grow">
+              <div className="flex justify-between items-start">
+                <div>
+                  <span className="text-[10px] uppercase tracking-widest font-bold text-accent mb-2 block">{aiTool.cat}</span>
+                  <h3 className="text-2xl font-heading font-bold text-white group-hover:text-accent transition-colors">{aiTool.title}</h3>
+                </div>
+                <ExternalLink size={20} className="text-white/40 group-hover:text-accent transition-colors" />
+              </div>
+              <p className="text-white/60 text-sm leading-relaxed">
+                {aiTool.desc}
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {aiTool.tags.map(tag => (
+                  <span key={tag} className="text-[9px] uppercase tracking-widest font-bold px-2 py-1 bg-white/10 text-white/60 border border-white/10">{tag}</span>
+                ))}
+              </div>
+              <div className="pt-4">
+                <span className="text-accent font-bold uppercase tracking-widest text-[10px] flex items-center gap-2">
+                  Try AI Assistant <ChevronRight size={14} />
+                </span>
+              </div>
+            </div>
+          </motion.a>
         </div>
       </section>
 

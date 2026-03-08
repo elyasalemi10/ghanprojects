@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { useSearch } from '@tanstack/react-router';
 import { Button } from '@/components/ui/button';
@@ -21,11 +21,15 @@ const API_URL = import.meta.env.PROD ? '' : 'http://localhost:3001';
 export default function Contact() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [messageValue, setMessageValue] = useState('');
+  const formRef = useRef<HTMLDivElement>(null);
   const search = useSearch({ strict: false }) as { message?: string };
   
   useEffect(() => {
     if (search.message) {
       setMessageValue(search.message);
+      setTimeout(() => {
+        formRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }, 300);
     }
   }, [search.message]);
 
@@ -180,7 +184,7 @@ export default function Contact() {
             </div>
 
             {/* Form */}
-            <div className="bg-secondary/30 p-10 lg:p-16 border border-secondary shadow-2xl relative">
+            <div ref={formRef} className="bg-secondary/30 p-10 lg:p-16 border border-secondary shadow-2xl relative">
               <div className="absolute top-0 right-0 w-32 h-32 bg-accent/5 -z-10 rounded-bl-full" />
               <form onSubmit={handleSubmit} className="space-y-8">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">

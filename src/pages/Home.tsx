@@ -67,22 +67,22 @@ const services = [
 
 const projects = [
   {
-    title: 'Townhouse Development – Berwick',
-    tags: ['Townhouses', 'Residential'],
-    result: '4 high-end townhouses delivered',
-    image: '/images/townhouse-berwick.webp',
+    title: '4 Luxury Townhouses – Berwick',
+    tags: ['Townhouse', 'Luxury'],
+    result: '4 luxury townhouses successfully delivered',
+    image: '/portfolio/4-luxury-townhouses/main.webp',
   },
   {
-    title: 'Dual Occupancy – Glen Waverley',
-    tags: ['Subdivision', 'Residential'],
-    result: 'Premium side-by-side development',
-    image: '/images/glen-waverley.webp',
+    title: '7 Luxury Townhouses – Mordialloc',
+    tags: ['Townhouse', 'Luxury'],
+    result: '7 high-end townhouses delivered',
+    image: '/portfolio/7-luxury-townhouses/main.webp',
   },
   {
-    title: 'Strategic Acquisition – Richmond',
-    tags: ['Commercial', 'Advisory'],
-    result: 'Value-add investment strategy',
-    image: '/images/commercial-richmond.webp',
+    title: 'Premium Duplex – Beaumaris',
+    tags: ['Duplex', 'Residential'],
+    result: 'Premium coastal duplex delivered',
+    image: '/portfolio/duplex/main.webp',
   },
 ];
 
