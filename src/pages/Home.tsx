@@ -1,4 +1,4 @@
-import React, { useRef } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import { Link, useNavigate } from '@tanstack/react-router';
 import { motion, useScroll, useTransform } from 'framer-motion';
 import { Button } from '@/components/ui/button';
@@ -22,6 +22,18 @@ import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { FadeInWhenVisible } from '@/components/shared/FadeInWhenVisible';
 import { SEO } from '@/components/shared/SEO';
+
+const API_URL = import.meta.env.PROD ? '' : 'http://localhost:3001';
+
+interface BlogPost {
+  id: number;
+  title: string;
+  category: string;
+  thumbnail: string;
+  date: string;
+  read_time: string;
+  excerpt: string;
+}
 
 // --- Data ---
 
@@ -112,10 +124,10 @@ const steps = [
   { title: 'Completion & Exit', desc: 'Marketing, sales, and capital realization.' },
 ];
 
-const insights = [
-  { title: 'How to Assess a Development Site in Melbourne', cat: 'Strategy', date: 'Oct 12, 2023' },
-  { title: 'JV Property Development: How Profit Splits Work', cat: 'Finance', date: 'Sep 28, 2023' },
-  { title: 'Feasibility Basics: Costs, Risks, and Returns', cat: 'Investment', date: 'Sep 15, 2023' },
+const fallbackInsights: BlogPost[] = [
+  { id: 1, title: 'How to Assess a Development Site in Melbourne', category: 'Strategy', date: '2023-10-12', read_time: '6 min read', excerpt: '', thumbnail: '/images/property-analysis.webp' },
+  { id: 2, title: 'JV Property Development: How Profit Splits Work', category: 'Finance', date: '2023-09-28', read_time: '8 min read', excerpt: '', thumbnail: '/images/glen-waverley.webp' },
+  { id: 3, title: 'Feasibility Basics: Costs, Risks, and Returns', category: 'Investment', date: '2023-09-15', read_time: '5 min read', excerpt: '', thumbnail: '/images/commercial-richmond.webp' },
 ];
 
 const resources = [
@@ -129,16 +141,37 @@ const HERO_IMAGE_URL = "/images/hero-home.webp";
 export default function Home() {
   const heroRef = useRef(null);
   const navigate = useNavigate();
+  const [insights, setInsights] = useState<BlogPost[]>(fallbackInsights);
   const { scrollYProgress } = useScroll({
     target: heroRef,
     offset: ["start start", "end start"]
   });
   const y = useTransform(scrollYProgress, [0, 1], ["0%", "30%"]);
 
+  useEffect(() => {
+    const fetchInsights = async () => {
+      try {
+        const res = await fetch(`${API_URL}/api/posts`);
+        if (res.ok) {
+          const data = await res.json();
+          if (data.length > 0) {
+            setInsights(data.slice(0, 3));
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching insights:', error);
+      }
+    };
+    fetchInsights();
+  }, []);
+
+  const formatDate = (dateStr: string) => {
+    const date = new Date(dateStr);
+    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  };
+
   const handleJoinNetwork = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    
-    const API_URL = import.meta.env.PROD ? '' : 'http://localhost:3001';
     const formData = new FormData(e.currentTarget);
     const email = formData.get('email') as string;
     const phone = formData.get('phone') as string;
@@ -309,8 +342,8 @@ export default function Home() {
                   </div>
                   <h3 className="text-2xl font-heading font-bold mb-2 group-hover:text-accent transition-colors">{project.title}</h3>
                   <p className="text-sm text-muted-foreground font-medium mb-6 italic">{project.result}</p>
-                  <Button variant="ghost" className="p-0 hover:bg-transparent text-primary hover:text-accent font-bold uppercase tracking-widest text-xs gap-2">
-                    View Project <ChevronRight size={16} />
+                  <Button asChild variant="ghost" className="p-0 hover:bg-transparent text-primary hover:text-accent font-bold uppercase tracking-widest text-xs gap-2">
+                    <Link to="/portfolio">View Project <ChevronRight size={16} /></Link>
                   </Button>
                 </div>
               </FadeInWhenVisible>
@@ -409,20 +442,24 @@ export default function Home() {
             </div>
             <div className="space-y-6">
               {insights.map((article, i) => (
-                <FadeInWhenVisible key={i} delay={i * 0.1}>
-                  <div className="group bg-background p-6 flex gap-6 items-center border hover:border-accent transition-all duration-300 shadow-sm cursor-pointer">
+                <FadeInWhenVisible key={article.id} delay={i * 0.1}>
+                  <Link 
+                    to="/insights/$id" 
+                    params={{ id: String(article.id) }}
+                    className="group bg-background p-6 flex gap-6 items-center border hover:border-accent transition-all duration-300 shadow-sm cursor-pointer block"
+                  >
                     <div className="w-24 h-24 bg-secondary shrink-0 hidden sm:block overflow-hidden">
-                      <img src="/images/property-analysis.webp" className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" alt="" />
+                      <img src={article.thumbnail || '/images/property-analysis.webp'} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" alt="" />
                     </div>
                     <div>
                       <div className="flex items-center gap-3 text-[10px] uppercase tracking-widest font-bold text-accent mb-2">
-                        <span>{article.cat}</span>
+                        <span>{article.category}</span>
                         <span className="w-1 h-1 bg-muted-foreground/30 rounded-full" />
-                        <span className="text-muted-foreground">{article.date}</span>
+                        <span className="text-muted-foreground">{formatDate(article.date)}</span>
                       </div>
                       <h3 className="text-lg font-heading font-bold text-primary leading-snug group-hover:text-accent transition-colors">{article.title}</h3>
                     </div>
-                  </div>
+                  </Link>
                 </FadeInWhenVisible>
               ))}
             </div>

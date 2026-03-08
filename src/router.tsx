@@ -51,6 +51,7 @@ function RootLayout() {
 
 const rootRoute = createRootRoute({
   component: RootLayout,
+  notFoundComponent: NotFound,
 });
 
 const indexRoute = createRoute({
@@ -113,12 +114,6 @@ const adminRoute = createRoute({
   component: Admin,
 });
 
-const notFoundRoute = createRoute({
-  getParentRoute: () => rootRoute,
-  path: '*',
-  component: NotFound,
-});
-
 const routeTree = rootRoute.addChildren([
   indexRoute,
   aboutRoute,
@@ -130,7 +125,6 @@ const routeTree = rootRoute.addChildren([
   contactRoute,
   bookConsultationRoute,
   adminRoute,
-  notFoundRoute,
 ]);
 
 export const router = createRouter({ routeTree });

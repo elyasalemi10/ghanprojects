@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from '@tanstack/react-router';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
-import { MapPin, CheckCircle2, ChevronLeft, ChevronRight } from 'lucide-react';
+import { MapPin, CheckCircle2, ChevronLeft, ChevronRight, X, ZoomIn } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { SEO } from '@/components/shared/SEO';
 
@@ -109,7 +109,118 @@ const portfolioProjects = [
 
 const categories = ['All', 'Townhouse', 'Duplex', 'Luxury', 'Residential'];
 
-function ImageGallery({ images, folder, title }: { images: string[], folder: string, title: string }) {
+function ImageLightbox({ 
+  images, 
+  folder, 
+  title, 
+  initialIndex, 
+  onClose 
+}: { 
+  images: string[], 
+  folder: string, 
+  title: string, 
+  initialIndex: number, 
+  onClose: () => void 
+}) {
+  const [currentIndex, setCurrentIndex] = useState(initialIndex);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+      if (e.key === 'ArrowRight') setCurrentIndex((prev) => (prev + 1) % images.length);
+      if (e.key === 'ArrowLeft') setCurrentIndex((prev) => (prev - 1 + images.length) % images.length);
+    };
+    document.addEventListener('keydown', handleKeyDown);
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+      document.body.style.overflow = '';
+    };
+  }, [images.length, onClose]);
+
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="fixed inset-0 z-50 bg-black/95 flex items-center justify-center"
+      onClick={onClose}
+    >
+      <button
+        onClick={onClose}
+        className="absolute top-6 right-6 w-12 h-12 bg-white/10 hover:bg-white/20 rounded-full flex items-center justify-center text-white transition-colors z-50"
+      >
+        <X size={24} />
+      </button>
+
+      <button
+        onClick={(e) => { e.stopPropagation(); setCurrentIndex((prev) => (prev - 1 + images.length) % images.length); }}
+        className="absolute left-6 top-1/2 -translate-y-1/2 w-14 h-14 bg-white/10 hover:bg-white/20 rounded-full flex items-center justify-center text-white transition-colors z-50"
+      >
+        <ChevronLeft size={28} />
+      </button>
+
+      <button
+        onClick={(e) => { e.stopPropagation(); setCurrentIndex((prev) => (prev + 1) % images.length); }}
+        className="absolute right-6 top-1/2 -translate-y-1/2 w-14 h-14 bg-white/10 hover:bg-white/20 rounded-full flex items-center justify-center text-white transition-colors z-50"
+      >
+        <ChevronRight size={28} />
+      </button>
+
+      <div className="max-w-6xl max-h-[85vh] mx-4" onClick={(e) => e.stopPropagation()}>
+        <AnimatePresence mode="wait">
+          <motion.img
+            key={currentIndex}
+            src={`/portfolio/${folder}/${images[currentIndex]}`}
+            alt={`${title} - Image ${currentIndex + 1}`}
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.95 }}
+            transition={{ duration: 0.2 }}
+            className="max-w-full max-h-[85vh] object-contain rounded-lg"
+          />
+        </AnimatePresence>
+      </div>
+
+      <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex items-center gap-4">
+        <span className="text-white/60 text-sm font-medium">{title}</span>
+        <span className="text-white/40">|</span>
+        <span className="text-white font-bold">{currentIndex + 1} / {images.length}</span>
+      </div>
+
+      <div className="absolute bottom-20 left-1/2 -translate-x-1/2 flex gap-2 max-w-[90vw] overflow-x-auto py-2 px-4">
+        {images.map((img, idx) => (
+          <button
+            key={idx}
+            onClick={(e) => { e.stopPropagation(); setCurrentIndex(idx); }}
+            className={cn(
+              "w-16 h-16 rounded overflow-hidden shrink-0 border-2 transition-all",
+              idx === currentIndex ? "border-white" : "border-transparent opacity-50 hover:opacity-80"
+            )}
+          >
+            <img
+              src={`/portfolio/${folder}/${img}`}
+              alt=""
+              className="w-full h-full object-cover"
+            />
+          </button>
+        ))}
+      </div>
+    </motion.div>
+  );
+}
+
+function ImageGallery({ 
+  images, 
+  folder, 
+  title,
+  onOpenLightbox 
+}: { 
+  images: string[], 
+  folder: string, 
+  title: string,
+  onOpenLightbox: (index: number) => void 
+}) {
   const [currentIndex, setCurrentIndex] = useState(0);
 
   const nextImage = (e: React.MouseEvent) => {
@@ -124,18 +235,18 @@ function ImageGallery({ images, folder, title }: { images: string[], folder: str
 
   return (
     <div className="relative aspect-[4/5] overflow-hidden group/gallery">
-      <AnimatePresence mode="wait">
-        <motion.img
-          key={currentIndex}
-          src={`/portfolio/${folder}/${images[currentIndex]}`}
-          alt={`${title} - Image ${currentIndex + 1}`}
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          transition={{ duration: 0.3 }}
-          className="w-full h-full object-cover"
-        />
-      </AnimatePresence>
+      <img
+        src={`/portfolio/${folder}/${images[currentIndex]}`}
+        alt={`${title} - Image ${currentIndex + 1}`}
+        className="w-full h-full object-cover transition-opacity duration-300"
+      />
+      
+      <button
+        onClick={(e) => { e.stopPropagation(); onOpenLightbox(currentIndex); }}
+        className="absolute top-4 left-4 w-10 h-10 bg-white/90 hover:bg-white rounded-full flex items-center justify-center text-primary opacity-0 group-hover/gallery:opacity-100 transition-all duration-300 shadow-lg z-10"
+      >
+        <ZoomIn size={18} />
+      </button>
       
       {images.length > 1 && (
         <>
@@ -176,11 +287,28 @@ function ImageGallery({ images, folder, title }: { images: string[], folder: str
 
 export default function Portfolio() {
   const [activeCat, setActiveCat] = useState('All');
+  const [lightbox, setLightbox] = useState<{ projectId: number, imageIndex: number } | null>(null);
   const navigate = useNavigate();
 
   const filteredProjects = activeCat === 'All' 
     ? portfolioProjects 
     : portfolioProjects.filter(p => p.tags.some(tag => tag.toLowerCase() === activeCat.toLowerCase()));
+
+  const lightboxProject = lightbox ? portfolioProjects.find(p => p.id === lightbox.projectId) : null;
+
+  useEffect(() => {
+    const allImages: string[] = [];
+    portfolioProjects.forEach(project => {
+      project.images.forEach(img => {
+        allImages.push(`/portfolio/${project.folder}/${img}`);
+      });
+    });
+    
+    allImages.forEach(src => {
+      const img = new Image();
+      img.src = src;
+    });
+  }, []);
 
   return (
     <div className="bg-background">
@@ -191,6 +319,19 @@ export default function Portfolio() {
         image="/images/townhouse-berwick.webp"
         keywords="property development projects Melbourne, townhouse development Victoria, subdivision development, commercial property development, residential property investment, property portfolio Melbourne, Ghan Projects portfolio"
       />
+      
+      <AnimatePresence>
+        {lightbox && lightboxProject && (
+          <ImageLightbox
+            images={lightboxProject.images}
+            folder={lightboxProject.folder}
+            title={lightboxProject.title}
+            initialIndex={lightbox.imageIndex}
+            onClose={() => setLightbox(null)}
+          />
+        )}
+      </AnimatePresence>
+
       {/* Hero */}
       <section className="relative min-h-[calc(100vh-80px)] flex items-center px-6 lg:px-12 bg-primary text-white overflow-hidden">
         <div className="absolute inset-0 z-0">
@@ -288,57 +429,61 @@ export default function Portfolio() {
       {/* Portfolio Grid */}
       <section className="py-24 px-6 lg:px-12">
         <div className="max-w-7xl mx-auto">
-          <motion.div 
-            layout
-            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-12"
-          >
-            <AnimatePresence mode="popLayout">
-              {filteredProjects.map((project) => (
-                <motion.div
-                  key={project.id}
-                  layout
-                  initial={{ opacity: 0, scale: 0.9 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0.9 }}
-                  transition={{ duration: 0.4 }}
-                  className="group bg-background border hover:border-accent transition-all duration-500 overflow-hidden shadow-sm hover:shadow-2xl"
-                >
-                  <ImageGallery 
-                    images={project.images} 
-                    folder={project.folder} 
-                    title={project.title} 
-                  />
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-12">
+            {filteredProjects.map((project) => (
+              <motion.div
+                key={project.id}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.4 }}
+                className="group bg-background border hover:border-accent transition-all duration-500 overflow-hidden shadow-sm hover:shadow-2xl"
+              >
+                <ImageGallery 
+                  images={project.images} 
+                  folder={project.folder} 
+                  title={project.title}
+                  onOpenLightbox={(index) => setLightbox({ projectId: project.id, imageIndex: index })}
+                />
+                
+                <div className="p-8 space-y-4">
+                  <div className="flex flex-wrap gap-2">
+                    {project.tags.map(tag => (
+                      <span key={tag} className="px-2 py-1 bg-accent/10 text-accent text-[10px] font-bold uppercase tracking-widest">{tag}</span>
+                    ))}
+                  </div>
                   
-                  <div className="p-8 space-y-4">
-                    <div className="flex flex-wrap gap-2">
-                      {project.tags.map(tag => (
-                        <span key={tag} className="px-2 py-1 bg-accent/10 text-accent text-[10px] font-bold uppercase tracking-widest">{tag}</span>
-                      ))}
-                    </div>
-                    
-                    <div>
-                      <h3 className="text-2xl font-heading font-bold text-primary group-hover:text-accent transition-colors">{project.title}</h3>
-                      {project.suburb && (
-                        <div className="flex items-center gap-2 text-muted-foreground mt-2 text-xs font-medium">
-                          <MapPin size={14} className="text-accent" />
-                          {project.suburb}, VIC
-                        </div>
-                      )}
-                    </div>
-                    
-                    <p className="text-sm text-muted-foreground italic">{project.caption}</p>
-                    
-                    {project.value && (
-                      <div className="pt-4 border-t">
-                        <span className="block text-[10px] uppercase tracking-widest font-bold text-muted-foreground mb-1">Project Value</span>
-                        <span className="text-lg font-bold text-primary">{project.value}</span>
+                  <div>
+                    <h3 className="text-2xl font-heading font-bold text-primary group-hover:text-accent transition-colors">{project.title}</h3>
+                    {project.suburb && (
+                      <div className="flex items-center gap-2 text-muted-foreground mt-2 text-xs font-medium">
+                        <MapPin size={14} className="text-accent" />
+                        {project.suburb}, VIC
                       </div>
                     )}
                   </div>
-                </motion.div>
-              ))}
-            </AnimatePresence>
-          </motion.div>
+                  
+                  <p className="text-sm text-muted-foreground italic">{project.caption}</p>
+                  
+                  {project.value && (
+                    <div className="pt-4 border-t">
+                      <span className="block text-[10px] uppercase tracking-widest font-bold text-muted-foreground mb-1">Project Value</span>
+                      <span className="text-lg font-bold text-primary">{project.value}</span>
+                    </div>
+                  )}
+                  
+                  <div className="pt-4">
+                    <Button 
+                      variant="ghost" 
+                      onClick={() => setLightbox({ projectId: project.id, imageIndex: 0 })}
+                      className="p-0 h-auto hover:bg-transparent text-primary hover:text-accent font-bold uppercase tracking-widest text-xs gap-2"
+                    >
+                      <ZoomIn size={14} /> View Gallery
+                    </Button>
+                  </div>
+                </div>
+              </motion.div>
+            ))}
+          </div>
 
           {filteredProjects.length === 0 && (
             <div className="py-20 text-center text-muted-foreground italic">
