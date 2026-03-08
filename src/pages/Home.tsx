@@ -125,9 +125,9 @@ const steps = [
 ];
 
 const fallbackInsights: BlogPost[] = [
-  { id: 1, title: 'How to Assess a Development Site in Melbourne', category: 'Strategy', date: '2023-10-12', read_time: '6 min read', excerpt: '', thumbnail: '/images/property-analysis.webp' },
-  { id: 2, title: 'JV Property Development: How Profit Splits Work', category: 'Finance', date: '2023-09-28', read_time: '8 min read', excerpt: '', thumbnail: '/images/glen-waverley.webp' },
-  { id: 3, title: 'Feasibility Basics: Costs, Risks, and Returns', category: 'Investment', date: '2023-09-15', read_time: '5 min read', excerpt: '', thumbnail: '/images/commercial-richmond.webp' },
+  { id: -1, title: 'How to Assess a Development Site in Melbourne', category: 'Strategy', date: '2023-10-12', read_time: '6 min read', excerpt: '', thumbnail: '/images/property-analysis.webp' },
+  { id: -2, title: 'JV Property Development: How Profit Splits Work', category: 'Finance', date: '2023-09-28', read_time: '8 min read', excerpt: '', thumbnail: '/images/glen-waverley.webp' },
+  { id: -3, title: 'Feasibility Basics: Costs, Risks, and Returns', category: 'Investment', date: '2023-09-15', read_time: '5 min read', excerpt: '', thumbnail: '/images/commercial-richmond.webp' },
 ];
 
 const resources = [
@@ -349,6 +349,17 @@ export default function Home() {
               </FadeInWhenVisible>
             ))}
           </div>
+          
+          <FadeInWhenVisible delay={0.4}>
+            <div className="mt-16 text-center">
+              <p className="text-muted-foreground mb-4">Showing 3 of 8+ completed projects</p>
+              <Button asChild variant="outline" className="rounded-none border-accent text-accent hover:bg-accent hover:text-white px-8 py-6">
+                <Link to="/portfolio">
+                  View Full Portfolio <ChevronRight size={16} className="ml-2" />
+                </Link>
+              </Button>
+            </div>
+          </FadeInWhenVisible>
         </div>
       </section>
 
@@ -444,8 +455,8 @@ export default function Home() {
               {insights.map((article, i) => (
                 <FadeInWhenVisible key={article.id} delay={i * 0.1}>
                   <Link 
-                    to="/insights/$id" 
-                    params={{ id: String(article.id) }}
+                    to={article.id > 0 ? "/insights/$id" : "/insights"}
+                    params={article.id > 0 ? { id: String(article.id) } : undefined}
                     className="group bg-background p-6 flex gap-6 items-center border hover:border-accent transition-all duration-300 shadow-sm cursor-pointer block"
                   >
                     <div className="w-24 h-24 bg-secondary shrink-0 hidden sm:block overflow-hidden">
