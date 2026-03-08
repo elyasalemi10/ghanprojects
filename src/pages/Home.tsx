@@ -136,7 +136,8 @@ const resources = [
   { title: 'JV Partnership Guide', type: 'PDF', size: '2.4 MB' },
 ];
 
-const HERO_IMAGE_URL = "/images/hero-home.webp";
+const HERO_VIDEO_URL = "/images/landing.webm";
+const HERO_THUMBNAIL_URL = "/images/landing-thumbnail.webp";
 
 export default function Home() {
   const heroRef = useRef(null);
@@ -219,11 +220,16 @@ export default function Home() {
       <section ref={heroRef} className="relative h-screen flex items-center px-6 lg:px-12 bg-primary overflow-hidden">
         <motion.div style={{ y }} className="absolute inset-0 z-0">
           <div className="absolute inset-0 bg-primary/40 z-10" />
-          <img 
-            src={HERO_IMAGE_URL} 
+          <video 
+            autoPlay 
+            muted 
+            loop 
+            playsInline
+            poster={HERO_THUMBNAIL_URL}
             className="w-full h-full object-cover"
-            alt="Premium Melbourne Property"
-          />
+          >
+            <source src={HERO_VIDEO_URL} type="video/webm" />
+          </video>
         </motion.div>
         
         <div className="relative z-20 max-w-4xl mx-auto lg:mx-0 text-white">
