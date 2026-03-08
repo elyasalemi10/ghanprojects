@@ -102,18 +102,42 @@ app.post('/api/contact', async (req, res) => {
 
 // Consultation form
 app.post('/api/consultation', async (req, res) => {
-  const { name, email, phone, preferredDate, investmentRange, message } = req.body;
+  const { fullName, name, email, phone, preferredTime, budgetRange, interestType, message } = req.body;
+  const userName = fullName || name;
   
   try {
+    // Send notification to admin
     const result = await resend.emails.send({
       from: process.env.RESEND_FROM_EMAIL,
       to: process.env.RESEND_TO_EMAIL,
-      subject: `Consultation Request: ${name}`,
-      html: `<h2>New Consultation Request</h2><p><strong>Name:</strong> ${name}</p><p><strong>Email:</strong> ${email}</p><p><strong>Phone:</strong> ${phone || 'Not provided'}</p><p><strong>Preferred Date:</strong> ${preferredDate || 'Not specified'}</p><p><strong>Investment Range:</strong> ${investmentRange || 'Not specified'}</p><p><strong>Message:</strong> ${message || 'None'}</p>`
+      subject: `Consultation Request: ${userName}`,
+      html: `<h2>New Consultation Request</h2><p><strong>Name:</strong> ${userName}</p><p><strong>Email:</strong> ${email || 'Not provided'}</p><p><strong>Phone:</strong> ${phone || 'Not provided'}</p><p><strong>Preferred Time:</strong> ${preferredTime || 'Not specified'}</p><p><strong>Budget Range:</strong> ${budgetRange || 'Not specified'}</p><p><strong>Interest:</strong> ${interestType || 'Not specified'}</p><p><strong>Message:</strong> ${message || 'None'}</p>`
     });
     
     if (result.error) return res.status(500).json({ error: 'Failed to send' });
-    await saveEmailSignup(email, 'consultation');
+    
+    // Send confirmation email to user
+    if (email) {
+      await resend.emails.send({
+        from: process.env.RESEND_FROM_EMAIL,
+        to: email,
+        subject: 'Your Consultation Request - Ghan Projects',
+        html: `
+          <h2>Thank you for your consultation request, ${userName}!</h2>
+          <p>We've received your request and this is a <strong>tentative booking</strong>. One of our property specialists will review your details and get back to you within 1 business day to confirm a suitable time.</p>
+          <p><strong>What happens next:</strong></p>
+          <ul>
+            <li>We'll review your requirements</li>
+            <li>A specialist will contact you to confirm the consultation</li>
+            <li>We'll discuss whether a phone call or video meeting works best for you</li>
+          </ul>
+          <p>In the meantime, feel free to explore our <a href="https://ghanprojects.com.au/insights">latest insights</a> or <a href="https://ghanprojects.com.au/resources">free resources</a>.</p>
+          <p>Best regards,<br>The Ghan Projects Team</p>
+        `
+      });
+    }
+    
+    await saveEmailSignup(email || phone, 'consultation');
     
     // Send Telegram notification
     if (process.env.TELEGRAM_BOT_TOKEN && process.env.TELEGRAM_CHAT_ID) {
@@ -122,7 +146,7 @@ app.post('/api/consultation', async (req, res) => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           chat_id: process.env.TELEGRAM_CHAT_ID,
-          text: `CONSULTATION REQUEST\n\nName: ${name}\nEmail: ${email}\nPhone: ${phone || 'N/A'}\nInvestment Range: ${investmentRange || 'N/A'}\nPreferred Date: ${preferredDate || 'N/A'}${message ? `\nMessage: ${message}` : ''}`
+          text: `CONSULTATION REQUEST\n\nName: ${userName}\nEmail: ${email || 'N/A'}\nPhone: ${phone || 'N/A'}\nBudget: ${budgetRange || 'N/A'}\nInterest: ${interestType || 'N/A'}\nPreferred Time: ${preferredTime || 'N/A'}${message ? `\nMessage: ${message}` : ''}`
         })
       });
     }
@@ -135,19 +159,47 @@ app.post('/api/consultation', async (req, res) => {
 
 // Investor network
 app.post('/api/investor-network', async (req, res) => {
-  const { email } = req.body;
-  if (!email) return res.status(400).json({ error: 'Email required' });
+  const { fullName, email, phone, budgetRange, interestType } = req.body;
+  if (!email && !phone) return res.status(400).json({ error: 'Email or phone required' });
   
   try {
+    // Send notification to admin
     const result = await resend.emails.send({
       from: process.env.RESEND_FROM_EMAIL,
       to: process.env.RESEND_TO_EMAIL,
-      subject: 'New Investor Network Signup',
-      html: `<h2>New Investor Network Signup</h2><p><strong>Email:</strong> ${email}</p>`
+      subject: `New Investor Network Signup: ${fullName || 'Anonymous'}`,
+      html: `<h2>New Investor Network Signup</h2><p><strong>Name:</strong> ${fullName || 'Not provided'}</p><p><strong>Email:</strong> ${email || 'Not provided'}</p><p><strong>Phone:</strong> ${phone || 'Not provided'}</p><p><strong>Budget Range:</strong> ${budgetRange || 'Not specified'}</p><p><strong>Interest:</strong> ${interestType || 'Not specified'}</p>`
     });
     
     if (result.error) return res.status(500).json({ error: 'Failed' });
-    await saveEmailSignup(email, 'investor_network');
+    
+    // Send welcome email to user
+    if (email) {
+      await resend.emails.send({
+        from: process.env.RESEND_FROM_EMAIL,
+        to: email,
+        subject: 'Welcome to the Ghan Projects Investor Network',
+        html: `
+          <h2>Welcome to the Investor Network${fullName ? `, ${fullName}` : ''}!</h2>
+          <p>Thank you for joining the Ghan Projects Investor Network. You're now part of an exclusive group of property investors and developers who receive priority access to opportunities.</p>
+          <p><strong>What you'll receive:</strong></p>
+          <ul>
+            <li>First access to off-market development sites</li>
+            <li>Strategic joint venture opportunities</li>
+            <li>Monthly Melbourne property market insights</li>
+            <li>Invitations to exclusive investor events</li>
+          </ul>
+          <p><strong>Free Resources:</strong></p>
+          <p>As a member, you have access to our strategic resources including feasibility checklists, due diligence guides, and JV partnership frameworks. <a href="https://ghanprojects.com.au/resources">Access them here</a>.</p>
+          <p>We'll be in touch when opportunities matching your interests become available. In the meantime, feel free to <a href="https://ghanprojects.com.au/book-consultation">book a consultation</a> to discuss your property goals.</p>
+          <p>Best regards,<br>The Ghan Projects Team</p>
+          <hr style="margin: 20px 0; border: none; border-top: 1px solid #eee;">
+          <p style="font-size: 12px; color: #666;">You're receiving this email because you signed up for the Ghan Projects Investor Network. You can unsubscribe at any time by replying to this email.</p>
+        `
+      });
+    }
+    
+    await saveEmailSignup(email || phone, 'investor_network');
     
     // Send Telegram notification
     if (process.env.TELEGRAM_BOT_TOKEN && process.env.TELEGRAM_CHAT_ID) {
@@ -156,7 +208,7 @@ app.post('/api/investor-network', async (req, res) => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           chat_id: process.env.TELEGRAM_CHAT_ID,
-          text: `INVESTOR NETWORK SIGNUP\n\nEmail: ${email}`
+          text: `INVESTOR NETWORK SIGNUP\n\nName: ${fullName || 'N/A'}\nEmail: ${email || 'N/A'}\nPhone: ${phone || 'N/A'}\nBudget: ${budgetRange || 'N/A'}\nInterest: ${interestType || 'N/A'}`
         })
       });
     }

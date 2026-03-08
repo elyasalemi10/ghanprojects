@@ -352,7 +352,7 @@ export default function Home() {
           
           <FadeInWhenVisible delay={0.4}>
             <div className="mt-16 text-center">
-              <p className="text-muted-foreground mb-4">Showing 3 of 8+ completed projects</p>
+              <p className="text-muted-foreground mb-4">Explore our complete collection of delivered projects</p>
               <Button asChild variant="outline" className="rounded-none border-accent text-accent hover:bg-accent hover:text-white px-8 py-6">
                 <Link to="/portfolio">
                   View Full Portfolio <ChevronRight size={16} className="ml-2" />

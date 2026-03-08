@@ -89,10 +89,6 @@ export function Footer() {
             <p>© {currentYear} GHAN PROJECTS. All rights reserved.</p>
             <p className="uppercase tracking-widest font-medium text-[10px]">General information only. Not financial advice.</p>
           </div>
-          <div className="flex gap-8">
-            <Link to="/" className="text-white/40 hover:text-white transition-colors text-[11px] uppercase tracking-wider">Privacy Policy</Link>
-            <Link to="/" className="text-white/40 hover:text-white transition-colors text-[11px] uppercase tracking-wider">Terms of Service</Link>
-          </div>
         </div>
       </div>
     </footer>

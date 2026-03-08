@@ -156,9 +156,9 @@ export default function BookConsultation() {
                     <div className="space-y-2">
                       <label className="text-[10px] uppercase tracking-widest font-bold text-primary">Preferred Time for Call</label>
                       <select name="preferredTime" className="w-full bg-secondary/30 border border-border p-5 focus:outline-none focus:ring-2 focus:ring-accent transition-all appearance-none cursor-pointer text-sm font-medium">
-                        <option>Morning (9am - 12pm)</option>
-                        <option>Afternoon (12pm - 5pm)</option>
-                        <option>Anytime</option>
+                        <option>Morning (10am - 12pm)</option>
+                        <option>Afternoon (12pm - 4pm)</option>
+                        <option>Anytime (10am - 4pm)</option>
                       </select>
                     </div>
                   </div>
@@ -183,7 +183,7 @@ export default function BookConsultation() {
                       </>
                     )}
                   </Button>
-                  <p className="text-[10px] text-muted-foreground text-center uppercase tracking-tight">By submitting this form, you agree to our privacy policy and terms of service.</p>
+                  <p className="text-[10px] text-muted-foreground text-center leading-relaxed">By submitting this form, you agree to receive emails and promotional communications from Ghan Projects. You can unsubscribe at any time.</p>
                 </form>
               </div>
             </div>

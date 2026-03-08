@@ -139,6 +139,19 @@ export default function Insights() {
       />
       {/* Hero */}
       <section className="relative min-h-[calc(100vh-80px)] flex items-center px-6 lg:px-12 bg-primary text-white overflow-hidden text-center">
+        <div className="absolute inset-0 z-0">
+          <video 
+            autoPlay 
+            muted 
+            loop 
+            playsInline
+            poster="/images/insights-thumbnail.webp"
+            className="w-full h-full object-cover"
+          >
+            <source src="/images/insights.webm" type="video/webm" />
+          </video>
+          <div className="absolute inset-0 bg-primary/70" />
+        </div>
         <div className="max-w-4xl mx-auto relative z-10 w-full py-16">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
