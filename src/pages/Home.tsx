@@ -100,18 +100,18 @@ const projects = [
 
 const opportunities = [
   {
-    title: 'Development Site – Mount Waverley',
-    bullets: ['850sqm Corner Site', 'Plans for 3 Luxury Townhouses', 'DA Approved'],
+    title: 'Residential Home – Beaumaris',
+    bullets: ['Premium Coastal Location', 'Established Neighbourhood', 'High Growth Area'],
     status: 'High Demand',
   },
   {
-    title: 'Subdivision Opportunity – Ringwood',
-    bullets: ['Flat 1000sqm Allotment', 'Concept for 4 Units', 'Pre-market Sale'],
+    title: 'Child Care – Wood St',
+    bullets: ['Strategic Location', 'High Yield Potential', 'Long-term Investment'],
     status: 'Strategic',
   },
   {
-    title: 'Townhouse Project – Bentleigh East',
-    bullets: ['3 Bed, 2.5 Bath Units', 'Construction Starting Q3', 'Fixed Price Build'],
+    title: '6 Townhouses – Narre Warren',
+    bullets: ['Development Approved', 'Multi-dwelling Site', 'Strong Rental Demand'],
     status: 'Investor Ready',
   },
 ];
