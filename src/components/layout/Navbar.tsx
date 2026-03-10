@@ -94,19 +94,20 @@ export function Navbar() {
       <AnimatePresence>
         {isMobileMenuOpen && (
           <motion.div
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            className="fixed inset-0 top-0 z-40 bg-background pt-24 px-6 lg:hidden"
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            transition={{ duration: 0.3 }}
+            className="absolute top-20 left-0 right-0 bg-background border-b shadow-lg lg:hidden overflow-hidden"
           >
-            <nav className="flex flex-col gap-6 items-center pt-8">
+            <nav className="flex flex-col py-6 px-6">
               {navLinks.map((link) => (
                 <Link
                   key={link.path}
                   to={link.path}
                   className={cn(
-                    "text-2xl font-heading font-bold text-primary",
-                    location.pathname === link.path && "text-accent"
+                    "py-3 text-lg font-heading font-medium text-primary border-b border-border/50 last:border-0",
+                    location.pathname === link.path && "text-accent font-bold"
                   )}
                 >
                   {link.name}
@@ -114,7 +115,7 @@ export function Navbar() {
               ))}
               <Button 
                 asChild
-                className="mt-4 w-full max-w-xs rounded-none py-6 font-heading font-bold uppercase tracking-wider"
+                className="mt-6 w-full rounded-none py-6 font-heading font-bold uppercase tracking-wider bg-primary"
               >
                 <Link to="/book-consultation">Book Consultation</Link>
               </Button>

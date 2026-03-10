@@ -1,71 +1,20 @@
 import { useState, useEffect } from 'react';
+import { Link } from '@tanstack/react-router';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
-import { FileText, Download, Lock, CheckCircle2, ChevronRight, Mail, Unlock, Bot, ExternalLink } from 'lucide-react';
+import { FileText, Download, Lock, CheckCircle2, ChevronRight, Mail, Unlock, Bot, ExternalLink, Calculator, Layers } from 'lucide-react';
 import { toast } from 'sonner';
 import { SEO } from '@/components/shared/SEO';
-
-const resources = [
-  {
-    id: 1,
-    title: 'Development Feasibility Checklist',
-    desc: 'The essential 50-point checklist we use to evaluate every development site in Melbourne.',
-    cat: 'Development',
-    type: 'PDF',
-    size: '1.2 MB',
-    tags: ['Feasibility', 'Risk Management'],
-  },
-  {
-    id: 2,
-    title: 'Due Diligence Checklist',
-    desc: 'Don’t miss a thing. A comprehensive guide to property due diligence for residential and commercial assets.',
-    cat: 'Investment',
-    type: 'PDF',
-    size: '0.8 MB',
-    tags: ['Acquisition', 'Legal'],
-  },
-  {
-    id: 3,
-    title: 'JV Partnership Guide',
-    desc: 'Learn how we structure joint ventures that protect both capital and equity partners.',
-    cat: 'Finance',
-    type: 'PDF',
-    size: '2.4 MB',
-    tags: ['Joint Ventures', 'Contracts'],
-  },
-  {
-    id: 4,
-    title: 'Melbourne Investor Starter Guide',
-    desc: 'New to the market? This guide covers the basics of Melbourne property cycles and investment strategy.',
-    cat: 'Investment',
-    type: 'PDF',
-    size: '3.1 MB',
-    tags: ['Strategy', 'Education'],
-  },
-  {
-    id: 5,
-    title: 'Off-Market Buying Guide',
-    desc: 'The insider secrets to finding and securing high-value property before it goes to auction.',
-    cat: 'Strategy',
-    type: 'PDF',
-    size: '1.5 MB',
-    tags: ['Off-Market', 'Negotiation'],
-  }
-];
-
-const aiTool = {
-  id: 0,
-  title: 'AI Assistant for Property Developers',
-  desc: 'A powerful AI tool for analyzing development sites, running feasibility scenarios, and getting instant answers to property development questions.',
-  cat: 'AI Tool',
-  type: 'External',
-  size: 'Free',
-  tags: ['AI', 'Feasibility', 'Analysis'],
-  url: 'https://cruxlogic.ai/property-development',
-  isExternal: true
-};
+import { freeResources, lockedResources, type Resource } from '@/data/resources';
 
 const API_URL = import.meta.env.PROD ? '' : 'http://localhost:3001';
+
+const getResourceIcon = (resource: Resource) => {
+  if (resource.id === 'ai-assistant') return Bot;
+  if (resource.id === 'subdivision-checker') return Layers;
+  if (resource.type === 'Tool') return Calculator;
+  return FileText;
+};
 
 export default function Resources() {
   const [email, setEmail] = useState('');
@@ -124,12 +73,12 @@ export default function Resources() {
           >
             <h1 className="text-5xl md:text-7xl font-heading font-bold mb-8">Strategic <span className="text-accent">Resources</span></h1>
             <p className="text-xl md:text-2xl text-white/70 leading-relaxed mb-10">
-              Download our proprietary tools and guides designed to help you navigate the Melbourne property market with confidence.
+              Access our proprietary tools and guides designed to help you navigate the Melbourne property market with confidence.
             </p>
             <div className="flex items-center gap-6 text-sm font-bold uppercase tracking-[0.2em] text-accent">
-              <span className="flex items-center gap-2"><CheckCircle2 size={16} /> Checklists</span>
+              <span className="flex items-center gap-2"><CheckCircle2 size={16} /> Calculators</span>
               <span className="flex items-center gap-2"><CheckCircle2 size={16} /> Guides</span>
-              <span className="flex items-center gap-2"><CheckCircle2 size={16} /> Models</span>
+              <span className="flex items-center gap-2"><CheckCircle2 size={16} /> Checklists</span>
             </div>
           </motion.div>
           
@@ -145,12 +94,12 @@ export default function Resources() {
                   <div className="w-12 h-12 bg-green-500/20 rounded-full flex items-center justify-center text-green-400">
                     <Unlock size={24} />
                   </div>
-                  <h2 className="text-2xl font-heading font-bold">Access Granted</h2>
+                  <h2 className="text-2xl font-heading font-bold">Premium Access Granted</h2>
                 </div>
-                <p className="text-white/60">You now have full access to all premium resources. Scroll down to download any resource you need.</p>
+                <p className="text-white/60">You now have full access to all premium resources. Scroll down to download any checklist or guide you need.</p>
                 <div className="flex items-center gap-4 p-4 bg-green-500/10 border border-green-500/20 text-green-400">
                   <CheckCircle2 size={24} />
-                  <span className="font-medium">All resources are now available for download</span>
+                  <span className="font-medium">All premium resources are now available</span>
                 </div>
               </>
             ) : (
@@ -159,9 +108,9 @@ export default function Resources() {
                   <div className="w-12 h-12 bg-accent/20 rounded-full flex items-center justify-center text-accent">
                     <Lock size={24} />
                   </div>
-                  <h2 className="text-2xl font-heading font-bold">Unlock Access</h2>
+                  <h2 className="text-2xl font-heading font-bold">Unlock Premium Resources</h2>
                 </div>
-                <p className="text-white/60">Enter your email to unlock all premium resources and receive strategic updates directly from our specialists.</p>
+                <p className="text-white/60">Enter your email to unlock all premium checklists and guides, plus receive strategic updates from our specialists.</p>
                 <form onSubmit={handleDownloadRequest} className="space-y-4">
                   <div className="relative">
                     <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-white/30" size={20} />
@@ -178,7 +127,7 @@ export default function Resources() {
                     disabled={isSubmitting}
                     className="w-full rounded-none bg-accent hover:bg-accent/90 text-white py-8 font-heading font-bold uppercase tracking-wider h-auto"
                   >
-                    {isSubmitting ? 'Processing...' : 'Get All Resources'}
+                    {isSubmitting ? 'Processing...' : 'Unlock Premium Resources'}
                   </Button>
                 </form>
               </>
@@ -187,50 +136,136 @@ export default function Resources() {
         </div>
       </section>
 
-      {/* Resources List */}
-      <section className="py-32 px-6 lg:px-12 bg-secondary/20">
+      {/* Free Resources Section */}
+      <section className="py-24 px-6 lg:px-12 bg-background">
         <div className="max-w-7xl mx-auto">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
-            {/* AI Tool */}
-            <motion.a
-              href={aiTool.url}
-              target="_blank"
-              rel="noopener noreferrer"
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              className="group bg-background p-10 border border-transparent hover:border-accent transition-all duration-500 flex flex-col md:flex-row gap-10 shadow-sm hover:shadow-2xl"
-            >
-              <div className="w-20 h-20 bg-primary/5 rounded-sm flex items-center justify-center text-primary shrink-0 group-hover:bg-accent group-hover:text-white transition-colors duration-500">
-                <Bot size={40} />
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="mb-12"
+          >
+            <div className="flex items-center gap-4 mb-4">
+              <div className="w-10 h-10 bg-green-500/10 rounded-full flex items-center justify-center text-green-500">
+                <Unlock size={20} />
               </div>
-              <div className="space-y-6 flex-grow">
-                <div className="flex justify-between items-start">
-                  <div>
-                    <span className="text-[10px] uppercase tracking-widest font-bold text-accent mb-2 block">{aiTool.cat}</span>
-                    <h3 className="text-2xl font-heading font-bold text-primary group-hover:text-accent transition-colors">{aiTool.title}</h3>
-                  </div>
-                  <span className="text-[10px] font-bold text-muted-foreground whitespace-nowrap flex items-center gap-2">
-                    <ExternalLink size={14} /> External
-                  </span>
-                </div>
-                <p className="text-muted-foreground text-sm leading-relaxed">
-                  {aiTool.desc}
-                </p>
-                <div className="flex flex-wrap gap-2">
-                  {aiTool.tags.map(tag => (
-                    <span key={tag} className="text-[9px] uppercase tracking-widest font-bold px-2 py-1 bg-secondary text-primary/60 border border-primary/5">{tag}</span>
-                  ))}
-                </div>
-                <div className="pt-6 border-t">
-                  <span className="text-primary group-hover:text-accent font-bold uppercase tracking-widest text-[10px] flex items-center gap-2">
-                    Try AI Assistant <ChevronRight size={14} />
-                  </span>
-                </div>
-              </div>
-            </motion.a>
+              <h2 className="text-3xl font-heading font-bold text-primary">Free Tools</h2>
+            </div>
+            <p className="text-muted-foreground text-lg max-w-2xl">
+              Access these powerful tools instantly—no signup required.
+            </p>
+          </motion.div>
 
-            {resources.map((res, i) => (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            {freeResources.map((res, i) => {
+              const Icon = getResourceIcon(res);
+              const isExternalOrTool = res.type === 'External' || res.type === 'Tool';
+              
+              return (
+                <motion.div
+                  key={res.id}
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 0.5, delay: i * 0.1 }}
+                >
+                  {isExternalOrTool ? (
+                    <Link
+                      to="/resources/$slug"
+                      params={{ slug: res.slug }}
+                      className="group bg-background p-10 border border-green-500/20 hover:border-accent transition-all duration-500 flex flex-col md:flex-row gap-10 shadow-sm hover:shadow-2xl block h-full"
+                    >
+                      <div className="w-20 h-20 bg-green-500/10 rounded-sm flex items-center justify-center text-green-600 shrink-0 group-hover:bg-accent group-hover:text-white transition-colors duration-500">
+                        <Icon size={40} />
+                      </div>
+                      <div className="space-y-6 flex-grow">
+                        <div className="flex justify-between items-start">
+                          <div>
+                            <div className="flex items-center gap-2 mb-2">
+                              <span className="text-[10px] uppercase tracking-widest font-bold text-accent">{res.cat}</span>
+                              <span className="text-[9px] uppercase tracking-widest font-bold px-2 py-0.5 bg-green-500/10 text-green-600 border border-green-500/20">Free</span>
+                            </div>
+                            <h3 className="text-2xl font-heading font-bold text-primary group-hover:text-accent transition-colors">{res.title}</h3>
+                          </div>
+                          {res.isExternal && (
+                            <span className="text-[10px] font-bold text-muted-foreground whitespace-nowrap flex items-center gap-2">
+                              <ExternalLink size={14} /> External
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-muted-foreground text-sm leading-relaxed">
+                          {res.desc}
+                        </p>
+                        <div className="pt-6 border-t">
+                          <span className="text-primary group-hover:text-accent font-bold uppercase tracking-widest text-[10px] flex items-center gap-2">
+                            {res.isExternal ? 'Launch Tool' : 'Use Calculator'} <ChevronRight size={14} />
+                          </span>
+                        </div>
+                      </div>
+                    </Link>
+                  ) : (
+                    <div className="group bg-background p-10 border border-green-500/20 hover:border-accent transition-all duration-500 flex flex-col md:flex-row gap-10 shadow-sm hover:shadow-2xl h-full">
+                      <div className="w-20 h-20 bg-green-500/10 rounded-sm flex items-center justify-center text-green-600 shrink-0 group-hover:bg-accent group-hover:text-white transition-colors duration-500">
+                        <Icon size={40} />
+                      </div>
+                      <div className="space-y-6 flex-grow">
+                        <div className="flex justify-between items-start">
+                          <div>
+                            <div className="flex items-center gap-2 mb-2">
+                              <span className="text-[10px] uppercase tracking-widest font-bold text-accent">{res.cat}</span>
+                              <span className="text-[9px] uppercase tracking-widest font-bold px-2 py-0.5 bg-green-500/10 text-green-600 border border-green-500/20">Free</span>
+                            </div>
+                            <h3 className="text-2xl font-heading font-bold text-primary group-hover:text-accent transition-colors">{res.title}</h3>
+                          </div>
+                        </div>
+                        <p className="text-muted-foreground text-sm leading-relaxed">
+                          {res.desc}
+                        </p>
+                        <div className="pt-6 border-t flex justify-between items-center">
+                          <Button variant="link" className="p-0 h-auto text-primary hover:text-accent font-bold uppercase tracking-widest text-[10px] gap-2">
+                            Learn More <ChevronRight size={14} />
+                          </Button>
+                          <Button 
+                            variant="outline" 
+                            className="rounded-none border-green-500 text-green-600 hover:bg-green-500 hover:text-white transition-all text-[10px] font-bold uppercase tracking-widest px-6 h-10 gap-2"
+                          >
+                            <Download size={14} /> Download
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </motion.div>
+              );
+            })}
+          </div>
+        </div>
+      </section>
+
+      {/* Premium/Locked Resources Section */}
+      <section className="py-24 px-6 lg:px-12 bg-secondary/20">
+        <div className="max-w-7xl mx-auto">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="mb-12"
+          >
+            <div className="flex items-center gap-4 mb-4">
+              <div className={`w-10 h-10 rounded-full flex items-center justify-center ${isUnlocked ? 'bg-green-500/10 text-green-500' : 'bg-accent/10 text-accent'}`}>
+                {isUnlocked ? <Unlock size={20} /> : <Lock size={20} />}
+              </div>
+              <h2 className="text-3xl font-heading font-bold text-primary">Premium Resources</h2>
+            </div>
+            <p className="text-muted-foreground text-lg max-w-2xl">
+              {isUnlocked 
+                ? 'Download our proprietary checklists and guides used by our team.' 
+                : 'Unlock access to our proprietary checklists and guides by entering your email above.'}
+            </p>
+          </motion.div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            {lockedResources.map((res, i) => (
               <motion.div
                 key={res.id}
                 initial={{ opacity: 0, y: 20 }}
@@ -254,7 +289,7 @@ export default function Resources() {
                     {res.desc}
                   </p>
                   <div className="flex flex-wrap gap-2">
-                    {res.tags.map(tag => (
+                    {res.tags?.map(tag => (
                       <span key={tag} className="text-[9px] uppercase tracking-widest font-bold px-2 py-1 bg-secondary text-primary/60 border border-primary/5">{tag}</span>
                     ))}
                   </div>
@@ -274,11 +309,12 @@ export default function Resources() {
                           toast.success(`Downloading ${res.title}...`);
                         } else {
                           toast.info('Unlock all resources above to download');
+                          window.scrollTo({ top: 0, behavior: 'smooth' });
                         }
                       }}
                     >
-                      {isUnlocked ? <CheckCircle2 size={14} /> : <Download size={14} />} 
-                      {isUnlocked ? 'Download Now' : 'Download'}
+                      {isUnlocked ? <CheckCircle2 size={14} /> : <Lock size={14} />} 
+                      {isUnlocked ? 'Download Now' : 'Locked'}
                     </Button>
                   </div>
                 </div>

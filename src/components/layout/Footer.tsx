@@ -1,7 +1,7 @@
 import React from 'react';
 import { Link } from '@tanstack/react-router';
 import { cn } from '@/lib/utils';
-import { Linkedin, Instagram, Mail, Phone, MapPin, Clock } from 'lucide-react';
+import { Mail, Phone, MapPin, Clock } from 'lucide-react';
 
 const LOGO_URL = "/images/ghan-projects-logo-blue.webp";
 
@@ -66,19 +66,14 @@ export function Footer() {
             </ul>
           </div>
 
-          {/* Column 4: Social */}
+          {/* Column 4: Quote */}
           <div>
-            <h3 className="font-heading font-bold text-lg mb-8 uppercase tracking-widest text-accent">Connect</h3>
-            <div className="flex gap-4 mb-8">
-              <a href="#" className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center hover:bg-accent transition-all duration-300">
-                <Linkedin size={20} />
-              </a>
-              <a href="#" className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center hover:bg-accent transition-all duration-300">
-                <Instagram size={20} />
-              </a>
-            </div>
-            <p className="text-xs text-white/40 leading-relaxed italic">
+            <h3 className="font-heading font-bold text-lg mb-8 uppercase tracking-widest text-accent">Our Mission</h3>
+            <p className="text-sm text-white/60 leading-relaxed italic mb-6">
               "Building wealth through strategic property development and disciplined acquisition."
+            </p>
+            <p className="text-xs text-white/40 leading-relaxed">
+              We're committed to helping investors navigate Melbourne's property market with confidence and clarity.
             </p>
           </div>
         </div>

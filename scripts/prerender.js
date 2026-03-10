@@ -25,6 +25,10 @@ const routes = [
   '/insights',
   '/contact',
   '/resources',
+  '/resources/ai-assistant',
+  '/resources/rental-yield-calculator',
+  '/resources/stamp-duty-calculator',
+  '/resources/subdivision-checker',
   '/book-consultation',
 ];
 

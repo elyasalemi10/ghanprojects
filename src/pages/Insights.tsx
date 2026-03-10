@@ -5,6 +5,7 @@ import { Search, Clock, ChevronRight, ChevronLeft } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Link } from '@tanstack/react-router';
 import { SEO } from '@/components/shared/SEO';
+import { toast } from 'sonner';
 
 const API_URL = import.meta.env.PROD ? '' : 'http://localhost:3001';
 
@@ -319,14 +320,52 @@ export default function Insights() {
         <div className="max-w-4xl mx-auto text-center space-y-8">
           <h2 className="text-3xl md:text-5xl font-heading font-bold leading-tight">Get Strategic Insights Delivered to Your Inbox</h2>
           <p className="text-white/70 text-lg">Join 2,000+ Melbourne property investors and receive monthly market analysis and project updates.</p>
-          <form className="flex flex-col sm:flex-row gap-4 max-w-xl mx-auto" onSubmit={(e) => e.preventDefault()}>
+          <form 
+            className="flex flex-col sm:flex-row gap-4 max-w-xl mx-auto" 
+            onSubmit={async (e) => {
+              e.preventDefault();
+              const form = e.currentTarget;
+              const emailInput = form.querySelector('input[type="email"]') as HTMLInputElement;
+              const email = emailInput?.value;
+              
+              if (!email) {
+                toast.error('Please enter your email address');
+                return;
+              }
+              
+              const submitBtn = form.querySelector('button') as HTMLButtonElement;
+              submitBtn.disabled = true;
+              submitBtn.textContent = 'Subscribing...';
+              
+              try {
+                const res = await fetch(`${API_URL}/api/newsletter`, {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ email, source: 'insights' })
+                });
+                
+                if (res.ok) {
+                  toast.success('Successfully subscribed! Check your inbox for confirmation.');
+                  emailInput.value = '';
+                } else {
+                  const data = await res.json();
+                  toast.error(data.message || 'Failed to subscribe. Please try again.');
+                }
+              } catch {
+                toast.error('Failed to connect. Please try again.');
+              } finally {
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Subscribe';
+              }
+            }}
+          >
             <input 
               type="email" 
               placeholder="Your Email Address" 
               required
-              className="flex-grow bg-white/10 border border-white/20 p-4 focus:outline-none focus:ring-2 focus:ring-accent text-white"
+              className="flex-grow bg-white/10 border border-white/20 p-4 focus:outline-none focus:ring-2 focus:ring-accent text-white placeholder:text-white/50"
             />
-            <Button className="rounded-none bg-accent hover:bg-accent/90 text-white font-heading font-bold uppercase tracking-wider px-8 h-auto">
+            <Button type="submit" className="rounded-none bg-accent hover:bg-accent/90 text-white font-heading font-bold uppercase tracking-wider px-8 h-auto py-4">
               Subscribe
             </Button>
           </form>

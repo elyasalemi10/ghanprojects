@@ -145,7 +145,7 @@ export const Chatbot = () => {
       <motion.button
         data-chat-button
         onClick={() => setIsOpen(!isOpen)}
-        className="fixed bottom-6 right-6 z-50 bg-accent hover:bg-accent/90 text-white p-4 rounded-full shadow-lg transition-colors"
+        className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 z-50 bg-accent hover:bg-accent/90 text-white p-3 sm:p-4 rounded-full shadow-lg transition-colors"
         whileHover={{ scale: 1.05 }}
         whileTap={{ scale: 0.95 }}
         aria-label={isOpen ? 'Close chat' : 'Open chat'}
@@ -159,7 +159,7 @@ export const Chatbot = () => {
               exit={{ rotate: 90, opacity: 0 }}
               transition={{ duration: 0.15 }}
             >
-              <X className="w-6 h-6" />
+              <X className="w-5 h-5 sm:w-6 sm:h-6" />
             </motion.div>
           ) : (
             <motion.div
@@ -169,7 +169,7 @@ export const Chatbot = () => {
               exit={{ rotate: -90, opacity: 0 }}
               transition={{ duration: 0.15 }}
             >
-              <MessageCircle className="w-6 h-6" />
+              <MessageCircle className="w-5 h-5 sm:w-6 sm:h-6" />
             </motion.div>
           )}
         </AnimatePresence>
@@ -184,33 +184,42 @@ export const Chatbot = () => {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 20, scale: 0.95 }}
             transition={{ duration: 0.2 }}
-            className="fixed bottom-24 right-6 z-50 w-[380px] max-w-[calc(100vw-3rem)] bg-background shadow-2xl flex flex-col overflow-hidden rounded-lg"
-            style={{ maxHeight: 'calc(100vh - 150px)' }}
+            className="fixed bottom-16 sm:bottom-24 right-2 sm:right-6 left-2 sm:left-auto z-50 sm:w-[380px] bg-background shadow-2xl flex flex-col overflow-hidden rounded-lg"
+            style={{ maxHeight: 'calc(100vh - 100px)' }}
           >
             {/* Header */}
-            <div className="bg-primary text-primary-foreground p-4 flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-accent rounded-full flex items-center justify-center">
-                  <MessageCircle className="w-5 h-5" />
+            <div className="bg-primary text-primary-foreground p-3 sm:p-4 flex items-center justify-between">
+              <div className="flex items-center gap-2 sm:gap-3">
+                <div className="w-8 h-8 sm:w-10 sm:h-10 bg-accent rounded-full flex items-center justify-center">
+                  <MessageCircle className="w-4 h-4 sm:w-5 sm:h-5" />
                 </div>
                 <div>
-                  <h3 className="font-semibold">Ghan Projects</h3>
-                  <p className="text-xs opacity-80">Property Consultation</p>
+                  <h3 className="font-semibold text-sm sm:text-base">Ghan Projects</h3>
+                  <p className="text-[10px] sm:text-xs opacity-80">Property Consultation</p>
                 </div>
               </div>
-              {messages.length > 1 && (
+              <div className="flex items-center gap-2">
+                {messages.length > 1 && (
+                  <button
+                    onClick={clearChat}
+                    className="text-xs opacity-70 hover:opacity-100 transition-opacity px-2 py-1"
+                    title="Clear chat history"
+                  >
+                    Clear
+                  </button>
+                )}
                 <button
-                  onClick={clearChat}
-                  className="text-xs opacity-70 hover:opacity-100 transition-opacity px-2 py-1"
-                  title="Clear chat history"
+                  onClick={() => setIsOpen(false)}
+                  className="sm:hidden p-1 opacity-70 hover:opacity-100 transition-opacity"
+                  aria-label="Close chat"
                 >
-                  Clear
+                  <X className="w-5 h-5" />
                 </button>
-              )}
+              </div>
             </div>
 
             {/* Messages */}
-            <div className="flex-1 overflow-y-auto p-4 space-y-4 min-h-[300px] max-h-[400px]">
+            <div className="flex-1 overflow-y-auto p-3 sm:p-4 space-y-3 sm:space-y-4 min-h-[250px] sm:min-h-[300px] max-h-[350px] sm:max-h-[400px]">
               {messages.map((msg, idx) => (
                 <motion.div
                   key={idx}
@@ -220,7 +229,7 @@ export const Chatbot = () => {
                   className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
                 >
                   <div
-                    className={`max-w-[80%] p-3 rounded-lg text-sm ${
+                    className={`max-w-[85%] sm:max-w-[80%] p-2.5 sm:p-3 rounded-lg text-sm ${
                       msg.role === 'user'
                         ? 'bg-accent text-white rounded-br-none'
                         : 'bg-secondary/50 text-foreground rounded-bl-none'
@@ -236,7 +245,7 @@ export const Chatbot = () => {
                   animate={{ opacity: 1 }}
                   className="flex justify-start"
                 >
-                  <div className="bg-secondary/50 p-3 rounded-lg rounded-bl-none flex items-center gap-2">
+                  <div className="bg-secondary/50 p-2.5 sm:p-3 rounded-lg rounded-bl-none flex items-center gap-2">
                     {(() => {
                       const { text, icon: Icon } = loadingMessages[loadingState];
                       return (
@@ -253,7 +262,7 @@ export const Chatbot = () => {
             </div>
 
             {/* Input */}
-            <div className="p-4 border-t border-border">
+            <div className="p-3 sm:p-4 border-t border-border">
               <div className="flex gap-2">
                 <input
                   ref={inputRef}
@@ -262,17 +271,17 @@ export const Chatbot = () => {
                   onChange={(e) => setInput(e.target.value)}
                   onKeyDown={handleKeyDown}
                   placeholder={loadingState ? "Wait for response..." : "Type your message..."}
-                  className="flex-1 bg-secondary/30 border border-border px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-accent rounded-lg"
+                  className="flex-1 bg-secondary/30 border border-border px-3 sm:px-4 py-2.5 sm:py-3 text-sm focus:outline-none focus:ring-2 focus:ring-accent rounded-lg"
                 />
                 <button
                   onClick={sendMessage}
                   disabled={!input.trim() || !!loadingState}
-                  className="bg-accent hover:bg-accent/90 disabled:opacity-50 disabled:cursor-not-allowed text-white p-3 rounded-lg transition-colors"
+                  className="bg-accent hover:bg-accent/90 disabled:opacity-50 disabled:cursor-not-allowed text-white p-2.5 sm:p-3 rounded-lg transition-colors"
                 >
                   <Send className="w-5 h-5" />
                 </button>
               </div>
-              <p className="text-[10px] text-muted-foreground mt-2 text-center">
+              <p className="text-[9px] sm:text-[10px] text-muted-foreground mt-2 text-center">
                 Powered by AI • Book consultations 48+ hours in advance
               </p>
             </div>

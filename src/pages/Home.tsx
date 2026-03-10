@@ -16,7 +16,10 @@ import {
   Clock,
   MapPin,
   Star,
-  CheckCircle2
+  CheckCircle2,
+  Bot,
+  Calculator,
+  Layers
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
@@ -130,10 +133,10 @@ const fallbackInsights: BlogPost[] = [
   { id: -3, title: 'Feasibility Basics: Costs, Risks, and Returns', category: 'Investment', date: '2023-09-15', read_time: '5 min read', excerpt: '', thumbnail: '/images/commercial-richmond.webp' },
 ];
 
-const resources = [
-  { title: 'Development Feasibility Checklist', type: 'PDF', size: '1.2 MB' },
-  { title: 'Due Diligence Checklist', type: 'PDF', size: '0.8 MB' },
-  { title: 'JV Partnership Guide', type: 'PDF', size: '2.4 MB' },
+const homeResources = [
+  { title: 'AI Assistant for Property Developers', type: 'Free Tool', slug: 'ai-assistant', icon: 'bot', isFree: true },
+  { title: 'Rental Yield Calculator', type: 'Free Tool', slug: 'rental-yield-calculator', icon: 'calculator', isFree: true },
+  { title: 'Stamp Duty Calculator', type: 'Free Tool', slug: 'stamp-duty-calculator', icon: 'calculator', isFree: true },
 ];
 
 const HERO_VIDEO_URL = "/images/landing.webm";
@@ -217,9 +220,9 @@ export default function Home() {
         keywords="property development Melbourne, property investment consulting, property advisory Melbourne, joint venture property development, buyer's agent Melbourne, Ghan Projects, Ghan Property Group, property consulting Melbourne, real estate investment Victoria"
       />
       {/* SECTION 1: HERO */}
-      <section ref={heroRef} className="relative h-screen flex items-center px-6 lg:px-12 bg-primary overflow-hidden">
+      <section ref={heroRef} className="relative min-h-screen flex items-center px-6 lg:px-12 bg-primary overflow-hidden py-24 md:py-0">
         <motion.div style={{ y }} className="absolute inset-0 z-0">
-          <div className="absolute inset-0 bg-primary/40 z-10" />
+          <div className="absolute inset-0 bg-primary/50 md:bg-primary/40 z-10" />
           <video 
             autoPlay 
             muted 
@@ -232,33 +235,33 @@ export default function Home() {
           </video>
         </motion.div>
         
-        <div className="relative z-20 max-w-4xl mx-auto lg:mx-0 text-white">
+        <div className="relative z-20 max-w-4xl mx-auto lg:mx-0 text-white pt-16 md:pt-0">
           <motion.div
             initial={{ opacity: 0, x: -50 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.8, ease: "easeOut" }}
           >
-            <h1 className="text-5xl md:text-7xl font-heading font-bold mb-6 text-balance leading-[1.1]">
+            <h1 className="text-4xl sm:text-5xl md:text-7xl font-heading font-bold mb-6 leading-[1.1]">
               Strategic Property <span className="text-accent">Development</span> & Investment
             </h1>
-            <p className="text-xl md:text-2xl text-white/80 mb-10 max-w-2xl leading-relaxed">
+            <p className="text-lg sm:text-xl md:text-2xl text-white/80 mb-8 md:mb-10 max-w-2xl leading-relaxed">
               Ghan Projects helps investors, landowners, and developers identify, structure, and deliver high-value property projects across Melbourne.
             </p>
-            <div className="flex flex-col sm:flex-row gap-4 mb-8">
-              <Button asChild size="lg" className="rounded-none px-8 py-7 text-lg font-heading font-bold uppercase tracking-wider bg-accent text-white hover:bg-accent/90">
+            <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 mb-8">
+              <Button asChild size="lg" className="rounded-none px-6 sm:px-8 py-5 sm:py-7 text-base sm:text-lg font-heading font-bold uppercase tracking-wider bg-accent text-white hover:bg-accent/90">
                 <Link to="/book-consultation">Book Consultation</Link>
               </Button>
-              <Button asChild size="lg" className="rounded-none px-8 py-7 text-lg font-heading font-bold uppercase tracking-wider bg-white text-primary hover:bg-white/90">
+              <Button asChild size="lg" className="rounded-none px-6 sm:px-8 py-5 sm:py-7 text-base sm:text-lg font-heading font-bold uppercase tracking-wider bg-white text-primary hover:bg-white/90">
                 <Link to="/portfolio">View Portfolio</Link>
               </Button>
             </div>
-            <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-white/60 font-medium uppercase tracking-[0.2em]">
+            <div className="flex flex-wrap items-center gap-x-4 sm:gap-x-6 gap-y-2 text-xs sm:text-sm text-white/60 font-medium uppercase tracking-[0.15em] sm:tracking-[0.2em]">
               <span>Advisory</span>
-              <span className="w-1 h-1 bg-accent rounded-full" />
+              <span className="w-1 h-1 bg-accent rounded-full hidden sm:block" />
               <span>Acquisition</span>
-              <span className="w-1 h-1 bg-accent rounded-full" />
+              <span className="w-1 h-1 bg-accent rounded-full hidden sm:block" />
               <span>Joint Ventures</span>
-              <span className="w-1 h-1 bg-accent rounded-full" />
+              <span className="w-1 h-1 bg-accent rounded-full hidden sm:block" />
               <span>Project Delivery</span>
             </div>
           </motion.div>
@@ -485,26 +488,33 @@ export default function Home() {
           {/* Resources */}
           <div>
             <div className="flex justify-between items-end mb-12">
-              <h2 className="text-3xl font-heading font-bold text-primary">Strategic Resources</h2>
+              <h2 className="text-3xl font-heading font-bold text-primary">Free Tools</h2>
               <Link to="/resources" className="text-xs uppercase tracking-widest font-bold text-accent hover:text-primary transition-colors">All Resources</Link>
             </div>
             <div className="grid grid-cols-1 gap-6">
-              {resources.map((res, i) => (
-                <FadeInWhenVisible key={i} delay={i * 0.1}>
-                  <div className="p-8 bg-primary text-white flex justify-between items-center group cursor-pointer hover:bg-primary/95 transition-all">
-                    <div className="flex items-center gap-6">
-                      <div className="w-12 h-12 bg-white/10 flex items-center justify-center rounded-sm text-accent group-hover:scale-110 transition-transform">
-                        <FileText size={24} />
+              {homeResources.map((res, i) => {
+                const IconComponent = res.icon === 'bot' ? Bot : res.icon === 'calculator' ? Calculator : Layers;
+                return (
+                  <FadeInWhenVisible key={i} delay={i * 0.1}>
+                    <div 
+                      onClick={() => navigate({ to: `/resources/${res.slug}` })}
+                      className="p-6 sm:p-8 bg-primary text-white flex justify-between items-center group cursor-pointer hover:bg-primary/95 transition-all"
+                    >
+                      <div className="flex items-center gap-4 sm:gap-6">
+                        <div className="w-10 h-10 sm:w-12 sm:h-12 bg-white/10 flex items-center justify-center rounded-sm text-accent group-hover:scale-110 transition-transform">
+                          <IconComponent size={20} className="sm:hidden" />
+                          <IconComponent size={24} className="hidden sm:block" />
+                        </div>
+                        <div>
+                          <h3 className="font-heading font-bold text-base sm:text-lg mb-1">{res.title}</h3>
+                          <span className="text-[10px] uppercase tracking-widest text-white/50">{res.type}</span>
+                        </div>
                       </div>
-                      <div>
-                        <h3 className="font-heading font-bold text-lg mb-1">{res.title}</h3>
-                        <span className="text-[10px] uppercase tracking-widest text-white/50">{res.type} • {res.size}</span>
-                      </div>
+                      <ChevronRight className="text-accent group-hover:translate-x-2 transition-transform" size={20} />
                     </div>
-                    <ChevronRight className="text-accent group-hover:translate-x-2 transition-transform" />
-                  </div>
-                </FadeInWhenVisible>
-              ))}
+                  </FadeInWhenVisible>
+                );
+              })}
             </div>
           </div>
         </div>

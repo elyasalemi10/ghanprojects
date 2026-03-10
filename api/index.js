@@ -219,6 +219,53 @@ app.post('/api/investor-network', async (req, res) => {
   }
 });
 
+// Newsletter subscription
+app.post('/api/newsletter', async (req, res) => {
+  const { email, source } = req.body;
+  
+  if (!email) return res.status(400).json({ error: 'Email is required' });
+  
+  try {
+    await saveEmailSignup(email, source || 'newsletter');
+    
+    await resend.emails.send({
+      from: process.env.RESEND_FROM_EMAIL,
+      to: email,
+      subject: 'Welcome to Ghan Projects Insights',
+      html: `
+        <h2>Welcome to Ghan Projects Insights!</h2>
+        <p>Thank you for subscribing to our newsletter. You'll now receive monthly strategic insights on Melbourne's property market.</p>
+        <p><strong>What to expect:</strong></p>
+        <ul>
+          <li>Monthly market analysis and trends</li>
+          <li>Development insights and case studies</li>
+          <li>Investment strategy tips</li>
+          <li>Early access to new resources and guides</li>
+        </ul>
+        <p>In the meantime, explore our <a href="https://ghanprojects.com.au/resources">free resources</a> or <a href="https://ghanprojects.com.au/book-consultation">book a consultation</a> to discuss your property goals.</p>
+        <p>Best regards,<br>The Ghan Projects Team</p>
+        <hr style="margin: 20px 0; border: none; border-top: 1px solid #eee;">
+        <p style="font-size: 12px; color: #666;">You can unsubscribe at any time by replying to this email.</p>
+      `
+    });
+    
+    if (process.env.TELEGRAM_BOT_TOKEN && process.env.TELEGRAM_CHAT_ID) {
+      await fetch(`https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}/sendMessage`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          chat_id: process.env.TELEGRAM_CHAT_ID,
+          text: `📧 NEWSLETTER SIGNUP\n\nEmail: ${email}\nSource: ${source || 'newsletter'}`
+        })
+      });
+    }
+    
+    res.json({ success: true });
+  } catch {
+    res.status(500).json({ error: 'Failed to subscribe' });
+  }
+});
+
 // Get blog posts
 app.get('/api/posts', async (req, res) => {
   if (!supabase) return res.status(500).json({ error: 'Database not configured' });
@@ -802,6 +849,10 @@ app.get('/sitemap.xml', async (req, res) => {
     { url: '/insights', priority: '0.9', changefreq: 'daily' },
     { url: '/contact', priority: '0.7', changefreq: 'monthly' },
     { url: '/resources', priority: '0.7', changefreq: 'monthly' },
+    { url: '/resources/ai-assistant', priority: '0.8', changefreq: 'monthly' },
+    { url: '/resources/rental-yield-calculator', priority: '0.8', changefreq: 'monthly' },
+    { url: '/resources/stamp-duty-calculator', priority: '0.8', changefreq: 'monthly' },
+    { url: '/resources/subdivision-checker', priority: '0.8', changefreq: 'monthly' },
     { url: '/book-consultation', priority: '0.8', changefreq: 'monthly' },
   ];
   

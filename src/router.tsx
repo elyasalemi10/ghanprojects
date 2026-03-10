@@ -9,6 +9,7 @@ import Portfolio from '@/pages/Portfolio';
 import Insights from '@/pages/Insights';
 import InsightPost from '@/pages/InsightPost';
 import Resources from '@/pages/Resources';
+import ResourcePage from '@/pages/ResourcePage';
 import Contact from '@/pages/Contact';
 import BookConsultation from '@/pages/BookConsultation';
 import Admin from '@/pages/Admin';
@@ -96,6 +97,12 @@ const resourcesRoute = createRoute({
   component: Resources,
 });
 
+const resourcePageRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/resources/$slug',
+  component: ResourcePage,
+});
+
 const contactRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/contact',
@@ -122,6 +129,7 @@ const routeTree = rootRoute.addChildren([
   insightsRoute,
   insightPostRoute,
   resourcesRoute,
+  resourcePageRoute,
   contactRoute,
   bookConsultationRoute,
   adminRoute,
