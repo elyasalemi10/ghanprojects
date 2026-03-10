@@ -73,26 +73,26 @@ Use this tool to compare multiple properties side-by-side and identify which inv
   {
     id: 'stamp-duty-calculator',
     title: 'Stamp Duty Calculator',
-    desc: 'Calculate Victorian stamp duty instantly. Includes first home buyer exemptions, foreign purchaser surcharge, and off-the-plan concessions.',
-    fullDescription: `Understanding your stamp duty obligations is crucial when budgeting for a property purchase in Victoria. Our Stamp Duty Calculator provides accurate calculations based on the latest Victorian State Revenue Office rates and thresholds.
+    desc: 'Calculate stamp duty for all Australian states and territories. Get accurate estimates for VIC, NSW, QLD, WA, SA, TAS, NT, and ACT.',
+    fullDescription: `Understanding your stamp duty obligations is crucial when budgeting for a property purchase anywhere in Australia. This comprehensive Stamp Duty Calculator provides accurate calculations for all states and territories.
 
-The calculator automatically applies relevant concessions and exemptions based on your circumstances—whether you're a first home buyer, purchasing off-the-plan, or an investor. It also calculates the foreign purchaser additional duty if applicable.
+Each state has different rates and thresholds, and this calculator adapts to show you the relevant fields and calculations. Whether you're buying in Victoria, New South Wales, Queensland, Western Australia, or any other state, you'll get an accurate estimate.
 
 Get instant clarity on one of the largest upfront costs in property purchases and plan your finances with confidence.`,
     cat: 'Calculator',
     type: 'Tool',
     isLocked: false,
     slug: 'stamp-duty-calculator',
-    seoTitle: 'Victorian Stamp Duty Calculator 2024 | Free Property Tax Calculator',
-    seoDescription: 'Calculate Victorian stamp duty for property purchases. Includes first home buyer exemptions, foreign purchaser surcharge, and off-the-plan concessions.',
-    seoKeywords: 'stamp duty calculator Victoria, Victorian stamp duty, property transfer duty, first home buyer stamp duty, Melbourne property taxes',
+    seoTitle: 'Australian Stamp Duty Calculator 2024 | All States & Territories',
+    seoDescription: 'Calculate stamp duty for property purchases across all Australian states. Includes VIC, NSW, QLD, WA, SA, TAS, NT, and ACT with accurate rates.',
+    seoKeywords: 'stamp duty calculator Australia, stamp duty NSW, stamp duty Victoria, stamp duty QLD, property transfer duty, stamp duty calculator',
     features: [
-      'Up-to-date Victorian rates',
-      'First home buyer exemptions',
-      'Off-the-plan concessions',
-      'Foreign purchaser surcharge',
-      'Pensioner exemptions',
-      'Principal residence vs investment'
+      'All Australian states & territories',
+      'State-specific rate calculations',
+      'First home buyer concessions',
+      'WA rate type selection',
+      'ACT owner-occupier rates',
+      'NSW land area adjustments'
     ]
   },
   {
