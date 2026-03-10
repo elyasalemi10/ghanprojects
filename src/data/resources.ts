@@ -21,20 +21,20 @@ export const freeResources: Resource[] = [
   {
     id: 'ai-assistant',
     title: 'AI Assistant for Property Developers',
-    desc: 'A powerful AI tool for analyzing development sites, running feasibility scenarios, and getting instant answers to property development questions.',
-    fullDescription: `Our AI Assistant for Property Developers is a cutting-edge tool designed specifically for Melbourne's property development landscape. Powered by advanced artificial intelligence, this tool helps you make data-driven decisions faster than ever before.
+    desc: 'We recommend this powerful AI tool for analyzing development sites, running feasibility scenarios, and getting instant answers to property development questions.',
+    fullDescription: `We highly recommend this AI Assistant for Property Developers—a cutting-edge tool designed specifically for Melbourne's property development landscape. Powered by advanced artificial intelligence, it helps you make data-driven decisions faster than ever before.
 
-Whether you're evaluating a potential development site, running quick feasibility calculations, or need instant answers to complex property development questions, our AI Assistant is available 24/7 to support your investment decisions.
+Whether you're evaluating a potential development site, running quick feasibility calculations, or need instant answers to complex property development questions, this AI Assistant is available 24/7 to support your investment decisions.
 
-The assistant understands Melbourne's unique zoning regulations, planning overlays, and market dynamics, providing contextually relevant insights for your specific projects.`,
-    cat: 'AI Tool',
+The assistant understands Melbourne's unique zoning regulations, planning overlays, and market dynamics, providing contextually relevant insights for your specific projects. We've found it to be an invaluable resource for property investors and developers.`,
+    cat: 'Recommended Tool',
     type: 'External',
     url: 'https://cruxlogic.ai/property-development',
     isExternal: true,
     isLocked: false,
     slug: 'ai-assistant',
-    seoTitle: 'Free AI Assistant for Property Developers Melbourne',
-    seoDescription: 'Use our free AI-powered property development assistant. Get instant feasibility analysis, zoning advice, and development insights for Melbourne properties.',
+    seoTitle: 'AI Assistant for Property Developers Melbourne | Recommended Tool',
+    seoDescription: 'We recommend this AI-powered property development assistant. Get instant feasibility analysis, zoning advice, and development insights for Melbourne properties.',
     seoKeywords: 'AI property development, property feasibility AI, Melbourne property assistant, development site analysis, property investment AI tool',
     features: [
       'Instant feasibility scenario analysis',
