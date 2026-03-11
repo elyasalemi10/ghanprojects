@@ -77,6 +77,19 @@ export function Footer() {
             <p>© {currentYear} GHAN PROJECTS. All rights reserved.</p>
             <p className="uppercase tracking-widest font-medium text-[10px]">General information only. Not financial advice.</p>
           </div>
+          <a 
+            href="https://scaleupwithai.ai/intelligent-websites" 
+            target="_blank" 
+            rel="noopener noreferrer"
+            className="flex items-center gap-2 text-white/40 hover:text-white/60 transition-colors"
+          >
+            <span className="text-[10px] uppercase tracking-widest">Powered by</span>
+            <img 
+              src="/scaleup.webp" 
+              alt="Scale Up with AI" 
+              className="h-5 w-auto opacity-60 hover:opacity-80 transition-opacity"
+            />
+          </a>
         </div>
       </div>
     </footer>
