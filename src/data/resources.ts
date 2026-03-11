@@ -132,34 +132,32 @@ export const lockedResources: Resource[] = [
 This comprehensive checklist covers everything from initial site assessment and planning controls to construction feasibility and profit margin analysis. It's designed to help you systematically evaluate opportunities and avoid costly mistakes.
 
 Each item includes guidance notes explaining why it matters and what red flags to watch for. This checklist has saved our team from numerous poor investments over the years.`,
-    cat: 'Development',
+    cat: 'PDF Guide',
     type: 'PDF',
-    size: '1.2 MB',
-    tags: ['Feasibility', 'Risk Management'],
     isLocked: true,
     slug: 'development-feasibility-checklist',
     seoTitle: 'Development Feasibility Checklist | Property Development Guide Melbourne',
     seoDescription: 'Download our 50-point development feasibility checklist. The essential framework for evaluating Melbourne development sites and avoiding costly mistakes.',
-    seoKeywords: 'development feasibility checklist, property development assessment, site evaluation Melbourne, development risk management, feasibility analysis'
+    seoKeywords: 'development feasibility checklist, property development assessment, site evaluation Melbourne, development risk management, feasibility analysis',
+    url: '/resources/development-feasibility-checklist.pdf'
   },
   {
     id: 'due-diligence-checklist',
     title: 'Due Diligence Checklist',
-    desc: "Don't miss a thing. A comprehensive guide to property due diligence for residential and commercial assets.",
+    desc: "A comprehensive guide to property due diligence for residential and commercial assets.",
     fullDescription: `Due diligence can make or break a property investment. Our comprehensive Due Diligence Checklist ensures you never miss a critical item when assessing a potential acquisition.
 
 This checklist covers legal, financial, physical, and planning aspects of property due diligence. It's suitable for both residential and commercial property purchases, with specific sections for each property type.
 
 Use this checklist to coordinate your solicitor, accountant, building inspector, and other advisors—ensuring nothing falls through the cracks before settlement.`,
-    cat: 'Investment',
+    cat: 'PDF Guide',
     type: 'PDF',
-    size: '0.8 MB',
-    tags: ['Acquisition', 'Legal'],
     isLocked: true,
     slug: 'due-diligence-checklist',
     seoTitle: 'Property Due Diligence Checklist | Investment Property Guide',
     seoDescription: 'Comprehensive property due diligence checklist for residential and commercial assets. Never miss a critical item in your property acquisition process.',
-    seoKeywords: 'property due diligence, due diligence checklist, property acquisition, investment property checklist, Melbourne property purchase'
+    seoKeywords: 'property due diligence, due diligence checklist, property acquisition, investment property checklist, Melbourne property purchase',
+    url: '/resources/due-diligence-checklist.pdf'
   },
   {
     id: 'jv-partnership-guide',
@@ -170,15 +168,14 @@ Use this checklist to coordinate your solicitor, accountant, building inspector,
 This guide covers different JV structures, profit-sharing arrangements, decision-making protocols, exit mechanisms, and dispute resolution processes. It includes template clauses and real-world examples from our own developments.
 
 Whether you're contributing capital, expertise, or land to a joint venture, this guide will help you understand the key terms and protect your interests.`,
-    cat: 'Finance',
+    cat: 'PDF Guide',
     type: 'PDF',
-    size: '2.4 MB',
-    tags: ['Joint Ventures', 'Contracts'],
     isLocked: true,
     slug: 'jv-partnership-guide',
     seoTitle: 'Joint Venture Partnership Guide | Property Development JV Structure',
     seoDescription: 'Learn how to structure property development joint ventures. Comprehensive guide covering profit sharing, decision making, and partner protection.',
-    seoKeywords: 'property joint venture, JV partnership guide, development partnership structure, property JV agreement, joint venture property development'
+    seoKeywords: 'property joint venture, JV partnership guide, development partnership structure, property JV agreement, joint venture property development',
+    url: '/resources/jv-partnership-guide.pdf'
   },
   {
     id: 'melbourne-investor-guide',
@@ -189,15 +186,14 @@ Whether you're contributing capital, expertise, or land to a joint venture, this
 This guide covers Melbourne's property cycles, the drivers of capital growth across different suburbs, rental market dynamics, and emerging areas to watch. It's designed for investors new to Melbourne or those looking to refresh their market understanding.
 
 We update this guide regularly to reflect current market conditions and opportunities.`,
-    cat: 'Investment',
+    cat: 'PDF Guide',
     type: 'PDF',
-    size: '3.1 MB',
-    tags: ['Strategy', 'Education'],
     isLocked: true,
     slug: 'melbourne-investor-starter-guide',
     seoTitle: 'Melbourne Property Investment Guide | Beginner Investor Resource',
     seoDescription: 'Essential guide for Melbourne property investors. Learn about property cycles, growth drivers, and investment strategies for the Melbourne market.',
-    seoKeywords: 'Melbourne property investment, property investment guide, Melbourne property market, investment strategy Melbourne, property cycles Australia'
+    seoKeywords: 'Melbourne property investment, property investment guide, Melbourne property market, investment strategy Melbourne, property cycles Australia',
+    url: '/resources/melbourne-investor-guide.pdf'
   },
   {
     id: 'off-market-guide',
@@ -208,15 +204,14 @@ We update this guide regularly to reflect current market conditions and opportun
 This guide covers how to build relationships with agents, identify motivated sellers, structure compelling offers, and negotiate effectively in off-market situations. It includes scripts and templates you can use in your own property search.
 
 Access to off-market opportunities can give you a significant edge in competitive markets—learn how to tap into this hidden inventory.`,
-    cat: 'Strategy',
+    cat: 'PDF Guide',
     type: 'PDF',
-    size: '1.5 MB',
-    tags: ['Off-Market', 'Negotiation'],
     isLocked: true,
     slug: 'off-market-buying-guide',
     seoTitle: 'Off-Market Property Buying Guide | Find Properties Before Auction',
     seoDescription: 'Discover how to find and secure off-market properties. Insider strategies for accessing high-value property deals before they go public.',
-    seoKeywords: 'off-market property, off-market buying guide, pre-market property, property negotiation, Melbourne off-market deals'
+    seoKeywords: 'off-market property, off-market buying guide, pre-market property, property negotiation, Melbourne off-market deals',
+    url: '/resources/off-market-buying-guide.pdf'
   }
 ];
 
