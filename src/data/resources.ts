@@ -139,7 +139,7 @@ Each item includes guidance notes explaining why it matters and what red flags t
     seoTitle: 'Development Feasibility Checklist | Property Development Guide Melbourne',
     seoDescription: 'Download our 50-point development feasibility checklist. The essential framework for evaluating Melbourne development sites and avoiding costly mistakes.',
     seoKeywords: 'development feasibility checklist, property development assessment, site evaluation Melbourne, development risk management, feasibility analysis',
-    url: '/resources/development-feasibility-checklist.pdf'
+    url: '/resources/Feasability-Checklist.pdf'
   },
   {
     id: 'due-diligence-checklist',
@@ -157,7 +157,7 @@ Use this checklist to coordinate your solicitor, accountant, building inspector,
     seoTitle: 'Property Due Diligence Checklist | Investment Property Guide',
     seoDescription: 'Comprehensive property due diligence checklist for residential and commercial assets. Never miss a critical item in your property acquisition process.',
     seoKeywords: 'property due diligence, due diligence checklist, property acquisition, investment property checklist, Melbourne property purchase',
-    url: '/resources/due-diligence-checklist.pdf'
+    url: '/resources/Due-Diligence.pdf'
   },
   {
     id: 'jv-partnership-guide',
@@ -175,7 +175,7 @@ Whether you're contributing capital, expertise, or land to a joint venture, this
     seoTitle: 'Joint Venture Partnership Guide | Property Development JV Structure',
     seoDescription: 'Learn how to structure property development joint ventures. Comprehensive guide covering profit sharing, decision making, and partner protection.',
     seoKeywords: 'property joint venture, JV partnership guide, development partnership structure, property JV agreement, joint venture property development',
-    url: '/resources/jv-partnership-guide.pdf'
+    url: '/resources/JV-Partnership.pdf'
   },
   {
     id: 'melbourne-investor-guide',
@@ -193,7 +193,7 @@ We update this guide regularly to reflect current market conditions and opportun
     seoTitle: 'Melbourne Property Investment Guide | Beginner Investor Resource',
     seoDescription: 'Essential guide for Melbourne property investors. Learn about property cycles, growth drivers, and investment strategies for the Melbourne market.',
     seoKeywords: 'Melbourne property investment, property investment guide, Melbourne property market, investment strategy Melbourne, property cycles Australia',
-    url: '/resources/melbourne-investor-guide.pdf'
+    url: '/resources/Melbourne-Investor-Guide.pdf'
   },
   {
     id: 'off-market-guide',
@@ -211,7 +211,7 @@ Access to off-market opportunities can give you a significant edge in competitiv
     seoTitle: 'Off-Market Property Buying Guide | Find Properties Before Auction',
     seoDescription: 'Discover how to find and secure off-market properties. Insider strategies for accessing high-value property deals before they go public.',
     seoKeywords: 'off-market property, off-market buying guide, pre-market property, property negotiation, Melbourne off-market deals',
-    url: '/resources/off-market-buying-guide.pdf'
+    url: '/resources/Off-Market-Guide.pdf'
   }
 ];
 
