@@ -1,15 +1,7 @@
-import React from 'react';
 import { Link } from '@tanstack/react-router';
 import { Mail, Phone, MapPin, Clock } from 'lucide-react';
 
 const LOGO_URL = "/images/ghan-projects-logo-blue.webp";
-
-const suburbs = [
-  'Beaumaris', 'South Yarra', 'Armadale', 'Malvern', 'Hawthorn',
-  'Canterbury', 'Middle Park', 'Albert Park', 'East Melbourne',
-  'South Melbourne', 'Camberwell', 'Brighton', 'Prahran', 'Deepdene',
-  'Glen Waverley', 'Toorak', 'Kew', 'Richmond'
-];
 
 export function Footer() {
   const currentYear = new Date().getFullYear();
@@ -30,22 +22,18 @@ export function Footer() {
             <p className="text-white/60 text-sm max-w-xs leading-relaxed">
               Strategic property development and investment advisory across Melbourne.
             </p>
-            <nav className="flex flex-col gap-2 pt-2">
+          </div>
+
+          {/* Column 2: Navigation */}
+          <div>
+            <h3 className="font-heading font-bold text-sm mb-6 uppercase tracking-widest text-accent">Navigate</h3>
+            <nav className="flex flex-col gap-3">
               <Link to="/" className="text-white/70 hover:text-accent transition-colors text-sm">Home</Link>
               <Link to="/about" className="text-white/70 hover:text-accent transition-colors text-sm">About</Link>
               <Link to="/services" className="text-white/70 hover:text-accent transition-colors text-sm">Services</Link>
               <Link to="/portfolio" className="text-white/70 hover:text-accent transition-colors text-sm">Portfolio</Link>
-            </nav>
-          </div>
-
-          {/* Column 2: Learn */}
-          <div>
-            <h3 className="font-heading font-bold text-sm mb-6 uppercase tracking-widest text-accent">Learn</h3>
-            <nav className="flex flex-col gap-3">
-              <Link to="/insights" className="text-white/70 hover:text-accent transition-colors text-sm">Insights & Articles</Link>
-              <Link to="/resources" className="text-white/70 hover:text-accent transition-colors text-sm">Resources & Tools</Link>
-              <Link to="/book-consultation" className="text-white/70 hover:text-accent transition-colors text-sm">Book Consultation</Link>
-              <Link to="/book-consultation?type=showroom-booking" className="text-white/70 hover:text-accent transition-colors text-sm">Book Showroom Visit</Link>
+              <Link to="/insights" className="text-white/70 hover:text-accent transition-colors text-sm">Insights</Link>
+              <Link to="/resources" className="text-white/70 hover:text-accent transition-colors text-sm">Resources</Link>
             </nav>
           </div>
 
@@ -72,17 +60,14 @@ export function Footer() {
             </ul>
           </div>
 
-          {/* Column 4: Areas We Service */}
+          {/* Column 4: Get Started */}
           <div>
-            <h3 className="font-heading font-bold text-sm mb-6 uppercase tracking-widest text-accent">Areas We Service</h3>
-            <div className="flex flex-wrap gap-x-3 gap-y-1.5">
-              {suburbs.map((suburb, i) => (
-                <span key={suburb} className="text-xs text-white/50 hover:text-white/70 transition-colors">
-                  {suburb}{i < suburbs.length - 1 ? ',' : ''}
-                </span>
-              ))}
-              <span className="text-xs text-accent">+ South East Melbourne</span>
-            </div>
+            <h3 className="font-heading font-bold text-sm mb-6 uppercase tracking-widest text-accent">Get Started</h3>
+            <nav className="flex flex-col gap-3">
+              <Link to="/book-consultation" className="text-white/70 hover:text-accent transition-colors text-sm">Book Consultation</Link>
+              <Link to="/book-consultation?type=showroom-booking" className="text-white/70 hover:text-accent transition-colors text-sm">Book Showroom Visit</Link>
+              <Link to="/contact" className="text-white/70 hover:text-accent transition-colors text-sm">Contact Us</Link>
+            </nav>
           </div>
         </div>
 
