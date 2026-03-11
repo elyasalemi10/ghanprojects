@@ -7,8 +7,6 @@ import {
   Mail, 
   MapPin, 
   Clock, 
-  Linkedin, 
-  Instagram,
   Send,
   CheckCircle2
 } from 'lucide-react';
@@ -100,9 +98,9 @@ export default function Contact() {
         </div>
       </section>
 
-      <section className="py-32 px-6 lg:px-12">
+      <section className="py-16 sm:py-24 lg:py-32 px-4 sm:px-6 lg:px-12">
         <div className="max-w-7xl mx-auto">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-24">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 sm:gap-16 lg:gap-24">
             {/* Contact Info */}
             <div className="space-y-16">
               <div className="space-y-8">
@@ -168,57 +166,52 @@ export default function Contact() {
                 </div>
               </div>
 
-              <div className="pt-12 border-t">
-                <div className="space-y-4 text-center sm:text-left">
-                  <h4 className="font-heading font-bold text-primary uppercase tracking-widest text-xs">Follow Our Projects</h4>
-                  <div className="flex gap-4 justify-center sm:justify-start">
-                    <a href="#" className="w-12 h-12 rounded-full bg-secondary flex items-center justify-center text-primary hover:bg-accent hover:text-white transition-all">
-                      <Linkedin size={20} />
-                    </a>
-                    <a href="#" className="w-12 h-12 rounded-full bg-secondary flex items-center justify-center text-primary hover:bg-accent hover:text-white transition-all">
-                      <Instagram size={20} />
-                    </a>
+              <div className="pt-8 border-t">
+                <div className="p-6 bg-accent/5 border border-accent/20 rounded-sm space-y-3">
+                  <div className="flex items-center gap-2 text-accent font-bold uppercase tracking-widest text-[10px]">
+                    <CheckCircle2 size={14} /> 100% Confidential
                   </div>
+                  <p className="text-xs text-muted-foreground italic">All discussions and project details are handled with strict professional confidentiality.</p>
                 </div>
               </div>
             </div>
 
             {/* Form */}
-            <div ref={formRef} className="bg-secondary/30 p-10 lg:p-16 border border-secondary shadow-2xl relative">
+            <div ref={formRef} className="bg-secondary/30 p-6 sm:p-10 lg:p-16 border border-secondary shadow-2xl relative">
               <div className="absolute top-0 right-0 w-32 h-32 bg-accent/5 -z-10 rounded-bl-full" />
-              <form onSubmit={handleSubmit} className="space-y-8">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6 lg:space-y-8">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 lg:gap-8">
                   <div className="space-y-2">
                     <label className="text-[10px] uppercase tracking-widest font-bold text-primary">Your Name</label>
                     <input 
                       name="name" 
                       required 
                       placeholder="Jane Smith"
-                      className="w-full bg-white border border-border p-5 focus:outline-none focus:ring-2 focus:ring-accent transition-all text-sm font-medium"
+                      className="w-full bg-white border border-border p-4 sm:p-5 focus:outline-none focus:ring-2 focus:ring-accent transition-all text-sm font-medium"
                     />
                   </div>
                   <div className="space-y-2">
-                    <label className="text-[10px] uppercase tracking-widest font-bold text-primary">Email Address <span className="text-muted-foreground normal-case">(or phone)</span></label>
+                    <label className="text-[10px] uppercase tracking-widest font-bold text-primary">Email <span className="text-muted-foreground normal-case">(or phone)</span></label>
                     <input 
                       name="email" 
                       type="email" 
                       placeholder="jane@example.com"
-                      className="w-full bg-white border border-border p-5 focus:outline-none focus:ring-2 focus:ring-accent transition-all text-sm font-medium"
+                      className="w-full bg-white border border-border p-4 sm:p-5 focus:outline-none focus:ring-2 focus:ring-accent transition-all text-sm font-medium"
                     />
                   </div>
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 lg:gap-8">
                   <div className="space-y-2">
-                    <label className="text-[10px] uppercase tracking-widest font-bold text-primary">Phone Number <span className="text-muted-foreground normal-case">(or email)</span></label>
+                    <label className="text-[10px] uppercase tracking-widest font-bold text-primary">Phone <span className="text-muted-foreground normal-case">(or email)</span></label>
                     <input 
                       name="phone" 
                       placeholder="+61 400 000 000"
-                      className="w-full bg-white border border-border p-5 focus:outline-none focus:ring-2 focus:ring-accent transition-all text-sm font-medium"
+                      className="w-full bg-white border border-border p-4 sm:p-5 focus:outline-none focus:ring-2 focus:ring-accent transition-all text-sm font-medium"
                     />
                   </div>
                   <div className="space-y-2">
                     <label className="text-[10px] uppercase tracking-widest font-bold text-primary">Project Type</label>
-                    <select name="projectType" className="w-full bg-white border border-border p-5 focus:outline-none focus:ring-2 focus:ring-accent transition-all appearance-none cursor-pointer text-sm font-medium">
+                    <select name="projectType" className="w-full bg-white border border-border p-4 sm:p-5 focus:outline-none focus:ring-2 focus:ring-accent transition-all appearance-none cursor-pointer text-sm font-medium">
                       <option>Property Advisory</option>
                       <option>Buyer's Agency</option>
                       <option>Joint Venture</option>
@@ -229,7 +222,7 @@ export default function Contact() {
                 </div>
                 <div className="space-y-2">
                   <label className="text-[10px] uppercase tracking-widest font-bold text-primary">Estimated Budget</label>
-                  <select name="budget" className="w-full bg-white border border-border p-5 focus:outline-none focus:ring-2 focus:ring-accent transition-all appearance-none cursor-pointer text-sm font-medium">
+                  <select name="budget" className="w-full bg-white border border-border p-4 sm:p-5 focus:outline-none focus:ring-2 focus:ring-accent transition-all appearance-none cursor-pointer text-sm font-medium">
                     <option>$500k - $1M</option>
                     <option>$1M - $3M</option>
                     <option>$3M - $5M</option>
@@ -241,21 +234,21 @@ export default function Contact() {
                   <textarea 
                     name="message" 
                     required 
-                    rows={5}
+                    rows={4}
                     placeholder="Tell us about your property goals..."
                     value={messageValue}
                     onChange={(e) => setMessageValue(e.target.value)}
-                    className="w-full bg-white border border-border p-5 focus:outline-none focus:ring-2 focus:ring-accent transition-all text-sm font-medium resize-none"
+                    className="w-full bg-white border border-border p-4 sm:p-5 focus:outline-none focus:ring-2 focus:ring-accent transition-all text-sm font-medium resize-none"
                   ></textarea>
                 </div>
                 <Button 
                   type="submit" 
                   disabled={isSubmitting}
-                  className="w-full rounded-none bg-primary hover:bg-primary/95 text-white py-8 font-heading font-bold uppercase tracking-wider text-sm h-auto flex gap-3"
+                  className="w-full rounded-none bg-primary hover:bg-primary/95 text-white py-5 sm:py-8 font-heading font-bold uppercase tracking-wider text-xs sm:text-sm h-auto flex gap-2 sm:gap-3"
                 >
                   {isSubmitting ? 'Sending...' : (
                     <>
-                      Send Message <Send size={18} />
+                      Send Message <Send size={16} className="sm:w-[18px] sm:h-[18px]" />
                     </>
                   )}
                 </Button>

@@ -402,9 +402,9 @@ export default function Home() {
                       to: '/contact', 
                       search: { message: `I am interested in an investment pack opportunity for ${opp.title}` } 
                     })}
-                    className="w-full rounded-none bg-accent hover:bg-accent/90 text-white py-6 font-heading font-bold uppercase tracking-wider text-xs"
+                    className="w-full rounded-none bg-accent hover:bg-accent/90 text-white py-4 sm:py-6 font-heading font-bold uppercase tracking-wider text-[10px] sm:text-xs whitespace-nowrap"
                   >
-                    Request Investment Pack
+                    Request Info Pack
                   </Button>
                 </div>
               </FadeInWhenVisible>
@@ -547,40 +547,40 @@ export default function Home() {
             </FadeInWhenVisible>
 
             <FadeInWhenVisible delay={0.2}>
-              <div className="bg-secondary/30 p-10 lg:p-14 border border-secondary shadow-2xl">
-                <form onSubmit={handleJoinNetwork} className="space-y-6">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="bg-secondary/30 p-6 sm:p-10 lg:p-14 border border-secondary shadow-2xl">
+                <form onSubmit={handleJoinNetwork} className="space-y-4 sm:space-y-6">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
                     <div className="space-y-2">
                       <label className="text-[10px] uppercase tracking-widest font-bold text-primary">Full Name</label>
                       <input 
                         name="fullName" 
                         required 
                         placeholder="John Doe"
-                        className="w-full bg-white border border-border p-4 focus:outline-none focus:ring-2 focus:ring-accent transition-all"
+                        className="w-full bg-white border border-border p-3 sm:p-4 focus:outline-none focus:ring-2 focus:ring-accent transition-all text-sm"
                       />
                     </div>
                     <div className="space-y-2">
-                      <label className="text-[10px] uppercase tracking-widest font-bold text-primary">Email Address <span className="text-muted-foreground normal-case">(or phone)</span></label>
+                      <label className="text-[10px] uppercase tracking-widest font-bold text-primary">Email <span className="text-muted-foreground normal-case">(or phone)</span></label>
                       <input 
                         name="email" 
                         type="email" 
                         placeholder="john@example.com"
-                        className="w-full bg-white border border-border p-4 focus:outline-none focus:ring-2 focus:ring-accent transition-all"
+                        className="w-full bg-white border border-border p-3 sm:p-4 focus:outline-none focus:ring-2 focus:ring-accent transition-all text-sm"
                       />
                     </div>
                   </div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
                     <div className="space-y-2">
-                      <label className="text-[10px] uppercase tracking-widest font-bold text-primary">Phone Number <span className="text-muted-foreground normal-case">(or email)</span></label>
+                      <label className="text-[10px] uppercase tracking-widest font-bold text-primary">Phone <span className="text-muted-foreground normal-case">(or email)</span></label>
                       <input 
                         name="phone" 
                         placeholder="+61 400 000 000"
-                        className="w-full bg-white border border-border p-4 focus:outline-none focus:ring-2 focus:ring-accent transition-all"
+                        className="w-full bg-white border border-border p-3 sm:p-4 focus:outline-none focus:ring-2 focus:ring-accent transition-all text-sm"
                       />
                     </div>
                     <div className="space-y-2">
                       <label className="text-[10px] uppercase tracking-widest font-bold text-primary">Budget Range</label>
-                      <select name="budgetRange" className="w-full bg-white border border-border p-4 focus:outline-none focus:ring-2 focus:ring-accent transition-all appearance-none cursor-pointer">
+                      <select name="budgetRange" className="w-full bg-white border border-border p-3 sm:p-4 focus:outline-none focus:ring-2 focus:ring-accent transition-all appearance-none cursor-pointer text-sm">
                         <option>$500k - $1M</option>
                         <option>$1M - $3M</option>
                         <option>$3M - $5M</option>
@@ -590,17 +590,17 @@ export default function Home() {
                   </div>
                   <div className="space-y-2">
                     <label className="text-[10px] uppercase tracking-widest font-bold text-primary">Investment Interest</label>
-                    <select name="interestType" className="w-full bg-white border border-border p-4 focus:outline-none focus:ring-2 focus:ring-accent transition-all appearance-none cursor-pointer">
+                    <select name="interestType" className="w-full bg-white border border-border p-3 sm:p-4 focus:outline-none focus:ring-2 focus:ring-accent transition-all appearance-none cursor-pointer text-sm">
                       <option>Off-market Opportunities</option>
                       <option>Joint Venture (JV) Projects</option>
                       <option>Development Sites</option>
                       <option>Investment Properties</option>
                     </select>
                   </div>
-                  <Button type="submit" className="w-full rounded-none bg-primary hover:bg-primary/95 text-white py-8 font-heading font-bold uppercase tracking-wider text-sm mt-4">
+                  <Button type="submit" className="w-full rounded-none bg-primary hover:bg-primary/95 text-white py-5 sm:py-8 font-heading font-bold uppercase tracking-wider text-xs sm:text-sm mt-4">
                     Join Network
                   </Button>
-                  <p className="text-[10px] text-muted-foreground text-center pt-2 uppercase tracking-tighter">By joining, you agree to receive communications regarding strategic property opportunities.</p>
+                  <p className="text-[10px] text-muted-foreground text-center pt-2 leading-relaxed">By joining, you agree to receive communications regarding strategic property opportunities.</p>
                 </form>
               </div>
             </FadeInWhenVisible>
@@ -649,12 +649,12 @@ export default function Home() {
         <div className="max-w-4xl mx-auto relative z-10">
           <FadeInWhenVisible>
             <h2 className="text-5xl md:text-7xl font-heading font-bold mb-8 text-white leading-tight">Start Your Next Property <span className="text-accent italic">Opportunity</span></h2>
-            <p className="text-xl md:text-2xl text-white/70 mb-12 leading-relaxed">Whether you're looking to acquire, develop, or invest, Ghan Projects provides the strategic edge you need in Melbourne's property market.</p>
-            <div className="flex flex-col sm:flex-row justify-center gap-6">
-              <Button asChild size="lg" className="rounded-none px-12 py-8 text-lg font-heading font-bold uppercase tracking-wider bg-accent text-white hover:bg-accent/90">
+            <p className="text-lg sm:text-xl md:text-2xl text-white/70 mb-8 sm:mb-12 leading-relaxed px-4">Whether you're looking to acquire, develop, or invest, Ghan Projects provides the strategic edge you need in Melbourne's property market.</p>
+            <div className="flex flex-col sm:flex-row justify-center gap-4 sm:gap-6 px-4">
+              <Button asChild size="lg" className="rounded-none px-8 sm:px-12 py-6 sm:py-8 text-sm sm:text-lg font-heading font-bold uppercase tracking-wider bg-accent text-white hover:bg-accent/90">
                 <Link to="/book-consultation">Book Consultation</Link>
               </Button>
-              <Button asChild size="lg" className="rounded-none px-12 py-8 text-lg font-heading font-bold uppercase tracking-wider bg-white text-primary hover:bg-white/90">
+              <Button asChild size="lg" className="rounded-none px-8 sm:px-12 py-6 sm:py-8 text-sm sm:text-lg font-heading font-bold uppercase tracking-wider bg-white text-primary hover:bg-white/90">
                 <Link to="/contact">Contact Us</Link>
               </Button>
             </div>
