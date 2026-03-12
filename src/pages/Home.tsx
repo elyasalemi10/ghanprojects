@@ -41,10 +41,10 @@ interface BlogPost {
 // --- Data ---
 
 const stats = [
-  { label: 'Projects Delivered', value: '50+' },
-  { label: 'Development Value', value: '$250M+' },
+  { label: 'Projects Delivered', value: '30+' },
+  { label: 'Development Value', value: '$110M+' },
   { label: 'Industry Partners', value: '200+' },
-  { label: 'Years Experience', value: '15+' },
+  { label: 'Years Experience', value: '13+' },
 ];
 
 const services = [
