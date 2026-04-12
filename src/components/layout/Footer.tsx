@@ -1,7 +1,7 @@
 import { Link } from '@tanstack/react-router';
 import { Mail, Phone, MapPin, Clock } from 'lucide-react';
 
-const LOGO_URL = "/images/ghan-projects-logo-blue.webp";
+const LOGO_URL = "/images/pdcon-logo.webp";
 
 export function Footer() {
   const currentYear = new Date().getFullYear();
@@ -15,7 +15,7 @@ export function Footer() {
             <Link to="/" className="flex items-center gap-2 group">
               <img 
                 src={LOGO_URL} 
-                alt="Ghan Projects" 
+                alt="PDCON" 
                 className="h-12 md:h-14 w-auto object-contain brightness-0 invert"
               />
             </Link>
@@ -47,7 +47,7 @@ export function Footer() {
               </li>
               <li className="flex items-start gap-3 text-white/70 hover:text-accent transition-colors">
                 <Mail size={16} className="mt-0.5 text-accent shrink-0" />
-                <a href="mailto:info@ghanprojects.com.au" className="text-sm">info@ghanprojects.com.au</a>
+                <a href="mailto:info@pdcon.com.au" className="text-sm">info@pdcon.com.au</a>
               </li>
               <li className="flex items-start gap-3 text-white/70">
                 <MapPin size={16} className="mt-0.5 text-accent shrink-0" />
@@ -74,7 +74,7 @@ export function Footer() {
         {/* Bottom Bar */}
         <div className="pt-8 border-t border-white/10 flex flex-col md:flex-row justify-between items-center gap-4">
           <div className="text-white/40 text-xs flex flex-col gap-1 text-center md:text-left">
-            <p>© {currentYear} GHAN PROJECTS. All rights reserved.</p>
+            <p>© {currentYear} PDCON. All rights reserved.</p>
             <p className="uppercase tracking-widest font-medium text-[10px]">General information only. Not financial advice.</p>
           </div>
           <a 

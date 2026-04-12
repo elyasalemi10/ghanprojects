@@ -75,7 +75,7 @@ async function prerender() {
     }
     
     // Replace localhost URLs with production URL
-    const finalHtml = html.replace(/http:\/\/localhost:\d+/gi, 'https://ghanprojects.com.au');
+    const finalHtml = html.replace(/http:\/\/localhost:\d+/gi, 'https://pdcon.com.au');
     
     writeFileSync(outputPath, finalHtml);
     console.log(`  Saved: ${outputPath}`);

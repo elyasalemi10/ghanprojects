@@ -13,7 +13,7 @@ import {
 import { toast } from 'sonner';
 import { SEO } from '@/components/shared/SEO';
 
-const LOGO_URL = "/images/ghan-projects-logo-blue.webp";
+const LOGO_URL = "/images/pdcon-logo.webp";
 const API_URL = import.meta.env.PROD ? '' : 'http://localhost:3001';
 
 export default function Contact() {
@@ -79,8 +79,8 @@ export default function Contact() {
       <SEO 
         title="Contact Property Development Consultants Melbourne"
         url="/contact"
-        description="Contact Ghan Projects for expert property development consulting, investment advisory, and joint venture opportunities in Melbourne. Schedule your consultation today."
-        keywords="contact property consultant Melbourne, property development enquiry, investment property consultation, Ghan Projects contact, property advisory Melbourne"
+        description="Contact PDCON for expert property development consulting, investment advisory, and joint venture opportunities in Melbourne. Schedule your consultation today."
+        keywords="contact property consultant Melbourne, property development enquiry, investment property consultation, PDCON contact, property advisory Melbourne"
       />
       {/* Hero */}
       <section className="relative min-h-[calc(100vh-80px)] flex items-center px-6 lg:px-12 bg-primary text-white overflow-hidden">
@@ -106,7 +106,7 @@ export default function Contact() {
               <div className="space-y-8">
                 <div className="flex items-center gap-4 mb-4">
                   <div className="w-12 h-1 bg-accent" />
-                  <img src={LOGO_URL} alt="Ghan Projects" className="h-8 w-auto object-contain" />
+                  <img src={LOGO_URL} alt="PDCON" className="h-8 w-auto object-contain" />
                 </div>
                 <h2 className="text-4xl font-heading font-bold text-primary leading-tight">Let's Discuss Your Next Property Move</h2>
                 <p className="text-lg text-muted-foreground leading-relaxed">
@@ -133,7 +133,7 @@ export default function Contact() {
                       </div>
                       <div>
                         <span className="block text-[10px] uppercase tracking-widest font-bold text-muted-foreground mb-1">Email</span>
-                        <a href="mailto:info@ghanprojects.com.au" className="text-primary font-bold hover:text-accent transition-colors">info@ghanprojects.com.au</a>
+                        <a href="mailto:info@pdcon.com.au" className="text-primary font-bold hover:text-accent transition-colors">info@pdcon.com.au</a>
                       </div>
                     </li>
                   </ul>

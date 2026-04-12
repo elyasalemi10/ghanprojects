@@ -10,7 +10,7 @@ export default function NotFound() {
       <SEO 
         title="Page Not Found"
         url="/404"
-        description="The page you're looking for doesn't exist. Return to Ghan Projects homepage."
+        description="The page you're looking for doesn't exist. Return to PDCON homepage."
       />
       <motion.div
         initial={{ opacity: 0, y: 20 }}
