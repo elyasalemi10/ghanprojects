@@ -124,7 +124,7 @@ export default function Contact() {
                       </div>
                       <div>
                         <span className="block text-[10px] uppercase tracking-widest font-bold text-muted-foreground mb-1">Phone</span>
-                        <a href="tel:+61390017797" className="text-primary font-bold hover:text-accent transition-colors">03 9001 7797</a>
+                        <a href="tel:+61408255259" className="text-primary font-bold hover:text-accent transition-colors">0408 255 259</a>
                       </div>
                     </li>
                     <li className="flex items-start gap-4 group cursor-pointer">
@@ -148,8 +148,8 @@ export default function Contact() {
                       </div>
                       <div>
                         <span className="block text-[10px] uppercase tracking-widest font-bold text-muted-foreground mb-1">Location</span>
-                        <span className="text-primary font-bold">Level 19, 263 William St</span>
-                        <span className="block text-xs text-muted-foreground mt-1">Melbourne 3000, Victoria</span>
+                        <span className="text-primary font-bold">7 Hammel Court</span>
+                        <span className="block text-xs text-muted-foreground mt-1">Hallam 3803, Victoria</span>
                       </div>
                     </li>
                     <li className="flex items-start gap-4">

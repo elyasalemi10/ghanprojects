@@ -275,7 +275,7 @@ export default function BookConsultation() {
                         { 
                           icon: <MapPin />, 
                           title: 'Prime Location', 
-                          desc: 'Level 19, 263 William St, Melbourne CBD - easily accessible by public transport.' 
+                          desc: '7 Hammel Court, Hallam - conveniently located in Melbourne\'s south-east.' 
                         },
                         { 
                           icon: <Target />, 

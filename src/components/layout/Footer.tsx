@@ -43,7 +43,7 @@ export function Footer() {
             <ul className="space-y-3">
               <li className="flex items-start gap-3 text-white/70 hover:text-accent transition-colors">
                 <Phone size={16} className="mt-0.5 text-accent shrink-0" />
-                <a href="tel:+61390017797" className="text-sm">03 9001 7797</a>
+                <a href="tel:+61408255259" className="text-sm">0408 255 259</a>
               </li>
               <li className="flex items-start gap-3 text-white/70 hover:text-accent transition-colors">
                 <Mail size={16} className="mt-0.5 text-accent shrink-0" />
@@ -51,7 +51,7 @@ export function Footer() {
               </li>
               <li className="flex items-start gap-3 text-white/70">
                 <MapPin size={16} className="mt-0.5 text-accent shrink-0" />
-                <span className="text-sm">Level 19, 263 William St<br />Melbourne 3000</span>
+                <span className="text-sm">7 Hammel Court<br />Hallam 3803</span>
               </li>
               <li className="flex items-start gap-3 text-white/70">
                 <Clock size={16} className="mt-0.5 text-accent shrink-0" />
