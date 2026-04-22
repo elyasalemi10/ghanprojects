@@ -217,7 +217,7 @@ export default function Home() {
         url="/"
         description="Melbourne's leading property development and investment consulting firm. Expert property advisory, joint venture structuring, buyer's agent services, and strategic property investment guidance."
         image="/images/hero-home.webp"
-        keywords="property development Melbourne, property investment consulting, property advisory Melbourne, joint venture property development, buyer's agent Melbourne, PDCON, property consulting Melbourne, real estate investment Victoria"
+        keywords="property development Melbourne, property investment consulting, property advisory Melbourne, joint venture property development, buyer's agent Melbourne, Ghan Projects, Ghan Property Group, property consulting Melbourne, real estate investment Victoria"
       />
       {/* SECTION 1: HERO */}
       <section ref={heroRef} className="relative min-h-screen flex items-center px-6 lg:px-12 bg-primary overflow-hidden py-24 md:py-0">
@@ -245,7 +245,7 @@ export default function Home() {
               Strategic Property <span className="text-accent">Development</span> & Investment
             </h1>
             <p className="text-lg sm:text-xl md:text-2xl text-white/80 mb-8 md:mb-10 max-w-2xl leading-relaxed">
-              PDCON helps investors, landowners, and developers identify, structure, and deliver high-value property projects across Melbourne.
+              Ghan Projects helps investors, landowners, and developers identify, structure, and deliver high-value property projects across Melbourne.
             </p>
             <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 mb-8">
               <Button asChild size="lg" className="rounded-none px-6 sm:px-8 py-5 sm:py-7 text-base sm:text-lg font-heading font-bold uppercase tracking-wider bg-accent text-white hover:bg-accent/90">
@@ -526,7 +526,7 @@ export default function Home() {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-20 items-center">
             <FadeInWhenVisible>
               <div>
-                <h2 className="text-4xl md:text-5xl font-heading font-bold text-primary mb-8 leading-tight">Join the PDCON <span className="text-accent italic">Investor Network</span></h2>
+                <h2 className="text-4xl md:text-5xl font-heading font-bold text-primary mb-8 leading-tight">Join the Ghan Projects <span className="text-accent italic">Investor Network</span></h2>
                 <p className="text-xl text-muted-foreground mb-10 leading-relaxed">Gain priority access to off-market opportunities, JV projects, and institutional-grade market insights across the Melbourne property landscape.</p>
                 <div className="space-y-6">
                   {[
@@ -622,9 +622,9 @@ export default function Home() {
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
             {[
-              { name: 'David Wilson', role: 'Property Investor', quote: 'The off-market site sourced by PDCON exceeded all our feasibility benchmarks. Their transparency and network in Melbourne is unparalleled.' },
-              { name: 'Sarah Thompson', role: 'Landowner', quote: 'We had a large block but no idea how to develop it. PDCON structured a JV that was win-win for everyone involved. Highly professional.' },
-              { name: 'Marcus Chen', role: 'Developer', quote: 'As a mid-scale developer, I need project management I can trust. PDCON takes the stress out of delivery and keeps things on track.' }
+              { name: 'David Wilson', role: 'Property Investor', quote: 'The off-market site sourced by Ghan Projects exceeded all our feasibility benchmarks. Their transparency and network in Melbourne is unparalleled.' },
+              { name: 'Sarah Thompson', role: 'Landowner', quote: 'We had a large block but no idea how to develop it. Ghan Projects structured a JV that was win-win for everyone involved. Highly professional.' },
+              { name: 'Marcus Chen', role: 'Developer', quote: 'As a mid-scale developer, I need project management I can trust. Ghan Projects takes the stress out of delivery and keeps things on track.' }
             ].map((t, i) => (
               <FadeInWhenVisible key={i} delay={i * 0.1}>
                 <div className="bg-background p-10 border shadow-sm relative italic leading-relaxed text-muted-foreground">
@@ -649,7 +649,7 @@ export default function Home() {
         <div className="max-w-4xl mx-auto relative z-10">
           <FadeInWhenVisible>
             <h2 className="text-5xl md:text-7xl font-heading font-bold mb-8 text-white leading-tight">Start Your Next Property <span className="text-accent italic">Opportunity</span></h2>
-            <p className="text-lg sm:text-xl md:text-2xl text-white/70 mb-8 sm:mb-12 leading-relaxed px-4">Whether you're looking to acquire, develop, or invest, PDCON provides the strategic edge you need in Melbourne's property market.</p>
+            <p className="text-lg sm:text-xl md:text-2xl text-white/70 mb-8 sm:mb-12 leading-relaxed px-4">Whether you're looking to acquire, develop, or invest, Ghan Projects provides the strategic edge you need in Melbourne's property market.</p>
             <div className="flex flex-col sm:flex-row justify-center gap-4 sm:gap-6 px-4">
               <Button asChild size="lg" className="rounded-none px-8 sm:px-12 py-6 sm:py-8 text-sm sm:text-lg font-heading font-bold uppercase tracking-wider bg-accent text-white hover:bg-accent/90">
                 <Link to="/book-consultation">Book Consultation</Link>

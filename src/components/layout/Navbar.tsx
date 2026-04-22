@@ -15,7 +15,7 @@ const navLinks = [
   { name: 'Contact', path: '/contact' },
 ];
 
-const LOGO_URL = "/images/pdcon-logo.webp";
+const LOGO_URL = "/images/ghan-projects-logo-blue.webp";
 
 export function Navbar() {
   const [isScrolled, setIsScrolled] = useState(false);
@@ -50,7 +50,7 @@ export function Navbar() {
         <Link to="/" className="flex items-center gap-2 group">
           <img 
             src={LOGO_URL} 
-            alt="PDCON" 
+            alt="Ghan Projects" 
             className="h-12 md:h-14 w-auto object-contain"
           />
         </Link>

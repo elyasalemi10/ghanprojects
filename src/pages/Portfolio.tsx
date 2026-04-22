@@ -317,7 +317,7 @@ export default function Portfolio() {
         url="/portfolio"
         description="Explore our successful property development projects across Melbourne. Townhouse developments, subdivisions, residential and commercial property investments delivered with strategic expertise."
         image="/images/townhouse-berwick.webp"
-        keywords="property development projects Melbourne, townhouse development Victoria, subdivision development, commercial property development, residential property investment, property portfolio Melbourne, PDCON portfolio"
+        keywords="property development projects Melbourne, townhouse development Victoria, subdivision development, commercial property development, residential property investment, property portfolio Melbourne, Ghan Projects portfolio"
       />
       
       <AnimatePresence>

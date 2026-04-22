@@ -6,17 +6,14 @@ import { Scale, Shield, Briefcase, TrendingUp, Target, Eye } from 'lucide-react'
 import { FadeInWhenVisible } from '@/components/shared/FadeInWhenVisible';
 import { SEO } from '@/components/shared/SEO';
 
-const FOUNDER_IMG = "/founder.jpeg";
-
 export default function About() {
   return (
     <div className="bg-background">
       <SEO 
-        title="About PDCON - Property Development Experts"
+        title="About Ghan Projects - Property Development Experts"
         url="/about"
-        description="Learn about PDCON - Melbourne's trusted property development and investment consulting firm. Our mission, values, and expert approach to delivering exceptional property outcomes."
-        image="/founder.jpeg"
-        keywords="about PDCON, Melbourne property developers, property consulting firm Melbourne, property investment experts Victoria"
+        description="Learn about Ghan Projects - Melbourne's trusted property development and investment consulting firm. Our mission, values, and expert approach to delivering exceptional property outcomes."
+        keywords="about Ghan Projects, Ghan Property Group, Melbourne property developers, property consulting firm Melbourne, property investment experts Victoria"
       />
       {/* Hero */}
       <section className="relative py-32 lg:py-48 px-6 lg:px-12 bg-primary text-white overflow-hidden">
@@ -34,14 +31,14 @@ export default function About() {
             transition={{ duration: 0.8 }}
           >
             <div className="inline-block px-4 py-1 bg-accent/20 border border-accent/30 text-accent text-[10px] font-bold uppercase tracking-widest mb-8">
-              About PDCON
+              About Ghan Projects
             </div>
             <h1 className="text-5xl md:text-7xl font-heading font-bold mb-8">
               Built on Experience,<br />
               <span className="text-accent">Driven by Excellence</span>
             </h1>
             <p className="text-xl md:text-2xl text-white/70 max-w-2xl leading-relaxed">
-              From second-generation construction heritage to industry-leading property development expertise, PDCON transforms your property aspirations into profitable realities.
+              From second-generation construction heritage to industry-leading property development expertise, Ghan Projects transforms your property aspirations into profitable realities.
             </p>
           </motion.div>
         </div>
@@ -49,9 +46,9 @@ export default function About() {
 
       {/* Founder's Journey */}
       <section className="py-32 px-6 lg:px-12">
-        <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-20 items-center">
+        <div className="max-w-7xl mx-auto">
           <FadeInWhenVisible>
-            <div className="space-y-8">
+            <div className="space-y-8 max-w-4xl mx-auto">
               <div className="flex items-center gap-4 mb-4">
                 <div className="w-12 h-1 bg-accent" />
                 <div className="inline-block px-4 py-1 bg-secondary text-primary text-[10px] font-bold uppercase tracking-widest">The Founder's Journey</div>
@@ -59,10 +56,10 @@ export default function About() {
               <h2 className="text-4xl font-heading font-bold text-primary leading-tight">A Vision Forged in Experience</h2>
               <div className="space-y-6 text-muted-foreground leading-relaxed text-lg">
                 <p>
-                  Baqir Rezaie established PDCON in 2013 with a clear vision: to elevate the construction and property development industry through unparalleled subcontracting and strategic client partnerships. As a second-generation professional in the construction field, Baqir didn't just inherit knowledge; he meticulously built upon it.
+                  Baqir Rezaie established Ghan Projects in 2013 with a clear vision: to elevate the construction and property development industry through unparalleled subcontracting and strategic client partnerships. As a second-generation professional in the construction field, Baqir didn't just inherit knowledge; he meticulously built upon it.
                 </p>
                 <p>
-                  This rigorous journey was driven by a deep understanding of the challenges and common pitfalls in property. Baqir's personal experiences, including navigating complex issues and learning from mistakes, now form the bedrock of PDCON's client-centric approach.
+                  This rigorous journey was driven by a deep understanding of the challenges and common pitfalls in property. Baqir's personal experiences, including navigating complex issues and learning from mistakes, now form the bedrock of Ghan Projects' client-centric approach.
                 </p>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 pt-8 border-t">
@@ -78,19 +75,6 @@ export default function About() {
                   <div className="text-3xl font-heading font-bold text-accent">2013</div>
                   <p className="text-sm text-muted-foreground">Established in Melbourne</p>
                 </div>
-              </div>
-            </div>
-          </FadeInWhenVisible>
-          <FadeInWhenVisible delay={0.2}>
-            <div className="relative">
-              <img
-                src={FOUNDER_IMG}
-                className="w-full aspect-[3/4] object-cover grayscale"
-                alt="Baqir Rezaie - Founder"
-              />
-              <div className="absolute -bottom-8 -left-8 w-2/3 h-2/3 bg-accent/10 -z-10" />
-              <div className="absolute top-8 right-8 bg-primary text-white px-6 py-4">
-                <span className="text-xs font-bold uppercase tracking-widest">Founder & Director</span>
               </div>
             </div>
           </FadeInWhenVisible>
@@ -174,12 +158,12 @@ export default function About() {
         </div>
       </section>
 
-      {/* The PDCON Approach */}
+      {/* The Ghan Projects Approach */}
       <section className="py-32 px-6 lg:px-12 bg-background">
         <div className="max-w-7xl mx-auto">
           <FadeInWhenVisible>
             <div className="text-center mb-20">
-              <h2 className="text-4xl md:text-5xl font-heading font-bold text-primary mb-6">The PDCON Approach</h2>
+              <h2 className="text-4xl md:text-5xl font-heading font-bold text-primary mb-6">The Ghan Projects Approach</h2>
               <p className="text-xl text-muted-foreground max-w-2xl mx-auto">Our methodology is built on four pillars of property success.</p>
             </div>
           </FadeInWhenVisible>
@@ -209,7 +193,7 @@ export default function About() {
           <FadeInWhenVisible>
             <h2 className="text-4xl font-heading font-bold mb-6">Ready to Accelerate Your Property Journey?</h2>
             <p className="text-lg text-white/80 mb-10 max-w-2xl mx-auto leading-relaxed">
-              Connect with PDCON today to discuss your unique goals. Let our expertise guide you to smarter decisions and greater success.
+              Connect with Ghan Projects today to discuss your unique goals. Let our expertise guide you to smarter decisions and greater success.
             </p>
             <Button asChild size="lg" className="rounded-none px-12 py-8 text-lg font-heading font-bold uppercase tracking-wider bg-primary text-white hover:bg-primary/90">
               <Link to="/book-consultation">Schedule Your Consultation</Link>

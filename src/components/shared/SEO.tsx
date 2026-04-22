@@ -12,12 +12,12 @@ interface SEOProps {
   keywords?: string;
 }
 
-const SITE_NAME = 'PDCON';
-const DEFAULT_TITLE = 'PDCON | Property Development & Investment Consulting Melbourne';
+const SITE_NAME = 'Ghan Projects';
+const DEFAULT_TITLE = 'Ghan Projects | Property Development & Investment Consulting Melbourne';
 const DEFAULT_DESCRIPTION = "Melbourne's leading property development and investment consulting firm. Expert property advisory, joint venture structuring, buyer's agent services, and strategic property investment guidance.";
-const DEFAULT_IMAGE = 'https://pdcon.com.au/images/pdcon-logo.webp';
-const BASE_URL = 'https://pdcon.com.au';
-const DEFAULT_KEYWORDS = 'property development Melbourne, property investment consulting, property advisory Melbourne, joint venture property development, buyer\'s agent Melbourne, PDCON, property consulting Melbourne';
+const DEFAULT_IMAGE = 'https://ghanprojects.com.au/images/ghan-projects-logo-blue.webp';
+const BASE_URL = 'https://ghanprojects.com.au';
+const DEFAULT_KEYWORDS = 'property development Melbourne, property investment consulting, property advisory Melbourne, joint venture property development, buyer\'s agent Melbourne, Ghan Projects, Ghan Property Group, property consulting Melbourne';
 
 export function SEO({
   title,
@@ -26,7 +26,7 @@ export function SEO({
   url,
   type = 'website',
   publishedTime,
-  author = 'PDCON',
+  author = 'Ghan Projects',
   noindex = false,
   keywords = DEFAULT_KEYWORDS,
 }: SEOProps) {

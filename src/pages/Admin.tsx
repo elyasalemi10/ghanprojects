@@ -417,7 +417,7 @@ export default function Admin() {
                       required
                     />
                     <span className="bg-primary text-white px-4 flex items-center text-sm font-medium">
-                      @pdcon.com.au
+                      @ghanprojects.com.au
                     </span>
                   </div>
                 </div>

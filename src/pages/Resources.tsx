@@ -72,7 +72,7 @@ export default function Resources() {
   return (
     <div className="bg-background">
       <SEO 
-        title="Free Property Development Resources, Tools & Guides | PDCON"
+        title="Free Property Development Resources, Tools & Guides | Ghan Projects"
         url="/resources"
         description="Access free property development calculators, feasibility checklists, due diligence guides, and investment resources. Professional tools for Melbourne property investors and developers."
         keywords="property development resources, rental yield calculator, stamp duty calculator, property feasibility checklist, investment property guides, due diligence checklist, Melbourne property tools"
@@ -309,7 +309,7 @@ export default function Resources() {
           <div className="lg:w-1/2 space-y-6">
             <h2 className="text-3xl md:text-4xl font-heading font-bold text-primary leading-tight">Why We Share Our Proprietary Frameworks</h2>
             <p className="text-lg text-muted-foreground leading-relaxed">
-              At PDCON, we believe in radical transparency. By sharing the tools we use to assess Melbourne's top development sites, we build trust and help our partners understand the rigor required for success.
+              At Ghan Projects, we believe in radical transparency. By sharing the tools we use to assess Melbourne's top development sites, we build trust and help our partners understand the rigor required for success.
             </p>
             <ul className="space-y-3">
               {[

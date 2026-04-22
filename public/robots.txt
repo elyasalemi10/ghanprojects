@@ -1,11 +1,11 @@
-# Robots.txt for PDCON
-# https://pdcon.com.au
+# Robots.txt for Ghan Projects
+# https://ghanprojects.com.au
 
 User-agent: *
 Allow: /
 
 # Sitemap
-Sitemap: https://pdcon.com.au/sitemap.xml
+Sitemap: https://ghanprojects.com.au/sitemap.xml
 
 # Disallow admin pages
 Disallow: /admin

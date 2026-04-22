@@ -88,10 +88,10 @@ export default function BookConsultation() {
         url="/book-consultation"
         description={isShowroomBooking 
           ? "Schedule a visit to our Melbourne showroom. See our project displays and meet our property development specialists in person."
-          : "Schedule a free property development consultation with PDCON. Discuss your property investment strategy, development opportunities, or joint venture partnerships in Melbourne."
+          : "Schedule a free property development consultation with Ghan Projects. Discuss your property investment strategy, development opportunities, or joint venture partnerships in Melbourne."
         }
         keywords={isShowroomBooking
-          ? "book showroom visit Melbourne, property showroom, PDCON showroom, property display Melbourne"
+          ? "book showroom visit Melbourne, property showroom, Ghan Projects showroom, property display Melbourne"
           : "property consultation Melbourne, book property consultant, free property advice, property investment consultation, development consultation Melbourne"
         }
       />
@@ -257,7 +257,7 @@ export default function BookConsultation() {
                       </>
                     )}
                   </Button>
-                  <p className="text-[10px] text-muted-foreground text-center leading-relaxed">By submitting this form, you agree to receive communications from PDCON.</p>
+                  <p className="text-[10px] text-muted-foreground text-center leading-relaxed">By submitting this form, you agree to receive communications from Ghan Projects.</p>
                 </form>
               </div>
             </div>
