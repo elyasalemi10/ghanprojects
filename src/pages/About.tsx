@@ -6,8 +6,6 @@ import { Scale, Shield, Briefcase, TrendingUp, Target, Eye } from 'lucide-react'
 import { FadeInWhenVisible } from '@/components/shared/FadeInWhenVisible';
 import { SEO } from '@/components/shared/SEO';
 
-const FOUNDER_IMG = "/images/founder-portrait.webp";
-
 export default function About() {
   return (
     <div className="bg-background">
@@ -15,7 +13,6 @@ export default function About() {
         title="About Ghan Projects - Property Development Experts"
         url="/about"
         description="Learn about Ghan Projects - Melbourne's trusted property development and investment consulting firm. Our mission, values, and expert approach to delivering exceptional property outcomes."
-        image="/images/founder-portrait.webp"
         keywords="about Ghan Projects, Ghan Property Group, Melbourne property developers, property consulting firm Melbourne, property investment experts Victoria"
       />
       {/* Hero */}
@@ -49,9 +46,9 @@ export default function About() {
 
       {/* Founder's Journey */}
       <section className="py-32 px-6 lg:px-12">
-        <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-20 items-center">
+        <div className="max-w-7xl mx-auto">
           <FadeInWhenVisible>
-            <div className="space-y-8">
+            <div className="space-y-8 max-w-4xl mx-auto">
               <div className="flex items-center gap-4 mb-4">
                 <div className="w-12 h-1 bg-accent" />
                 <div className="inline-block px-4 py-1 bg-secondary text-primary text-[10px] font-bold uppercase tracking-widest">The Founder's Journey</div>
@@ -78,19 +75,6 @@ export default function About() {
                   <div className="text-3xl font-heading font-bold text-accent">2013</div>
                   <p className="text-sm text-muted-foreground">Established in Melbourne</p>
                 </div>
-              </div>
-            </div>
-          </FadeInWhenVisible>
-          <FadeInWhenVisible delay={0.2}>
-            <div className="relative">
-              <img
-                src={FOUNDER_IMG}
-                className="w-full aspect-[3/4] object-cover grayscale"
-                alt="Baqir Rezaie - Founder"
-              />
-              <div className="absolute -bottom-8 -left-8 w-2/3 h-2/3 bg-accent/10 -z-10" />
-              <div className="absolute top-8 right-8 bg-primary text-white px-6 py-4">
-                <span className="text-xs font-bold uppercase tracking-widest">Founder & Director</span>
               </div>
             </div>
           </FadeInWhenVisible>
