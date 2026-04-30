@@ -398,9 +398,9 @@ export default function Home() {
                     ))}
                   </ul>
                   <Button 
-                    onClick={() => navigate({ 
-                      to: '/contact', 
-                      search: { message: `I am interested in an investment pack opportunity for ${opp.title}` } 
+                    onClick={() => navigate({
+                      to: '/book-consultation',
+                      search: { message: `I am interested in an investment pack opportunity for ${opp.title}` }
                     })}
                     className="w-full rounded-none bg-accent hover:bg-accent/90 text-white py-4 sm:py-6 font-heading font-bold uppercase tracking-wider text-[10px] sm:text-xs whitespace-nowrap"
                   >
@@ -652,10 +652,10 @@ export default function Home() {
             <p className="text-lg sm:text-xl md:text-2xl text-white/70 mb-8 sm:mb-12 leading-relaxed px-4">Whether you're looking to acquire, develop, or invest, Ghan Projects provides the strategic edge you need in Melbourne's property market.</p>
             <div className="flex flex-col sm:flex-row justify-center gap-4 sm:gap-6 px-4">
               <Button asChild size="lg" className="rounded-none px-8 sm:px-12 py-6 sm:py-8 text-sm sm:text-lg font-heading font-bold uppercase tracking-wider bg-accent text-white hover:bg-accent/90">
-                <Link to="/book-consultation">Book Consultation</Link>
+                <Link to="/book-consultation">Contact Us</Link>
               </Button>
               <Button asChild size="lg" className="rounded-none px-8 sm:px-12 py-6 sm:py-8 text-sm sm:text-lg font-heading font-bold uppercase tracking-wider bg-white text-primary hover:bg-white/90">
-                <Link to="/contact">Contact Us</Link>
+                <Link to="/invest">Invest With Us</Link>
               </Button>
             </div>
           </FadeInWhenVisible>

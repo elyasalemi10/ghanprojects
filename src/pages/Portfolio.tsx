@@ -390,10 +390,10 @@ export default function Portfolio() {
                     </li>
                   ))}
                 </ul>
-                <Button 
-                  onClick={() => navigate({ 
-                    to: '/contact', 
-                    search: { message: `I am interested in an investment pack opportunity for ${opp.title}` } 
+                <Button
+                  onClick={() => navigate({
+                    to: '/book-consultation',
+                    search: { message: `I am interested in an investment pack opportunity for ${opp.title}` }
                   })}
                   className="w-full rounded-none bg-accent hover:bg-accent/90 text-white py-6 font-heading font-bold uppercase tracking-wider text-xs"
                 >

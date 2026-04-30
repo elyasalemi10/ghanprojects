@@ -32,6 +32,7 @@ export function Footer() {
               <Link to="/about" className="text-white/70 hover:text-accent transition-colors text-sm">About</Link>
               <Link to="/services" className="text-white/70 hover:text-accent transition-colors text-sm">Services</Link>
               <Link to="/portfolio" className="text-white/70 hover:text-accent transition-colors text-sm">Portfolio</Link>
+              <Link to="/invest" className="text-white/70 hover:text-accent transition-colors text-sm">Invest</Link>
               <Link to="/insights" className="text-white/70 hover:text-accent transition-colors text-sm">Insights</Link>
               <Link to="/resources" className="text-white/70 hover:text-accent transition-colors text-sm">Resources</Link>
             </nav>
@@ -43,7 +44,7 @@ export function Footer() {
             <ul className="space-y-3">
               <li className="flex items-start gap-3 text-white/70 hover:text-accent transition-colors">
                 <Phone size={16} className="mt-0.5 text-accent shrink-0" />
-                <a href="tel:+61408255259" className="text-sm">0408 255 259</a>
+                <a href="tel:+61390017797" className="text-sm">03 9001 7797</a>
               </li>
               <li className="flex items-start gap-3 text-white/70 hover:text-accent transition-colors">
                 <Mail size={16} className="mt-0.5 text-accent shrink-0" />
@@ -64,9 +65,9 @@ export function Footer() {
           <div>
             <h3 className="font-heading font-bold text-sm mb-6 uppercase tracking-widest text-accent">Get Started</h3>
             <nav className="flex flex-col gap-3">
-              <Link to="/book-consultation" className="text-white/70 hover:text-accent transition-colors text-sm">Book Consultation</Link>
+              <Link to="/book-consultation" className="text-white/70 hover:text-accent transition-colors text-sm">Contact Us</Link>
               <Link to="/book-consultation?type=showroom-booking" className="text-white/70 hover:text-accent transition-colors text-sm">Book Showroom Visit</Link>
-              <Link to="/contact" className="text-white/70 hover:text-accent transition-colors text-sm">Contact Us</Link>
+              <Link to="/invest" className="text-white/70 hover:text-accent transition-colors text-sm">Invest With Us</Link>
             </nav>
           </div>
         </div>

@@ -10,7 +10,7 @@ import Insights from '@/pages/Insights';
 import InsightPost from '@/pages/InsightPost';
 import Resources from '@/pages/Resources';
 import ResourcePage from '@/pages/ResourcePage';
-import Contact from '@/pages/Contact';
+import Invest from '@/pages/Invest';
 import BookConsultation from '@/pages/BookConsultation';
 import Admin from '@/pages/Admin';
 import NotFound from '@/pages/NotFound';
@@ -103,10 +103,10 @@ const resourcePageRoute = createRoute({
   component: ResourcePage,
 });
 
-const contactRoute = createRoute({
+const investRoute = createRoute({
   getParentRoute: () => rootRoute,
-  path: '/contact',
-  component: Contact,
+  path: '/invest',
+  component: Invest,
 });
 
 const bookConsultationRoute = createRoute({
@@ -130,7 +130,7 @@ const routeTree = rootRoute.addChildren([
   insightPostRoute,
   resourcesRoute,
   resourcePageRoute,
-  contactRoute,
+  investRoute,
   bookConsultationRoute,
   adminRoute,
 ]);

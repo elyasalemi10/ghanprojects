@@ -56,7 +56,7 @@ export default function NotFound() {
             <span className="text-muted-foreground">•</span>
             <Link to="/insights" className="text-primary hover:text-accent transition-colors font-medium">Insights</Link>
             <span className="text-muted-foreground">•</span>
-            <Link to="/contact" className="text-primary hover:text-accent transition-colors font-medium">Contact</Link>
+            <Link to="/book-consultation" className="text-primary hover:text-accent transition-colors font-medium">Contact</Link>
           </div>
         </div>
       </motion.div>

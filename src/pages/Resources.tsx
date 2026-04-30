@@ -293,10 +293,10 @@ export default function Resources() {
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center pt-4">
               <Button asChild size="lg" className="rounded-none bg-accent hover:bg-accent/90 text-white px-8 py-6 font-heading font-bold uppercase tracking-wider">
-                <Link to="/book-consultation">Book Free Consultation</Link>
+                <Link to="/book-consultation">Contact Us</Link>
               </Button>
               <Button asChild size="lg" variant="outline" className="rounded-none border-white/30 text-white hover:bg-white/10 px-8 py-6 font-heading font-bold uppercase tracking-wider">
-                <Link to="/contact">Contact Us</Link>
+                <Link to="/invest">Investment Opportunities</Link>
               </Button>
             </div>
           </motion.div>

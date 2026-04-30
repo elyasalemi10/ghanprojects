@@ -1,21 +1,23 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { useSearch } from '@tanstack/react-router';
 import { Button } from '@/components/ui/button';
-import { 
+import {
   Accordion,
   AccordionContent,
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-import { 
-  PhoneCall, 
-  Calendar, 
-  CheckCircle2, 
+import {
+  PhoneCall,
+  Calendar,
+  CheckCircle2,
   Clock,
   ShieldCheck,
   Target,
-  MapPin
+  MapPin,
+  Phone,
+  Mail
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { SEO } from '@/components/shared/SEO';
@@ -24,8 +26,19 @@ const API_URL = import.meta.env.PROD ? '' : 'http://localhost:3001';
 
 export default function BookConsultation() {
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const search = useSearch({ strict: false }) as { type?: string };
+  const search = useSearch({ strict: false }) as { type?: string; message?: string };
   const isShowroomBooking = search.type === 'showroom-booking';
+  const [messageValue, setMessageValue] = useState('');
+  const formRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (search.message) {
+      setMessageValue(search.message);
+      setTimeout(() => {
+        formRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }, 300);
+    }
+  }, [search.message]);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -83,16 +96,16 @@ export default function BookConsultation() {
 
   return (
     <div className="bg-background min-h-screen">
-      <SEO 
-        title={isShowroomBooking ? "Book Showroom Visit Melbourne" : "Book Property Consultation Melbourne"}
+      <SEO
+        title={isShowroomBooking ? "Book Showroom Visit Melbourne" : "Contact Ghan Projects Melbourne"}
         url="/book-consultation"
-        description={isShowroomBooking 
+        description={isShowroomBooking
           ? "Schedule a visit to our Melbourne showroom. See our project displays and meet our property development specialists in person."
-          : "Schedule a free property development consultation with Ghan Projects. Discuss your property investment strategy, development opportunities, or joint venture partnerships in Melbourne."
+          : "Contact Ghan Projects for property development consulting, investment advisory, and joint venture opportunities in Melbourne. Schedule your free strategy call today."
         }
         keywords={isShowroomBooking
           ? "book showroom visit Melbourne, property showroom, Ghan Projects showroom, property display Melbourne"
-          : "property consultation Melbourne, book property consultant, free property advice, property investment consultation, development consultation Melbourne"
+          : "contact Ghan Projects, property consultation Melbourne, contact property consultant, property advisory Melbourne, property investment Melbourne"
         }
       />
       {/* Hero */}
@@ -111,20 +124,66 @@ export default function BookConsultation() {
               {isShowroomBooking ? (
                 <>Book a <span className="text-accent italic">Showroom Visit</span></>
               ) : (
-                <>Book a <span className="text-accent italic">Consultation</span></>
+                <>Contact <span className="text-accent italic">Us</span></>
               )}
             </h1>
             <p className="text-lg sm:text-xl md:text-2xl text-white/70 max-w-2xl mx-auto leading-relaxed px-4">
-              {isShowroomBooking 
+              {isShowroomBooking
                 ? 'Visit our Melbourne showroom to view project displays and discuss your property goals in person.'
-                : 'Tell us about your property goals. Our specialists will review your requirements and respond within 1 business day.'
+                : 'Whether you\'re exploring a joint venture, seeking advisory, or looking for your next acquisition — tell us about your property goals and our specialists will respond within 1 business day.'
               }
             </p>
           </motion.div>
         </div>
       </section>
 
-      <section className="py-16 lg:py-24 px-4 sm:px-6 lg:px-12">
+      {/* Direct Contact Strip */}
+      {!isShowroomBooking && (
+        <section className="py-12 lg:py-16 px-4 sm:px-6 lg:px-12 bg-secondary/30 border-b">
+          <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+            <div className="flex items-start gap-4">
+              <div className="w-12 h-12 rounded-full bg-accent/10 flex items-center justify-center text-accent shrink-0">
+                <Phone size={20} />
+              </div>
+              <div>
+                <span className="block text-[10px] uppercase tracking-widest font-bold text-muted-foreground mb-1">Phone</span>
+                <a href="tel:+61390017797" className="text-primary font-bold hover:text-accent transition-colors">03 9001 7797</a>
+              </div>
+            </div>
+            <div className="flex items-start gap-4">
+              <div className="w-12 h-12 rounded-full bg-accent/10 flex items-center justify-center text-accent shrink-0">
+                <Mail size={20} />
+              </div>
+              <div>
+                <span className="block text-[10px] uppercase tracking-widest font-bold text-muted-foreground mb-1">Email</span>
+                <a href="mailto:info@ghanprojects.com.au" className="text-primary font-bold hover:text-accent transition-colors break-all">info@ghanprojects.com.au</a>
+              </div>
+            </div>
+            <div className="flex items-start gap-4">
+              <div className="w-12 h-12 rounded-full bg-accent/10 flex items-center justify-center text-accent shrink-0">
+                <MapPin size={20} />
+              </div>
+              <div>
+                <span className="block text-[10px] uppercase tracking-widest font-bold text-muted-foreground mb-1">Office</span>
+                <span className="text-primary font-bold block">7 Hammel Court</span>
+                <span className="block text-xs text-muted-foreground mt-1">Hallam 3803, Victoria</span>
+              </div>
+            </div>
+            <div className="flex items-start gap-4">
+              <div className="w-12 h-12 rounded-full bg-accent/10 flex items-center justify-center text-accent shrink-0">
+                <Clock size={20} />
+              </div>
+              <div>
+                <span className="block text-[10px] uppercase tracking-widest font-bold text-muted-foreground mb-1">Office Hours</span>
+                <span className="text-primary font-bold block">Mon–Fri: 9AM–5PM</span>
+                <span className="block text-xs text-muted-foreground mt-1">Weekends: By Appointment</span>
+              </div>
+            </div>
+          </div>
+        </section>
+      )}
+
+      <section ref={formRef} className="py-16 lg:py-24 px-4 sm:px-6 lg:px-12">
         <div className="max-w-7xl mx-auto">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-20">
             {/* Form Column */}
@@ -235,11 +294,13 @@ export default function BookConsultation() {
                       </div>
                       <div className="space-y-2">
                         <label className="text-[10px] uppercase tracking-widest font-bold text-primary">Message / Project Details</label>
-                        <textarea 
-                          name="message" 
-                          required 
+                        <textarea
+                          name="message"
+                          required
                           rows={4}
                           placeholder="Brief overview of your property goals..."
+                          value={messageValue}
+                          onChange={(e) => setMessageValue(e.target.value)}
                           className="w-full bg-secondary/30 border border-border p-4 sm:p-5 focus:outline-none focus:ring-2 focus:ring-accent transition-all text-sm font-medium resize-none"
                         ></textarea>
                       </div>
@@ -389,6 +450,18 @@ export default function BookConsultation() {
           </div>
         </div>
       </section>
+
+      {/* Map Placeholder */}
+      {!isShowroomBooking && (
+        <section className="h-[400px] w-full bg-secondary grayscale">
+          <div className="w-full h-full flex items-center justify-center bg-secondary/50 border-y">
+            <div className="text-center space-y-4">
+              <MapPin size={48} className="mx-auto text-primary/20" />
+              <span className="text-xs uppercase tracking-[0.3em] font-bold text-muted-foreground/60">7 Hammel Court, Hallam 3803, Victoria</span>
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* Trust Badges */}
       <section className="py-16 lg:py-20 px-6 lg:px-12 bg-secondary/10 border-t">

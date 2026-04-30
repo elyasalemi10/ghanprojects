@@ -1231,7 +1231,7 @@ app.get('/sitemap.xml', async (req, res) => {
     { url: '/services', priority: '0.9', changefreq: 'monthly' },
     { url: '/projects', priority: '0.8', changefreq: 'weekly' },
     { url: '/insights', priority: '0.9', changefreq: 'daily' },
-    { url: '/contact', priority: '0.7', changefreq: 'monthly' },
+    { url: '/invest', priority: '0.8', changefreq: 'weekly' },
     { url: '/resources', priority: '0.7', changefreq: 'monthly' },
     { url: '/resources/ai-assistant', priority: '0.8', changefreq: 'monthly' },
     { url: '/resources/rental-yield-calculator', priority: '0.8', changefreq: 'monthly' },

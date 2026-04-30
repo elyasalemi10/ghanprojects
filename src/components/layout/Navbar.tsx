@@ -10,9 +10,9 @@ const navLinks = [
   { name: 'About', path: '/about' },
   { name: 'Services', path: '/services' },
   { name: 'Portfolio', path: '/portfolio' },
+  { name: 'Invest', path: '/invest' },
   { name: 'Insights', path: '/insights' },
   { name: 'Resources', path: '/resources' },
-  { name: 'Contact', path: '/contact' },
 ];
 
 const LOGO_URL = "/images/ghan-projects-logo-blue.webp";
@@ -77,7 +77,7 @@ export function Navbar() {
             asChild
             className="rounded-none px-6 font-heading font-bold uppercase tracking-wider text-xs bg-primary text-white hover:bg-primary/90"
           >
-            <Link to="/book-consultation">Book Consultation</Link>
+            <Link to="/book-consultation">Contact Us</Link>
           </Button>
         </div>
 
@@ -117,7 +117,7 @@ export function Navbar() {
                 asChild
                 className="mt-6 w-full rounded-none py-6 font-heading font-bold uppercase tracking-wider bg-primary"
               >
-                <Link to="/book-consultation">Book Consultation</Link>
+                <Link to="/book-consultation">Contact Us</Link>
               </Button>
             </nav>
           </motion.div>

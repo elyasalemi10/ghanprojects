@@ -261,10 +261,10 @@ export default function Services() {
             <p className="text-xl text-white/80 mb-12">Every project is unique. Let's discuss how we can tailor our services to your specific property goals.</p>
             <div className="flex flex-col sm:flex-row justify-center gap-6">
               <Button asChild size="lg" className="rounded-none px-12 py-8 text-lg font-heading font-bold uppercase tracking-wider bg-primary text-white hover:bg-primary/90">
-                <Link to="/book-consultation">Request Call Back</Link>
+                <Link to="/book-consultation">Contact Us</Link>
               </Button>
               <Button asChild size="lg" className="rounded-none px-12 py-8 text-lg font-heading font-bold uppercase tracking-wider bg-white text-accent hover:bg-white/90">
-                <Link to="/contact">Contact Us</Link>
+                <Link to="/invest">Invest With Us</Link>
               </Button>
             </div>
           </FadeInWhenVisible>
