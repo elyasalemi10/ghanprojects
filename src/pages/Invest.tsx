@@ -198,7 +198,7 @@ export default function Invest() {
                 asChild
                 size="lg"
                 variant="outline"
-                className="rounded-none px-12 py-8 text-lg font-heading font-bold uppercase tracking-wider border-white text-white hover:bg-white hover:text-primary"
+                className="rounded-none px-12 py-8 text-lg font-heading font-bold uppercase tracking-wider border-white text-primary hover:bg-white hover:text-primary"
               >
                 <Link to="/portfolio">
                   View Our Portfolio <ChevronRight size={18} className="ml-2" />
