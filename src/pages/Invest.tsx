@@ -177,7 +177,7 @@ export default function Invest() {
       </section>
 
       {/* CTA */}
-      <section className="py-24 px-6 lg:px-12 bg-accent text-white text-center">
+      <section className="py-24 px-6 lg:px-12 bg-primary text-white text-center">
         <div className="max-w-4xl mx-auto">
           <FadeInWhenVisible>
             <h2 className="text-4xl font-heading font-bold mb-6">
@@ -190,7 +190,7 @@ export default function Invest() {
               <Button
                 asChild
                 size="lg"
-                className="rounded-none px-12 py-8 text-lg font-heading font-bold uppercase tracking-wider bg-primary text-white hover:bg-primary/90"
+                className="rounded-none px-12 py-8 text-lg font-heading font-bold uppercase tracking-wider bg-accent text-white hover:bg-accent/90"
               >
                 <Link to="/book-consultation">Speak With An Advisor</Link>
               </Button>
@@ -198,7 +198,7 @@ export default function Invest() {
                 asChild
                 size="lg"
                 variant="outline"
-                className="rounded-none px-12 py-8 text-lg font-heading font-bold uppercase tracking-wider border-white text-white hover:bg-white hover:text-accent"
+                className="rounded-none px-12 py-8 text-lg font-heading font-bold uppercase tracking-wider border-white text-white hover:bg-white hover:text-primary"
               >
                 <Link to="/portfolio">
                   View Our Portfolio <ChevronRight size={18} className="ml-2" />
