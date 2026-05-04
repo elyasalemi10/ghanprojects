@@ -1,36 +1,87 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Plus, Edit, Trash2, X, Search } from 'lucide-react';
 import { toast } from 'sonner';
 import { authFetch, hasPermission } from '@/lib/auth';
 import { useAdminUser } from '../AdminLayout';
+import { label, PROJECT_STATUS_LABELS } from '@/lib/format';
 import {
-  Field, TextInput, TextArea, Select, NumericInput, DatePicker, LoadingBlock, LoadingValue,
+  Field, TextInput, TextArea, Select, NumericInput, DatePicker,
+  LoadingBlock, LoadingValue, Section, AdvancedSettings,
 } from '@/components/admin/form-controls';
+import { BankSelect, bankByKey } from '@/components/admin/bank-select';
+import {
+  LineItemsEditor, lineItemsToStorage, lineItemsFromStorage, lineItemsTotal,
+  type LineItem,
+} from '@/components/admin/line-items';
+
+interface StoredLineItem { label: string; amount: number }
 
 interface Project {
   id: string;
   name: string;
   description: string | null;
   address: string | null;
-  status: string;
+  status: 'PLANNING' | 'ACTIVE' | 'COMPLETED' | 'ON_HOLD';
   total_cost: string | null;
   total_revenue: string | null;
   total_profit: string | null;
+  cost_line_items: StoredLineItem[] | null;
+  revenue_line_items: StoredLineItem[] | null;
   start_date: string | null;
   estimated_completion: string | null;
   actual_completion: string | null;
-  custom_fields: Record<string, unknown> | null;
   created_at: string;
 }
 
-const STATUSES = ['PLANNING', 'ACTIVE', 'COMPLETED', 'ON_HOLD'];
+const STATUSES: Array<Project['status']> = ['PLANNING', 'ACTIVE', 'COMPLETED', 'ON_HOLD'];
+const REPAYMENT_FREQUENCIES = ['MONTHLY', 'FORTNIGHTLY', 'WEEKLY', 'QUARTERLY', 'OTHER'];
 
-const empty = {
-  name: '', description: '', address: '', status: 'PLANNING',
-  total_cost: '', total_revenue: '', total_profit: '',
-  start_date: '', estimated_completion: '', actual_completion: '',
-  custom_fields_text: '',
+const emptyProject = {
+  name: '',
+  description: '',
+  address: '',
+  status: 'PLANNING' as Project['status'],
+  start_date: '',
+  estimated_completion: '',
+  actual_completion: '',
+  cost_items: [] as LineItem[],
+  revenue_items: [] as LineItem[],
+  profit_override: '', // empty = use auto-calculated
+};
+
+const emptyBankLoan = {
+  enabled: false,
+  bank_key: '',
+  loan_account_number: '',
+  loan_type: 'CONSTRUCTION' as 'CONSTRUCTION' | 'OTHER',
+  loan_type_other: '',
+  secured: true,
+  secured_to: '',
+  facility_limit: '',
+  amount_drawn: '',
+  amount_available: '',
+  interest_rate: '',
+  interest_rate_type: 'FIXED' as 'FIXED' | 'VARIABLE',
+  interest_rate_pegged_to: '',
+  interest_rate_date: '',
+  settlement_date: '',
+  maturity_date: '',
+  io_period_months: '',
+  pi_period_months: '',
+  repayment_frequency: 'MONTHLY',
+  min_monthly_repayment: '',
+  direct_debit_day: '',
+  debit_bsb: '',
+  debit_account_number: '',
+  establishment_fee: '',
+  ongoing_fees: '',
+  early_repayment_terms: '',
+  loan_agreement_url: '',
+  mortgage_documents_url: '',
+  valuation_report_url: '',
+  covenants: '',
+  notes: '',
 };
 
 export default function Projects() {
@@ -40,7 +91,8 @@ export default function Projects() {
   const [search, setSearch] = useState('');
   const [editing, setEditing] = useState<Project | null>(null);
   const [creating, setCreating] = useState(false);
-  const [form, setForm] = useState(empty);
+  const [project, setProject] = useState(emptyProject);
+  const [bankLoan, setBankLoan] = useState(emptyBankLoan);
   const [saving, setSaving] = useState(false);
 
   const canCreate = hasPermission(user, 'projects', 'create') || user.role === 'OWNER';
@@ -61,50 +113,130 @@ export default function Projects() {
   const open = (p?: Project) => {
     if (p) {
       setEditing(p);
-      setForm({
-        name: p.name, description: p.description || '', address: p.address || '',
+      setProject({
+        name: p.name,
+        description: p.description || '',
+        address: p.address || '',
         status: p.status,
-        total_cost: p.total_cost || '', total_revenue: p.total_revenue || '', total_profit: p.total_profit || '',
-        start_date: p.start_date || '', estimated_completion: p.estimated_completion || '',
+        start_date: p.start_date || '',
+        estimated_completion: p.estimated_completion || '',
         actual_completion: p.actual_completion || '',
-        custom_fields_text: p.custom_fields ? JSON.stringify(p.custom_fields, null, 2) : '',
+        cost_items: lineItemsFromStorage(p.cost_line_items),
+        revenue_items: lineItemsFromStorage(p.revenue_line_items),
+        profit_override: p.total_profit || '',
       });
+      setBankLoan(emptyBankLoan); // editing project doesn't change bank loan here
     } else {
-      setEditing(null); setForm(empty);
+      setEditing(null);
+      setProject(emptyProject);
+      setBankLoan(emptyBankLoan);
     }
     setCreating(true);
   };
 
-  const close = () => { setCreating(false); setEditing(null); setForm(empty); };
+  const close = () => {
+    setCreating(false); setEditing(null);
+    setProject(emptyProject); setBankLoan(emptyBankLoan);
+  };
+
+  const totalCost = useMemo(() => lineItemsTotal(project.cost_items), [project.cost_items]);
+  const totalRevenue = useMemo(() => lineItemsTotal(project.revenue_items), [project.revenue_items]);
+  const autoProfit = totalRevenue - totalCost;
+  const finalProfit = project.profit_override === '' ? autoProfit : Number(project.profit_override);
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (project.status === 'COMPLETED' && !project.actual_completion) {
+      toast.error('Please pick the actual completion date');
+      return;
+    }
+    if (bankLoan.enabled && !bankLoan.bank_key) {
+      toast.error('Pick a bank or untick "Add bank facility"');
+      return;
+    }
+    if (bankLoan.enabled && bankLoan.loan_type === 'OTHER' && !bankLoan.loan_type_other) {
+      toast.error('Specify the loan type');
+      return;
+    }
+    if (bankLoan.enabled && bankLoan.secured && !bankLoan.secured_to) {
+      toast.error('What is this loan secured to?');
+      return;
+    }
+
     setSaving(true);
     try {
-      let custom_fields: Record<string, unknown> | null = null;
-      if (form.custom_fields_text.trim()) {
-        try { custom_fields = JSON.parse(form.custom_fields_text); }
-        catch { toast.error('Custom fields must be valid JSON'); setSaving(false); return; }
-      }
       const num = (v: string) => v === '' ? null : Number(v);
       const date = (v: string) => v || null;
-      const body = {
-        name: form.name, description: form.description || null, address: form.address || null,
-        status: form.status,
-        total_cost: num(form.total_cost), total_revenue: num(form.total_revenue), total_profit: num(form.total_profit),
-        start_date: date(form.start_date), estimated_completion: date(form.estimated_completion),
-        actual_completion: date(form.actual_completion), custom_fields,
+
+      const projectPayload = {
+        name: project.name,
+        description: project.description || null,
+        address: project.address || null,
+        status: project.status,
+        total_cost: totalCost > 0 ? totalCost : null,
+        total_revenue: totalRevenue > 0 ? totalRevenue : null,
+        total_profit: finalProfit !== 0 ? finalProfit : null,
+        cost_line_items: project.cost_items.length > 0 ? lineItemsToStorage(project.cost_items) : null,
+        revenue_line_items: project.revenue_items.length > 0 ? lineItemsToStorage(project.revenue_items) : null,
+        start_date: date(project.start_date),
+        estimated_completion: date(project.estimated_completion),
+        actual_completion: project.status === 'COMPLETED' ? date(project.actual_completion) : null,
       };
-      const res = await authFetch(
-        editing ? `/api/admin/projects/${editing.id}` : '/api/admin/projects',
-        { method: editing ? 'PUT' : 'POST', body: JSON.stringify(body) }
-      );
-      if (res.ok) {
-        toast.success(editing ? 'Project updated' : 'Project created');
-        close(); load();
+
+      if (editing) {
+        const res = await authFetch(`/api/admin/projects/${editing.id}`, {
+          method: 'PUT', body: JSON.stringify(projectPayload),
+        });
+        if (res.ok) { toast.success('Project updated'); close(); load(); }
+        else { const err = await res.json().catch(() => ({})); toast.error(err.error || 'Save failed'); }
       } else {
-        const err = await res.json().catch(() => ({}));
-        toast.error(err.error || 'Save failed');
+        // Create + optional bank loan in one call
+        const bank = bankByKey(bankLoan.bank_key);
+        const bankLoanPayload = bankLoan.enabled && bank ? {
+          bank_key: bank.key,
+          bank_name: bank.name,
+          loan_account_number: bankLoan.loan_account_number || null,
+          loan_type: bankLoan.loan_type,
+          loan_type_other: bankLoan.loan_type === 'OTHER' ? bankLoan.loan_type_other : null,
+          secured: bankLoan.secured,
+          secured_to: bankLoan.secured ? bankLoan.secured_to : null,
+          facility_limit: num(bankLoan.facility_limit),
+          amount_drawn: num(bankLoan.amount_drawn),
+          amount_available: num(bankLoan.amount_available),
+          interest_rate: num(bankLoan.interest_rate),
+          interest_rate_type: bankLoan.interest_rate_type,
+          interest_rate_pegged_to: bankLoan.interest_rate_type === 'VARIABLE' ? bankLoan.interest_rate_pegged_to || null : null,
+          interest_rate_date: date(bankLoan.interest_rate_date),
+          settlement_date: date(bankLoan.settlement_date),
+          maturity_date: date(bankLoan.maturity_date),
+          io_period_months: num(bankLoan.io_period_months),
+          pi_period_months: num(bankLoan.pi_period_months),
+          repayment_frequency: bankLoan.repayment_frequency,
+          min_monthly_repayment: num(bankLoan.min_monthly_repayment),
+          direct_debit_day: num(bankLoan.direct_debit_day),
+          debit_bsb: bankLoan.debit_bsb || null,
+          debit_account_number: bankLoan.debit_account_number || null,
+          establishment_fee: num(bankLoan.establishment_fee),
+          ongoing_fees: bankLoan.ongoing_fees || null,
+          early_repayment_terms: bankLoan.early_repayment_terms || null,
+          loan_agreement_url: bankLoan.loan_agreement_url || null,
+          mortgage_documents_url: bankLoan.mortgage_documents_url || null,
+          valuation_report_url: bankLoan.valuation_report_url || null,
+          covenants: bankLoan.covenants || null,
+          notes: bankLoan.notes || null,
+        } : null;
+
+        const res = await authFetch('/api/admin/projects/with-bank-loan', {
+          method: 'POST',
+          body: JSON.stringify({ project: projectPayload, bankLoan: bankLoanPayload }),
+        });
+        if (res.ok) {
+          toast.success(bankLoanPayload ? 'Project & bank facility created' : 'Project created');
+          close(); load();
+        } else {
+          const err = await res.json().catch(() => ({}));
+          toast.error(err.error || 'Save failed');
+        }
       }
     } finally {
       setSaving(false);
@@ -115,86 +247,280 @@ export default function Projects() {
     if (!confirm(`Delete ${p.name}?`)) return;
     const res = await authFetch(`/api/admin/projects/${p.id}`, { method: 'DELETE' });
     if (res.ok) { toast.success('Project deleted'); load(); }
-    else {
-      const err = await res.json().catch(() => ({}));
-      toast.error(err.error || 'Delete failed');
-    }
+    else { const err = await res.json().catch(() => ({})); toast.error(err.error || 'Delete failed'); }
   };
 
   const filtered = list.filter((p) => p.name.toLowerCase().includes(search.toLowerCase()));
 
+  // ============================================================================
+  // CREATE / EDIT FORM
+  // ============================================================================
   if (creating) {
+    const isProfitOverridden = project.profit_override !== '';
+    const showActualCompletion = project.status === 'COMPLETED';
+    const showOtherLoanType = bankLoan.loan_type === 'OTHER';
+    const showPeggedTo = bankLoan.interest_rate_type === 'VARIABLE';
+
     return (
-      <div className="bg-white p-10 border shadow-xl">
-        <div className="flex justify-between items-center mb-6">
+      <div className="space-y-6">
+        <div className="bg-white p-6 border shadow-xl flex justify-between items-center">
           <h2 className="text-xl font-heading font-bold text-primary">
             {editing ? 'Edit Project' : 'New Project'}
           </h2>
           <Button variant="outline" onClick={close}><X size={16} /> Cancel</Button>
         </div>
+
         <form onSubmit={submit} className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <Field label="Name" required>
-              <TextInput value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} required />
-            </Field>
-            <Field label="Status">
-              <Select value={form.status} onChange={(e) => setForm({ ...form, status: e.target.value })}>
-                {STATUSES.map((s) => <option key={s} value={s}>{s}</option>)}
-              </Select>
-            </Field>
-            <Field label="Address">
-              <TextInput value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} />
-            </Field>
-            <Field label="Description">
-              <TextArea rows={3} value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />
-            </Field>
+          <Section title="Basics">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <Field label="Name" required>
+                <TextInput value={project.name} onChange={(e) => setProject({ ...project, name: e.target.value })} required />
+              </Field>
+              <Field label="Status">
+                <Select value={project.status} onChange={(e) => setProject({ ...project, status: e.target.value as Project['status'] })}>
+                  {STATUSES.map((s) => <option key={s} value={s}>{label(s, PROJECT_STATUS_LABELS)}</option>)}
+                </Select>
+              </Field>
+              <Field label="Address">
+                <TextInput value={project.address} onChange={(e) => setProject({ ...project, address: e.target.value })} />
+              </Field>
+              <Field label="Description">
+                <TextArea rows={3} value={project.description} onChange={(e) => setProject({ ...project, description: e.target.value })} />
+              </Field>
+            </div>
+          </Section>
+
+          <Section title="Financials" description="Break down the cost and revenue line by line. Profit auto-calculates from the difference, but you can override.">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              <LineItemsEditor
+                label="Estimated Cost"
+                items={project.cost_items}
+                onChange={(items) => setProject({ ...project, cost_items: items })}
+                addLabel="Add cost item"
+              />
+              <LineItemsEditor
+                label="Estimated Revenue"
+                items={project.revenue_items}
+                onChange={(items) => setProject({ ...project, revenue_items: items })}
+                addLabel="Add revenue item"
+              />
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="bg-secondary/30 border-l-4 border-primary p-4">
+                <p className="text-[10px] uppercase tracking-widest font-bold text-muted-foreground">Total Cost</p>
+                <p className="text-lg font-heading font-bold text-primary mt-1">{aud(totalCost)}</p>
+              </div>
+              <div className="bg-secondary/30 border-l-4 border-primary p-4">
+                <p className="text-[10px] uppercase tracking-widest font-bold text-muted-foreground">Total Revenue</p>
+                <p className="text-lg font-heading font-bold text-primary mt-1">{aud(totalRevenue)}</p>
+              </div>
+              <div className="bg-accent/10 border-l-4 border-accent p-4 space-y-2">
+                <div className="flex items-center justify-between">
+                  <p className="text-[10px] uppercase tracking-widest font-bold text-muted-foreground">Estimated Profit {isProfitOverridden ? '(override)' : '(auto)'}</p>
+                  {isProfitOverridden && (
+                    <button type="button" onClick={() => setProject({ ...project, profit_override: '' })} className="text-[10px] text-accent hover:underline">use auto</button>
+                  )}
+                </div>
+                <NumericInput
+                  prefix="$"
+                  value={isProfitOverridden ? project.profit_override : String(autoProfit)}
+                  onChange={(v) => setProject({ ...project, profit_override: v })}
+                />
+              </div>
+            </div>
+          </Section>
+
+          <Section title="Timeline">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <Field label="Start Date">
+                <DatePicker value={project.start_date} onChange={(v) => setProject({ ...project, start_date: v })} />
+              </Field>
+              <Field label="Estimated Completion">
+                <DatePicker value={project.estimated_completion} onChange={(v) => setProject({ ...project, estimated_completion: v })} />
+              </Field>
+              {showActualCompletion && (
+                <Field label="Actual Completion" required>
+                  <DatePicker value={project.actual_completion} onChange={(v) => setProject({ ...project, actual_completion: v })} required />
+                </Field>
+              )}
+            </div>
+          </Section>
+
+          {!editing && (
+            <Section title="Bank Facility" description="Optional. Link this project to a bank loan. The lender is the bank, no investor account is created.">
+              <label className="flex items-center gap-3 text-sm cursor-pointer">
+                <input
+                  type="checkbox" checked={bankLoan.enabled}
+                  onChange={(e) => setBankLoan({ ...bankLoan, enabled: e.target.checked })}
+                  className="w-4 h-4 accent-accent"
+                />
+                <span>Add a bank facility for this project</span>
+              </label>
+
+              {bankLoan.enabled && (
+                <div className="space-y-6 pt-4 border-t">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <Field label="Bank" required>
+                      <BankSelect value={bankLoan.bank_key} onChange={(v) => setBankLoan({ ...bankLoan, bank_key: v })} />
+                    </Field>
+                    <Field label="Loan Account Number">
+                      <TextInput value={bankLoan.loan_account_number} onChange={(e) => setBankLoan({ ...bankLoan, loan_account_number: e.target.value })} />
+                    </Field>
+                    <Field label="Loan Type" required>
+                      <Select value={bankLoan.loan_type} onChange={(e) => setBankLoan({ ...bankLoan, loan_type: e.target.value as 'CONSTRUCTION' | 'OTHER' })}>
+                        <option value="CONSTRUCTION">Construction</option>
+                        <option value="OTHER">Other (specify)</option>
+                      </Select>
+                    </Field>
+                    {showOtherLoanType && (
+                      <Field label="Specify Loan Type" required>
+                        <TextInput value={bankLoan.loan_type_other} onChange={(e) => setBankLoan({ ...bankLoan, loan_type_other: e.target.value })} required placeholder="e.g. Bridging facility" />
+                      </Field>
+                    )}
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <Field label="Facility Limit">
+                      <NumericInput prefix="$" value={bankLoan.facility_limit} onChange={(v) => setBankLoan({ ...bankLoan, facility_limit: v })} />
+                    </Field>
+                    <Field label="Amount Drawn">
+                      <NumericInput prefix="$" value={bankLoan.amount_drawn} onChange={(v) => setBankLoan({ ...bankLoan, amount_drawn: v })} />
+                    </Field>
+                    <Field label="Amount Available">
+                      <NumericInput prefix="$" value={bankLoan.amount_available} onChange={(v) => setBankLoan({ ...bankLoan, amount_available: v })} />
+                    </Field>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <Field label="Interest Rate (%)">
+                      <NumericInput value={bankLoan.interest_rate} onChange={(v) => setBankLoan({ ...bankLoan, interest_rate: v })} placeholder="7.250" />
+                    </Field>
+                    <Field label="Rate Type">
+                      <Select value={bankLoan.interest_rate_type} onChange={(e) => setBankLoan({ ...bankLoan, interest_rate_type: e.target.value as 'FIXED' | 'VARIABLE' })}>
+                        <option value="FIXED">Fixed</option>
+                        <option value="VARIABLE">Variable</option>
+                      </Select>
+                    </Field>
+                    <Field label="Rate Set Date">
+                      <DatePicker value={bankLoan.interest_rate_date} onChange={(v) => setBankLoan({ ...bankLoan, interest_rate_date: v })} />
+                    </Field>
+                  </div>
+                  {showPeggedTo && (
+                    <Field label="Pegged To">
+                      <TextInput value={bankLoan.interest_rate_pegged_to} onChange={(e) => setBankLoan({ ...bankLoan, interest_rate_pegged_to: e.target.value })} placeholder="e.g. BBSY + 2.5%" />
+                    </Field>
+                  )}
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <Field label="Settlement Date">
+                      <DatePicker value={bankLoan.settlement_date} onChange={(v) => setBankLoan({ ...bankLoan, settlement_date: v })} />
+                    </Field>
+                    <Field label="Maturity Date">
+                      <DatePicker value={bankLoan.maturity_date} onChange={(v) => setBankLoan({ ...bankLoan, maturity_date: v })} />
+                    </Field>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <label className="flex items-center gap-3 text-sm cursor-pointer mt-7">
+                      <input
+                        type="checkbox" checked={bankLoan.secured}
+                        onChange={(e) => setBankLoan({ ...bankLoan, secured: e.target.checked })}
+                        className="w-4 h-4 accent-accent"
+                      />
+                      <span>Secured loan</span>
+                    </label>
+                    {bankLoan.secured && (
+                      <Field label="Secured To" required>
+                        <TextInput value={bankLoan.secured_to} onChange={(e) => setBankLoan({ ...bankLoan, secured_to: e.target.value })} required placeholder="e.g. The development site at 123 Main St" />
+                      </Field>
+                    )}
+                  </div>
+
+                  <AdvancedSettings title="Repayment terms">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <Field label="Interest-only period (months)">
+                        <NumericInput decimals={0} value={bankLoan.io_period_months} onChange={(v) => setBankLoan({ ...bankLoan, io_period_months: v })} />
+                      </Field>
+                      <Field label="Principal & Interest period (months)">
+                        <NumericInput decimals={0} value={bankLoan.pi_period_months} onChange={(v) => setBankLoan({ ...bankLoan, pi_period_months: v })} />
+                      </Field>
+                      <Field label="Repayment Frequency">
+                        <Select value={bankLoan.repayment_frequency} onChange={(e) => setBankLoan({ ...bankLoan, repayment_frequency: e.target.value })}>
+                          {REPAYMENT_FREQUENCIES.map((f) => <option key={f} value={f}>{label(f)}</option>)}
+                        </Select>
+                      </Field>
+                      <Field label="Minimum Monthly Repayment">
+                        <NumericInput prefix="$" value={bankLoan.min_monthly_repayment} onChange={(v) => setBankLoan({ ...bankLoan, min_monthly_repayment: v })} />
+                      </Field>
+                      <Field label="Direct Debit Day of Month">
+                        <NumericInput decimals={0} value={bankLoan.direct_debit_day} onChange={(v) => setBankLoan({ ...bankLoan, direct_debit_day: v })} />
+                      </Field>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <Field label="Debit BSB">
+                        <TextInput value={bankLoan.debit_bsb} onChange={(e) => setBankLoan({ ...bankLoan, debit_bsb: e.target.value })} placeholder="123-456" />
+                      </Field>
+                      <Field label="Debit Account Number">
+                        <TextInput value={bankLoan.debit_account_number} onChange={(e) => setBankLoan({ ...bankLoan, debit_account_number: e.target.value })} />
+                      </Field>
+                    </div>
+                  </AdvancedSettings>
+
+                  <AdvancedSettings title="Fees & penalties">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <Field label="Establishment Fee">
+                        <NumericInput prefix="$" value={bankLoan.establishment_fee} onChange={(v) => setBankLoan({ ...bankLoan, establishment_fee: v })} />
+                      </Field>
+                      <Field label="Ongoing / Service Fees">
+                        <TextInput value={bankLoan.ongoing_fees} onChange={(e) => setBankLoan({ ...bankLoan, ongoing_fees: e.target.value })} placeholder="$300/year line fee" />
+                      </Field>
+                    </div>
+                    <Field label="Early Repayment Penalty Terms">
+                      <TextArea rows={3} value={bankLoan.early_repayment_terms} onChange={(e) => setBankLoan({ ...bankLoan, early_repayment_terms: e.target.value })} />
+                    </Field>
+                  </AdvancedSettings>
+
+                  <AdvancedSettings title="Documents (paste URLs)">
+                    <Field label="Loan Agreement PDF (URL)">
+                      <TextInput value={bankLoan.loan_agreement_url} onChange={(e) => setBankLoan({ ...bankLoan, loan_agreement_url: e.target.value })} placeholder="https://..." />
+                    </Field>
+                    <Field label="Mortgage Documents (URL)">
+                      <TextInput value={bankLoan.mortgage_documents_url} onChange={(e) => setBankLoan({ ...bankLoan, mortgage_documents_url: e.target.value })} />
+                    </Field>
+                    <Field label="Valuation Report (URL)">
+                      <TextInput value={bankLoan.valuation_report_url} onChange={(e) => setBankLoan({ ...bankLoan, valuation_report_url: e.target.value })} />
+                    </Field>
+                  </AdvancedSettings>
+
+                  <AdvancedSettings title="Covenants & notes">
+                    <Field label="Covenants">
+                      <TextArea rows={3} value={bankLoan.covenants} onChange={(e) => setBankLoan({ ...bankLoan, covenants: e.target.value })} placeholder="LVR &lt; 70%, presale of 4 of 8 apartments before drawdown, etc." />
+                    </Field>
+                    <Field label="Notes">
+                      <TextArea rows={3} value={bankLoan.notes} onChange={(e) => setBankLoan({ ...bankLoan, notes: e.target.value })} />
+                    </Field>
+                  </AdvancedSettings>
+                </div>
+              )}
+            </Section>
+          )}
+
+          <div className="bg-white p-6 border shadow-xl">
+            <Button
+              type="submit" disabled={saving}
+              className="w-full rounded-none bg-accent hover:bg-accent/90 text-white py-6 font-heading font-bold uppercase tracking-wider"
+            >
+              {saving ? 'Saving...' : (editing ? 'Update Project' : (bankLoan.enabled ? 'Create Project & Bank Facility' : 'Create Project'))}
+            </Button>
           </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <Field label="Total Cost (AUD)">
-              <NumericInput prefix="$" value={form.total_cost} onChange={(v) => setForm({ ...form, total_cost: v })} placeholder="0" />
-            </Field>
-            <Field label="Total Revenue (AUD)">
-              <NumericInput prefix="$" value={form.total_revenue} onChange={(v) => setForm({ ...form, total_revenue: v })} placeholder="0" />
-            </Field>
-            <Field label="Total Profit (AUD)">
-              <NumericInput prefix="$" value={form.total_profit} onChange={(v) => setForm({ ...form, total_profit: v })} placeholder="0" />
-            </Field>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <Field label="Start Date">
-              <DatePicker value={form.start_date} onChange={(v) => setForm({ ...form, start_date: v })} />
-            </Field>
-            <Field label="Estimated Completion">
-              <DatePicker value={form.estimated_completion} onChange={(v) => setForm({ ...form, estimated_completion: v })} />
-            </Field>
-            <Field label="Actual Completion">
-              <DatePicker value={form.actual_completion} onChange={(v) => setForm({ ...form, actual_completion: v })} />
-            </Field>
-          </div>
-
-          <Field label="Custom Fields (JSON)">
-            <TextArea
-              value={form.custom_fields_text}
-              onChange={(e) => setForm({ ...form, custom_fields_text: e.target.value })}
-              placeholder={'{\n  "councilApproval": "VCAT 2026/01234"\n}'}
-              rows={6}
-              className="font-mono text-sm"
-            />
-          </Field>
-
-          <Button
-            type="submit" disabled={saving}
-            className="w-full rounded-none bg-accent hover:bg-accent/90 text-white py-6 font-heading font-bold uppercase tracking-wider"
-          >
-            {saving ? 'Saving...' : (editing ? 'Update Project' : 'Create Project')}
-          </Button>
         </form>
       </div>
     );
   }
 
+  // ============================================================================
+  // LIST VIEW
+  // ============================================================================
   return (
     <div className="bg-white p-10 border shadow-xl">
       <div className="flex justify-between items-center mb-6">
@@ -233,7 +559,7 @@ export default function Projects() {
                 <tr key={p.id} className="border-b hover:bg-secondary/20">
                   <td className="py-3 px-4 font-medium">{p.name}</td>
                   <td className="py-3 px-4">
-                    <span className="inline-block px-2 py-1 text-xs font-medium bg-secondary text-primary">{p.status}</span>
+                    <span className="inline-block px-2 py-1 text-xs font-medium bg-secondary text-primary">{label(p.status, PROJECT_STATUS_LABELS)}</span>
                   </td>
                   <td className="py-3 px-4 text-sm">{fmt(p.total_cost)}</td>
                   <td className="py-3 px-4 text-sm">{fmt(p.total_revenue)}</td>
@@ -260,9 +586,13 @@ export default function Projects() {
   );
 }
 
+function aud(n: number) {
+  return n.toLocaleString('en-AU', { style: 'currency', currency: 'AUD', maximumFractionDigits: 0 });
+}
+
 function fmt(v: string | null) {
   if (v == null || v === '') return '—';
-  return Number(v).toLocaleString('en-AU', { style: 'currency', currency: 'AUD', maximumFractionDigits: 0 });
+  return aud(Number(v));
 }
 
 function Th({ children }: { children: React.ReactNode }) {

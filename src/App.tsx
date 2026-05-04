@@ -3,6 +3,7 @@ import { RouterProvider } from '@tanstack/react-router';
 import { router } from './router';
 import { Toaster } from '@/components/ui/sonner';
 import { Chatbot } from '@/components/shared/Chatbot';
+import { preloadBankLogos } from '@/components/admin/bank-select';
 
 const PORTAL_PREFIXES = ['/admin', '/investor', '/login', '/forgot-password', '/reset-password'];
 
@@ -15,6 +16,7 @@ function App() {
 
   useEffect(() => {
     document.dispatchEvent(new Event('render-event'));
+    preloadBankLogos();
     const unsub = router.subscribe('onResolved', () => {
       setPathname(window.location.pathname);
     });

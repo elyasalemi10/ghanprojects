@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button';
 import { ChevronRight, X } from 'lucide-react';
 import { authFetch } from '@/lib/auth';
 import { LoadingBlock, LoadingValue } from '@/components/admin/form-controls';
+import { label as fmtLabel, LOAN_TYPE_LABELS, LOAN_STATUS_LABELS } from '@/lib/format';
 
 interface Loan {
   id: string;
@@ -78,10 +79,10 @@ export default function MyLoans() {
                 {selected.project?.name || 'General company loan'}
               </h2>
               <p className="text-sm text-muted-foreground mt-1">
-                {selected.loan_type.replace('_', ' ')} · {Number(selected.interest_rate).toFixed(2)}% p.a. · {selected.term_months} months
+                {fmtLabel(selected.loan_type, LOAN_TYPE_LABELS)} · {Number(selected.interest_rate).toFixed(2)}% p.a. · {selected.term_months} months
               </p>
             </div>
-            <span className={`inline-block px-3 py-1 text-xs font-medium ${STATUS_COLORS[selected.status]}`}>{selected.status}</span>
+            <span className={`inline-block px-3 py-1 text-xs font-medium ${STATUS_COLORS[selected.status]}`}>{fmtLabel(selected.status, LOAN_STATUS_LABELS)}</span>
           </div>
 
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
@@ -172,8 +173,8 @@ export default function MyLoans() {
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-3 mb-1">
                   <span className="font-mono text-xs text-muted-foreground">{l.reference}</span>
-                  <span className={`inline-block px-2 py-0.5 text-[10px] font-medium ${STATUS_COLORS[l.status]}`}>{l.status}</span>
-                  <span className="text-xs text-muted-foreground">{l.loan_type.replace('_', ' ')}</span>
+                  <span className={`inline-block px-2 py-0.5 text-[10px] font-medium ${STATUS_COLORS[l.status]}`}>{fmtLabel(l.status, LOAN_STATUS_LABELS)}</span>
+                  <span className="text-xs text-muted-foreground">{fmtLabel(l.loan_type, LOAN_TYPE_LABELS)}</span>
                 </div>
                 <p className="font-bold text-primary truncate">{l.project?.name || 'General company loan'}</p>
                 <p className="text-sm text-muted-foreground">

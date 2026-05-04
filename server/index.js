@@ -1679,6 +1679,147 @@ app.delete('/api/admin/projects/:id', requireAuth(['OWNER']), async (req, res) =
   res.json({ success: true });
 });
 
+// POST /api/admin/projects/with-bank-loan — atomic create of project + initial bank loan.
+app.post('/api/admin/projects/with-bank-loan', requireAuth(['OWNER','ADMIN']), async (req, res) => {
+  if (!dbReady(req, res)) return;
+  if (req.user.role === 'ADMIN' && !hasPermission(req.user, 'projects', 'create')) {
+    return res.status(403).json({ error: 'Forbidden' });
+  }
+  const { project, bankLoan } = req.body || {};
+  if (!project?.name) return res.status(400).json({ error: 'project.name required' });
+
+  // 1. Create project
+  const { data: newProject, error: pErr } = await supabase.from('projects').insert({
+    name: project.name,
+    description: project.description || null,
+    address: project.address || null,
+    status: project.status || 'PLANNING',
+    total_cost: project.total_cost ?? null,
+    total_revenue: project.total_revenue ?? null,
+    total_profit: project.total_profit ?? null,
+    cost_line_items: project.cost_line_items || null,
+    revenue_line_items: project.revenue_line_items || null,
+    start_date: project.start_date || null,
+    estimated_completion: project.estimated_completion || null,
+    actual_completion: project.actual_completion || null,
+    custom_fields: project.custom_fields || null,
+  }).select().single();
+  if (pErr) return res.status(400).json({ error: pErr.message });
+  await logAction(req, 'PROJECT_CREATED', 'Project', newProject.id, { name: project.name });
+
+  // 2. Create bank loan if provided
+  let createdBankLoan = null;
+  if (bankLoan && bankLoan.bank_key && bankLoan.bank_name) {
+    const { data: bl, error: blErr } = await supabase.from('bank_loans').insert({
+      project_id: newProject.id,
+      bank_key: bankLoan.bank_key,
+      bank_name: bankLoan.bank_name,
+      loan_account_number: bankLoan.loan_account_number || null,
+      loan_type: bankLoan.loan_type || 'CONSTRUCTION',
+      loan_type_other: bankLoan.loan_type_other || null,
+      secured: bankLoan.secured ?? true,
+      secured_to: bankLoan.secured_to || null,
+      facility_limit: bankLoan.facility_limit ?? null,
+      amount_drawn: bankLoan.amount_drawn ?? null,
+      amount_available: bankLoan.amount_available ?? null,
+      interest_rate: bankLoan.interest_rate ?? null,
+      interest_rate_type: bankLoan.interest_rate_type || 'FIXED',
+      interest_rate_pegged_to: bankLoan.interest_rate_pegged_to || null,
+      interest_rate_date: bankLoan.interest_rate_date || null,
+      settlement_date: bankLoan.settlement_date || null,
+      maturity_date: bankLoan.maturity_date || null,
+      io_period_months: bankLoan.io_period_months ?? null,
+      pi_period_months: bankLoan.pi_period_months ?? null,
+      repayment_frequency: bankLoan.repayment_frequency || null,
+      min_monthly_repayment: bankLoan.min_monthly_repayment ?? null,
+      direct_debit_day: bankLoan.direct_debit_day ?? null,
+      debit_bsb: bankLoan.debit_bsb || null,
+      debit_account_number: bankLoan.debit_account_number || null,
+      establishment_fee: bankLoan.establishment_fee ?? null,
+      ongoing_fees: bankLoan.ongoing_fees || null,
+      early_repayment_terms: bankLoan.early_repayment_terms || null,
+      loan_agreement_url: bankLoan.loan_agreement_url || null,
+      mortgage_documents_url: bankLoan.mortgage_documents_url || null,
+      valuation_report_url: bankLoan.valuation_report_url || null,
+      covenants: bankLoan.covenants || null,
+      notes: bankLoan.notes || null,
+    }).select().single();
+    if (blErr) {
+      // Roll back the project so the user can re-submit cleanly.
+      await supabase.from('projects').delete().eq('id', newProject.id);
+      return res.status(400).json({ error: `Bank loan creation failed: ${blErr.message}. Project rolled back.` });
+    }
+    createdBankLoan = bl;
+    await logAction(req, 'BANK_LOAN_CREATED', 'BankLoan', bl.id, { project_id: newProject.id, bank: bankLoan.bank_name });
+  }
+
+  res.status(201).json({ project: newProject, bankLoan: createdBankLoan });
+});
+
+// ---------- BANK LOANS (CRUD) ----------
+app.get('/api/admin/bank-loans', requireAuth(['OWNER','ADMIN']), async (req, res) => {
+  if (!dbReady(req, res)) return;
+  const { projectId } = req.query;
+  let q = supabase.from('bank_loans').select('*, project:projects(id, name, status)').order('created_at', { ascending: false });
+  if (projectId) q = q.eq('project_id', String(projectId));
+  const { data, error } = await q;
+  if (error) return res.status(500).json({ error: error.message });
+  res.json(data);
+});
+app.get('/api/admin/bank-loans/:id', requireAuth(['OWNER','ADMIN']), async (req, res) => {
+  if (!dbReady(req, res)) return;
+  const { data, error } = await supabase.from('bank_loans')
+    .select('*, project:projects(id, name, status)')
+    .eq('id', req.params.id).maybeSingle();
+  if (error) return res.status(500).json({ error: error.message });
+  if (!data) return res.status(404).json({ error: 'Not found' });
+  res.json(data);
+});
+app.post('/api/admin/bank-loans', requireAuth(['OWNER','ADMIN']), async (req, res) => {
+  if (!dbReady(req, res)) return;
+  if (req.user.role === 'ADMIN' && !hasPermission(req.user, 'projects', 'create')) {
+    return res.status(403).json({ error: 'Forbidden' });
+  }
+  const b = req.body || {};
+  if (!b.bank_key || !b.bank_name || !b.loan_type) return res.status(400).json({ error: 'bank_key, bank_name, loan_type required' });
+  const { data, error } = await supabase.from('bank_loans').insert({
+    project_id: b.project_id || null,
+    bank_key: b.bank_key, bank_name: b.bank_name,
+    loan_account_number: b.loan_account_number || null,
+    loan_type: b.loan_type, loan_type_other: b.loan_type_other || null,
+    secured: b.secured ?? true, secured_to: b.secured_to || null,
+    facility_limit: b.facility_limit ?? null, amount_drawn: b.amount_drawn ?? null, amount_available: b.amount_available ?? null,
+    interest_rate: b.interest_rate ?? null, interest_rate_type: b.interest_rate_type || 'FIXED',
+    interest_rate_pegged_to: b.interest_rate_pegged_to || null, interest_rate_date: b.interest_rate_date || null,
+    settlement_date: b.settlement_date || null, maturity_date: b.maturity_date || null,
+    io_period_months: b.io_period_months ?? null, pi_period_months: b.pi_period_months ?? null,
+    repayment_frequency: b.repayment_frequency || null, min_monthly_repayment: b.min_monthly_repayment ?? null,
+    direct_debit_day: b.direct_debit_day ?? null, debit_bsb: b.debit_bsb || null, debit_account_number: b.debit_account_number || null,
+    establishment_fee: b.establishment_fee ?? null, ongoing_fees: b.ongoing_fees || null, early_repayment_terms: b.early_repayment_terms || null,
+    loan_agreement_url: b.loan_agreement_url || null, mortgage_documents_url: b.mortgage_documents_url || null, valuation_report_url: b.valuation_report_url || null,
+    covenants: b.covenants || null, notes: b.notes || null,
+  }).select('*, project:projects(id, name, status)').single();
+  if (error) return res.status(400).json({ error: error.message });
+  await logAction(req, 'BANK_LOAN_CREATED', 'BankLoan', data.id, { project_id: data.project_id, bank: data.bank_name });
+  res.status(201).json(data);
+});
+app.put('/api/admin/bank-loans/:id', requireAuth(['OWNER','ADMIN']), async (req, res) => {
+  if (!dbReady(req, res)) return;
+  const update = { ...req.body }; delete update.id; delete update.created_at; delete update.updated_at; delete update.project;
+  const { data, error } = await supabase.from('bank_loans').update(update).eq('id', req.params.id)
+    .select('*, project:projects(id, name, status)').single();
+  if (error) return res.status(400).json({ error: error.message });
+  await logAction(req, 'BANK_LOAN_UPDATED', 'BankLoan', req.params.id, Object.keys(update));
+  res.json(data);
+});
+app.delete('/api/admin/bank-loans/:id', requireAuth(['OWNER']), async (req, res) => {
+  if (!dbReady(req, res)) return;
+  const { error } = await supabase.from('bank_loans').delete().eq('id', req.params.id);
+  if (error) return res.status(400).json({ error: error.message });
+  await logAction(req, 'BANK_LOAN_DELETED', 'BankLoan', req.params.id);
+  res.json({ success: true });
+});
+
 // ---------- LOANS ----------
 app.get('/api/admin/loans', requireAuth(['OWNER','ADMIN']), async (req, res) => {
   if (!dbReady(req, res)) return;

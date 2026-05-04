@@ -1,8 +1,8 @@
 import { useState, useId } from 'react';
-import { Calendar as CalendarIcon } from 'lucide-react';
+import { Calendar as CalendarIcon, ChevronDown } from 'lucide-react';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Spinner } from '@/components/ui/spinner';
+import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
 
 // ============================================================================
@@ -182,23 +182,98 @@ export function DatePicker({
 }
 
 // ============================================================================
-// LoadingValue — shows a spinner inline while loading, then the value.
-// Use for things like "Blog posts (3)" → "Blog posts (⟳)" while fetching.
+// Section + AdvancedSettings — visual grouping for forms.
+// ============================================================================
+export function Section({
+  title, description, children,
+}: {
+  title: string;
+  description?: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="border border-border bg-white p-6 space-y-4">
+      <div>
+        <h3 className="text-base font-heading font-bold text-primary">{title}</h3>
+        {description && <p className="text-xs text-muted-foreground mt-1">{description}</p>}
+      </div>
+      {children}
+    </div>
+  );
+}
+
+export function AdvancedSettings({
+  title = 'Advanced settings',
+  defaultOpen = false,
+  children,
+}: {
+  title?: string;
+  defaultOpen?: boolean;
+  children: React.ReactNode;
+}) {
+  const [open, setOpen] = useState(defaultOpen);
+  return (
+    <div className="border border-border">
+      <button
+        type="button" onClick={() => setOpen(!open)}
+        className="w-full flex items-center justify-between gap-2 px-4 py-3 bg-secondary/30 hover:bg-secondary/50 text-left"
+      >
+        <span className="text-sm font-medium text-primary">{title}</span>
+        <ChevronDown size={16} className={cn('transition-transform text-muted-foreground', open && 'rotate-180')} />
+      </button>
+      {open && (
+        <div className="p-4 space-y-4 border-t border-border">
+          {children}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ============================================================================
+// LoadingValue — shimmer bar while loading, then the value.
+// Used for inline counts: "Blog posts (3)" with the 3 swapped for a small bar.
 // ============================================================================
 export function LoadingValue({ loading, value }: { loading: boolean; value: React.ReactNode }) {
-  if (loading) return <Spinner className="inline-block size-3 align-middle" />;
+  if (loading) return <Skeleton className="inline-block h-4 w-8 align-middle" />;
   return <>{value}</>;
 }
 
 // ============================================================================
-// LoadingBlock — centred spinner with optional label, for empty-while-loading
-// list/table states.
+// LoadingBlock — shimmer rows for list/table empty-while-loading states.
+// Renders as a stack of decreasing-width pulsing bars rather than a spinner.
 // ============================================================================
-export function LoadingBlock({ label = 'Loading' }: { label?: string }) {
+export function LoadingBlock({ rows = 4 }: { rows?: number; label?: string }) {
+  const widths = ['w-full', 'w-11/12', 'w-10/12', 'w-9/12', 'w-11/12', 'w-full'];
   return (
-    <div className="flex items-center justify-center gap-2 py-12 text-sm text-muted-foreground">
-      <Spinner className="size-5" />
-      <span>{label}</span>
+    <div className="space-y-3 py-4" aria-busy="true" aria-live="polite">
+      {Array.from({ length: rows }).map((_, i) => (
+        <Skeleton key={i} className={cn('h-10', widths[i % widths.length])} />
+      ))}
     </div>
   );
+}
+
+// ============================================================================
+// LoadingTable — shimmer rows shaped like a table, for richer skeleton.
+// ============================================================================
+export function LoadingTable({ rows = 5, columns = 4 }: { rows?: number; columns?: number }) {
+  return (
+    <div className="space-y-2 py-2" aria-busy="true">
+      {Array.from({ length: rows }).map((_, r) => (
+        <div key={r} className="grid gap-3" style={{ gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))` }}>
+          {Array.from({ length: columns }).map((_, c) => (
+            <Skeleton key={c} className={cn('h-4', c === 0 ? 'w-3/4' : c === columns - 1 ? 'w-1/2' : 'w-full')} />
+          ))}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// ============================================================================
+// LoadingKpi — large shimmer block for a KPI card while loading.
+// ============================================================================
+export function LoadingKpi() {
+  return <Skeleton className="h-7 w-24 mt-2" />;
 }

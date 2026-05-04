@@ -8,6 +8,7 @@ import { useAdminUser } from '../AdminLayout';
 import {
   Field, TextArea, Select, NumericInput, DatePicker, LoadingBlock, LoadingValue,
 } from '@/components/admin/form-controls';
+import { label, LOAN_TYPE_LABELS, LOAN_STATUS_LABELS } from '@/lib/format';
 
 type LoanType = 'FIXED_MONTHLY' | 'FIXED_END' | 'PROFIT_SHARE';
 type LoanStatus = 'PENDING' | 'ACTIVE' | 'COMPLETED' | 'CANCELLED' | 'DEFAULTED';
@@ -325,13 +326,13 @@ export default function Loans() {
                     </td>
                     <td className="py-3 px-4 text-sm">{l.borrower?.full_name || '—'}</td>
                     <td className="py-3 px-4 text-sm">{l.project?.name || <span className="text-muted-foreground">General</span>}</td>
-                    <td className="py-3 px-4 text-xs">{l.loan_type.replace('_', ' ')}</td>
+                    <td className="py-3 px-4 text-xs">{label(l.loan_type, LOAN_TYPE_LABELS)}</td>
                     <td className="py-3 px-4 text-sm">{money(l.principal)}</td>
                     <td className="py-3 px-4 text-sm font-medium">{money(l.current_balance)}</td>
                     <td className="py-3 px-4 text-sm">{Number(l.interest_rate).toFixed(2)}%</td>
                     <td className="py-3 px-4 text-sm text-muted-foreground">{new Date(l.maturity_date).toLocaleDateString('en-AU')}</td>
                     <td className="py-3 px-4">
-                      <span className={`inline-block px-2 py-1 text-xs font-medium ${STATUS_COLORS[l.status]}`}>{l.status}</span>
+                      <span className={`inline-block px-2 py-1 text-xs font-medium ${STATUS_COLORS[l.status]}`}>{label(l.status, LOAN_STATUS_LABELS)}</span>
                     </td>
                     <td className="py-3 px-4 text-right space-x-2">
                       {canEdit && (

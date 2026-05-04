@@ -8,6 +8,7 @@ import { useAdminUser } from '../AdminLayout';
 import {
   Field, TextInput, TextArea, Select, NumericInput, DatePicker, LoadingBlock,
 } from '@/components/admin/form-controls';
+import { label as fmtLabel, LOAN_TYPE_LABELS, LOAN_STATUS_LABELS } from '@/lib/format';
 
 type TxType = 'INTEREST_PAYMENT' | 'PRINCIPAL_PAYMENT' | 'PROFIT_DISTRIBUTION' | 'DISBURSEMENT' | 'TOP_UP' | 'EARLY_REPAYMENT';
 
@@ -215,10 +216,10 @@ export default function LoanDetail() {
               {loan.borrower.full_name}
             </h2>
             <p className="text-sm text-muted-foreground mt-1">
-              {loan.project?.name || 'General company loan'} · {loan.loan_type.replace('_', ' ')} · {Number(loan.interest_rate).toFixed(2)}% p.a. · {loan.term_months} months
+              {loan.project?.name || 'General company loan'} · {fmtLabel(loan.loan_type, LOAN_TYPE_LABELS)} · {Number(loan.interest_rate).toFixed(2)}% p.a. · {loan.term_months} months
             </p>
           </div>
-          <span className={`inline-block px-3 py-1 text-xs font-medium ${STATUS_COLORS[loan.status]}`}>{loan.status}</span>
+          <span className={`inline-block px-3 py-1 text-xs font-medium ${STATUS_COLORS[loan.status]}`}>{fmtLabel(loan.status, LOAN_STATUS_LABELS)}</span>
         </div>
 
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">

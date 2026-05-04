@@ -4,7 +4,7 @@ import { Plus, Edit, Trash2, X, Search } from 'lucide-react';
 import { toast } from 'sonner';
 import { authFetch, hasPermission } from '@/lib/auth';
 import { useAdminUser } from '../AdminLayout';
-import { LoadingBlock, LoadingValue } from '@/components/admin/form-controls';
+import { LoadingBlock, LoadingValue, AdvancedSettings } from '@/components/admin/form-controls';
 
 interface Borrower {
   id: string;
@@ -22,7 +22,16 @@ interface Borrower {
 
 const empty = {
   full_name: '', email: '', phone: '', address: '',
-  id_number: '', id_type: '', notes: '', custom_fields_text: '',
+  id_number: '', id_type: '', notes: '',
+  // curated optional fields
+  preferred_contact: '',     // 'email' | 'phone' | 'mail'
+  referred_by: '',
+  occupation: '',
+  date_of_birth: '',
+  emergency_contact: '',
+  tfn: '',
+  bank_bsb: '',
+  bank_account: '',
 };
 
 export default function Borrowers() {
@@ -53,11 +62,19 @@ export default function Borrowers() {
   const open = (b?: Borrower) => {
     if (b) {
       setEditing(b);
+      const cf = (b.custom_fields || {}) as Record<string, string>;
       setForm({
         full_name: b.full_name, email: b.email, phone: b.phone || '',
         address: b.address || '', id_number: b.id_number || '', id_type: b.id_type || '',
         notes: b.notes || '',
-        custom_fields_text: b.custom_fields ? JSON.stringify(b.custom_fields, null, 2) : '',
+        preferred_contact: cf.preferred_contact || '',
+        referred_by: cf.referred_by || '',
+        occupation: cf.occupation || '',
+        date_of_birth: cf.date_of_birth || '',
+        emergency_contact: cf.emergency_contact || '',
+        tfn: cf.tfn || '',
+        bank_bsb: cf.bank_bsb || '',
+        bank_account: cf.bank_account || '',
       });
     } else {
       setEditing(null);
@@ -72,11 +89,22 @@ export default function Borrowers() {
     e.preventDefault();
     setSaving(true);
     try {
-      let custom_fields: Record<string, unknown> | null = null;
-      if (form.custom_fields_text.trim()) {
-        try { custom_fields = JSON.parse(form.custom_fields_text); }
-        catch { toast.error('Custom fields must be valid JSON'); setSaving(false); return; }
-      }
+      // Build custom_fields from the curated optional inputs
+      const cfEntries: [string, string][] = [
+        ['preferred_contact', form.preferred_contact],
+        ['referred_by', form.referred_by],
+        ['occupation', form.occupation],
+        ['date_of_birth', form.date_of_birth],
+        ['emergency_contact', form.emergency_contact],
+        ['tfn', form.tfn],
+        ['bank_bsb', form.bank_bsb],
+        ['bank_account', form.bank_account],
+      ];
+      const populated = cfEntries.filter(([, v]) => v && v.trim());
+      const custom_fields: Record<string, unknown> | null = populated.length > 0
+        ? Object.fromEntries(populated)
+        : null;
+
       const body = {
         full_name: form.full_name, email: form.email, phone: form.phone || null,
         address: form.address || null, id_number: form.id_number || null,
@@ -132,16 +160,31 @@ export default function Borrowers() {
             <Field label="Address" value={form.address} onChange={(v) => setForm({ ...form, address: v })} />
           </div>
           <Field label="Notes" textarea value={form.notes} onChange={(v) => setForm({ ...form, notes: v })} />
-          <div className="space-y-2">
-            <label className="text-[10px] uppercase tracking-widest font-bold text-primary">Custom Fields (JSON)</label>
-            <textarea
-              value={form.custom_fields_text}
-              onChange={(e) => setForm({ ...form, custom_fields_text: e.target.value })}
-              placeholder={'{\n  "preferredContact": "phone"\n}'}
-              rows={6}
-              className="w-full bg-secondary/30 border border-border p-4 focus:outline-none focus:ring-2 focus:ring-accent font-mono text-sm"
-            />
-          </div>
+
+          <AdvancedSettings title="Additional details (optional)">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-2">
+                <label className="text-[10px] uppercase tracking-widest font-bold text-primary">Preferred Contact</label>
+                <select
+                  value={form.preferred_contact}
+                  onChange={(e) => setForm({ ...form, preferred_contact: e.target.value })}
+                  className="w-full bg-secondary/30 border border-border p-4 focus:outline-none focus:ring-2 focus:ring-accent"
+                >
+                  <option value="">—</option>
+                  <option value="email">Email</option>
+                  <option value="phone">Phone</option>
+                  <option value="mail">Postal mail</option>
+                </select>
+              </div>
+              <Field label="Referred By" value={form.referred_by} onChange={(v) => setForm({ ...form, referred_by: v })} placeholder="Name or source" />
+              <Field label="Occupation" value={form.occupation} onChange={(v) => setForm({ ...form, occupation: v })} />
+              <Field label="Date of Birth" type="date" value={form.date_of_birth} onChange={(v) => setForm({ ...form, date_of_birth: v })} />
+              <Field label="Emergency Contact" value={form.emergency_contact} onChange={(v) => setForm({ ...form, emergency_contact: v })} placeholder="Name + phone" />
+              <Field label="TFN" value={form.tfn} onChange={(v) => setForm({ ...form, tfn: v })} placeholder="Tax File Number" />
+              <Field label="Bank BSB" value={form.bank_bsb} onChange={(v) => setForm({ ...form, bank_bsb: v })} placeholder="123-456" />
+              <Field label="Bank Account Number" value={form.bank_account} onChange={(v) => setForm({ ...form, bank_account: v })} />
+            </div>
+          </AdvancedSettings>
           <Button
             type="submit"
             disabled={saving}
