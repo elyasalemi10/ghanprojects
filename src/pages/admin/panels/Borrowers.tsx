@@ -2,7 +2,9 @@ import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Plus, Edit, Trash2, X, Search } from 'lucide-react';
 import { toast } from 'sonner';
-import { authFetch, hasPermission, type SessionUser } from '@/lib/auth';
+import { authFetch, hasPermission } from '@/lib/auth';
+import { useAdminUser } from '../AdminLayout';
+import { LoadingBlock, LoadingValue } from '@/components/admin/form-controls';
 
 interface Borrower {
   id: string;
@@ -23,7 +25,8 @@ const empty = {
   id_number: '', id_type: '', notes: '', custom_fields_text: '',
 };
 
-export default function Borrowers({ user }: { user: SessionUser }) {
+export default function Borrowers() {
+  const user = useAdminUser();
   const [list, setList] = useState<Borrower[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -155,7 +158,7 @@ export default function Borrowers({ user }: { user: SessionUser }) {
     <div className="bg-white p-10 border shadow-xl">
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-xl font-heading font-bold text-primary">
-          Borrowers ({filtered.length})
+          Borrowers (<LoadingValue loading={loading} value={filtered.length} />)
         </h2>
         {canCreate && (
           <Button onClick={() => open()} className="gap-2"><Plus size={16} /> New Borrower</Button>
@@ -174,7 +177,7 @@ export default function Borrowers({ user }: { user: SessionUser }) {
       </div>
 
       {loading ? (
-        <p className="text-center py-8 text-muted-foreground">Loading...</p>
+        <LoadingBlock />
       ) : filtered.length === 0 ? (
         <p className="text-center py-8 text-muted-foreground">No borrowers yet.</p>
       ) : (

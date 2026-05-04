@@ -2,7 +2,9 @@ import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { User as UserIcon, KeyRound } from 'lucide-react';
 import { toast } from 'sonner';
-import { authFetch } from '@/lib/auth';
+import { authFetch, fetchMe } from '@/lib/auth';
+import TwoFactor from '@/components/admin/TwoFactor';
+import { LoadingBlock } from '@/components/admin/form-controls';
 
 interface Borrower {
   id: string;
@@ -17,6 +19,7 @@ interface Borrower {
 
 export default function InvestorProfile() {
   const [borrower, setBorrower] = useState<Borrower | null>(null);
+  const [totpEnabled, setTotpEnabled] = useState(false);
   const [loading, setLoading] = useState(true);
   const [phone, setPhone] = useState('');
   const [savingPhone, setSavingPhone] = useState(false);
@@ -27,12 +30,16 @@ export default function InvestorProfile() {
 
   const load = async () => {
     setLoading(true);
-    const res = await authFetch('/api/investor/me');
-    if (res.ok) {
-      const data = await res.json();
+    const [meRes, sessionMe] = await Promise.all([
+      authFetch('/api/investor/me'),
+      fetchMe(),
+    ]);
+    if (meRes.ok) {
+      const data = await meRes.json();
       setBorrower(data.borrower);
       setPhone(data.borrower.phone || '');
     }
+    if (sessionMe) setTotpEnabled(!!sessionMe.totpEnabled);
     setLoading(false);
   };
   useEffect(() => { load(); }, []);
@@ -71,7 +78,7 @@ export default function InvestorProfile() {
   };
 
   if (loading || !borrower) {
-    return <div className="bg-white p-12 border shadow-xl text-center text-muted-foreground">Loading…</div>;
+    return <div className="bg-white p-12 border shadow-xl"><LoadingBlock /></div>;
   }
 
   return (
@@ -127,6 +134,8 @@ export default function InvestorProfile() {
           {savingPassword ? 'Saving…' : 'Change Password'}
         </Button>
       </form>
+
+      <TwoFactor enabled={totpEnabled} onChange={load} />
     </div>
   );
 }

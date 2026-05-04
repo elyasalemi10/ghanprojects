@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Download, FileSpreadsheet } from 'lucide-react';
 import { toast } from 'sonner';
 import { authFetch, API_URL } from '@/lib/auth';
+import { DatePicker } from '@/components/admin/form-controls';
 
 const aud = (n: number) => n.toLocaleString('en-AU', { style: 'currency', currency: 'AUD', maximumFractionDigits: 0 });
 const today = () => new Date().toISOString().split('T')[0];
@@ -64,17 +65,11 @@ export default function InvestorStatements() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div className="space-y-2">
             <label className="text-[10px] uppercase tracking-widest font-bold text-primary">From</label>
-            <input
-              type="date" value={from} onChange={(e) => setFrom(e.target.value)}
-              className="w-full bg-secondary/30 border border-border p-4 focus:outline-none focus:ring-2 focus:ring-accent"
-            />
+            <DatePicker value={from} onChange={setFrom} />
           </div>
           <div className="space-y-2">
             <label className="text-[10px] uppercase tracking-widest font-bold text-primary">To</label>
-            <input
-              type="date" value={to} onChange={(e) => setTo(e.target.value)}
-              className="w-full bg-secondary/30 border border-border p-4 focus:outline-none focus:ring-2 focus:ring-accent"
-            />
+            <DatePicker value={to} onChange={setTo} />
           </div>
           <div className="flex items-end gap-3">
             <Button onClick={generate} disabled={loading} className="rounded-none bg-primary hover:bg-primary/90 text-white px-6 font-heading uppercase tracking-wider">

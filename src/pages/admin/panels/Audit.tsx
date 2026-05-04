@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { ScrollText, Search } from 'lucide-react';
 import { authFetch } from '@/lib/auth';
+import { LoadingBlock, LoadingValue } from '@/components/admin/form-controls';
 
 interface AuditEntry {
   id: string;
@@ -45,7 +46,7 @@ export default function Audit() {
     <div className="bg-white p-10 border shadow-xl">
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-xl font-heading font-bold text-primary flex items-center gap-2">
-          <ScrollText size={20} /> Audit Log ({list.length})
+          <ScrollText size={20} /> Audit Log (<LoadingValue loading={loading} value={list.length} />)
         </h2>
       </div>
 
@@ -73,7 +74,7 @@ export default function Audit() {
       </div>
 
       {loading ? (
-        <p className="text-center py-8 text-muted-foreground">Loading…</p>
+        <LoadingBlock />
       ) : list.length === 0 ? (
         <p className="text-center py-8 text-muted-foreground">No audit entries.</p>
       ) : (

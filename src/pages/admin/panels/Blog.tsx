@@ -4,6 +4,7 @@ import { Plus, Edit, Trash2, FileText, Eye, EyeOff, Calendar, Clock } from 'luci
 import { toast } from 'sonner';
 import { authFetch } from '@/lib/auth';
 import { RichTextEditor } from '@/components/admin/RichTextEditor';
+import { LoadingBlock, LoadingValue } from '@/components/admin/form-controls';
 
 interface BlogPost {
   id: number;
@@ -133,13 +134,13 @@ export default function BlogPanel() {
     <div className="bg-white p-10 border shadow-xl">
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-xl font-heading font-bold text-primary flex items-center gap-2">
-          <FileText size={20} /> Blog Posts ({list.length})
+          <FileText size={20} /> Blog Posts (<LoadingValue loading={loading} value={list.length} />)
         </h2>
         <Button onClick={() => open()} className="gap-2"><Plus size={16} /> New Post</Button>
       </div>
 
       {loading ? (
-        <p className="text-center py-8 text-muted-foreground">Loading...</p>
+        <LoadingBlock />
       ) : list.length === 0 ? (
         <p className="text-center py-8 text-muted-foreground">No posts yet. Create your first post!</p>
       ) : (

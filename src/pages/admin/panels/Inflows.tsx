@@ -3,6 +3,9 @@ import { Button } from '@/components/ui/button';
 import { Plus, Edit, Trash2, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { authFetch } from '@/lib/auth';
+import {
+  Field, TextInput, TextArea, Select, NumericInput, DatePicker, LoadingBlock, LoadingValue,
+} from '@/components/admin/form-controls';
 
 interface Inflow {
   id: string;
@@ -109,33 +112,33 @@ export default function Inflows() {
           <Button variant="outline" onClick={close}><X size={16} /> Cancel</Button>
         </div>
         <form onSubmit={submit} className="space-y-6">
-          <Field label="Description" required value={form.description} onChange={(v) => setForm({ ...form, description: v })} placeholder="e.g. Project A profit distribution" />
+          <Field label="Description" required>
+            <TextInput value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} required placeholder="e.g. Project A profit distribution" />
+          </Field>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <Field label="Amount (AUD)" required type="number" value={form.amount} onChange={(v) => setForm({ ...form, amount: v })} />
-            <Field label="Expected Date" required type="date" value={form.expected_date} onChange={(v) => setForm({ ...form, expected_date: v })} />
-            <div className="space-y-2">
-              <label className="text-[10px] uppercase tracking-widest font-bold text-primary">Confidence</label>
-              <select
-                value={form.confidence} onChange={(e) => setForm({ ...form, confidence: e.target.value as 'LIKELY' | 'POSSIBLE' | 'CONFIRMED' })}
-                className="w-full bg-secondary/30 border border-border p-4 focus:outline-none focus:ring-2 focus:ring-accent"
-              >
+            <Field label="Amount (AUD)" required>
+              <NumericInput prefix="$" value={form.amount} onChange={(v) => setForm({ ...form, amount: v })} required placeholder="0" />
+            </Field>
+            <Field label="Expected Date" required>
+              <DatePicker value={form.expected_date} onChange={(v) => setForm({ ...form, expected_date: v })} required />
+            </Field>
+            <Field label="Confidence">
+              <Select value={form.confidence} onChange={(e) => setForm({ ...form, confidence: e.target.value as 'LIKELY' | 'POSSIBLE' | 'CONFIRMED' })}>
                 <option value="CONFIRMED">Confirmed</option>
                 <option value="LIKELY">Likely</option>
                 <option value="POSSIBLE">Possible</option>
-              </select>
-            </div>
+              </Select>
+            </Field>
           </div>
-          <div className="space-y-2">
-            <label className="text-[10px] uppercase tracking-widest font-bold text-primary">Project (optional)</label>
-            <select
-              value={form.project_id} onChange={(e) => setForm({ ...form, project_id: e.target.value })}
-              className="w-full bg-secondary/30 border border-border p-4 focus:outline-none focus:ring-2 focus:ring-accent"
-            >
+          <Field label="Project (optional)">
+            <Select value={form.project_id} onChange={(e) => setForm({ ...form, project_id: e.target.value })}>
               <option value="">— None —</option>
               {projects.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
-            </select>
-          </div>
-          <Field label="Notes" textarea value={form.notes} onChange={(v) => setForm({ ...form, notes: v })} />
+            </Select>
+          </Field>
+          <Field label="Notes">
+            <TextArea rows={3} value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} />
+          </Field>
           <Button
             type="submit" disabled={saving}
             className="w-full rounded-none bg-accent hover:bg-accent/90 text-white py-6 font-heading font-bold uppercase tracking-wider"
@@ -151,7 +154,7 @@ export default function Inflows() {
     <div className="bg-white p-10 border shadow-xl">
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-xl font-heading font-bold text-primary">
-          Estimated Inflows ({list.length})
+          Estimated Inflows (<LoadingValue loading={loading} value={list.length} />)
         </h2>
         <Button onClick={() => open()} className="gap-2"><Plus size={16} /> New Inflow</Button>
       </div>
@@ -160,7 +163,7 @@ export default function Inflows() {
       </p>
 
       {loading ? (
-        <p className="text-center py-8 text-muted-foreground">Loading...</p>
+        <LoadingBlock />
       ) : list.length === 0 ? (
         <p className="text-center py-8 text-muted-foreground">No inflows yet.</p>
       ) : (
@@ -198,27 +201,4 @@ export default function Inflows() {
 
 function Th({ children }: { children: React.ReactNode }) {
   return <th className="text-left py-3 px-4 font-bold text-[10px] uppercase tracking-widest text-primary">{children}</th>;
-}
-function Field({
-  label, value, onChange, required, type = 'text', placeholder, textarea,
-}: {
-  label: string; value: string; onChange: (v: string) => void; required?: boolean;
-  type?: string; placeholder?: string; textarea?: boolean;
-}) {
-  return (
-    <div className="space-y-2">
-      <label className="text-[10px] uppercase tracking-widest font-bold text-primary">{label}{required ? ' *' : ''}</label>
-      {textarea ? (
-        <textarea
-          value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder} rows={3}
-          className="w-full bg-secondary/30 border border-border p-4 focus:outline-none focus:ring-2 focus:ring-accent"
-        />
-      ) : (
-        <input
-          type={type} value={value} onChange={(e) => onChange(e.target.value)} required={required} placeholder={placeholder}
-          className="w-full bg-secondary/30 border border-border p-4 focus:outline-none focus:ring-2 focus:ring-accent"
-        />
-      )}
-    </div>
-  );
 }

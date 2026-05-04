@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Check, X, CheckCircle2, Inbox } from 'lucide-react';
 import { toast } from 'sonner';
 import { authFetch } from '@/lib/auth';
+import { LoadingBlock, LoadingValue } from '@/components/admin/form-controls';
 
 type Status = 'PENDING' | 'APPROVED' | 'REJECTED' | 'COMPLETED';
 
@@ -90,10 +91,10 @@ export default function Requests() {
     <div className="space-y-6">
       <div className="bg-white p-2 border shadow-md flex gap-1">
         <TabBtn active={tab === 'repayment'} onClick={() => setTab('repayment')}>
-          Early Repayment ({repayment.filter((r) => r.status === 'PENDING').length})
+          Early Repayment (<LoadingValue loading={loading} value={repayment.filter((r) => r.status === 'PENDING').length} />)
         </TabBtn>
         <TabBtn active={tab === 'topup'} onClick={() => setTab('topup')}>
-          Top-Up ({topup.filter((t) => t.status === 'PENDING').length})
+          Top-Up (<LoadingValue loading={loading} value={topup.filter((t) => t.status === 'PENDING').length} />)
         </TabBtn>
       </div>
 
@@ -115,7 +116,7 @@ export default function Requests() {
         </div>
 
         {loading ? (
-          <p className="text-center py-8 text-muted-foreground">Loading…</p>
+          <LoadingBlock />
         ) : tab === 'repayment' ? (
           filteredR.length === 0 ? (
             <p className="text-center py-8 text-muted-foreground">No matching requests.</p>

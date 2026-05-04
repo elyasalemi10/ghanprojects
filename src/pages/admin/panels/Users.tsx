@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Plus, Edit, Power, X, ShieldCheck } from 'lucide-react';
 import { toast } from 'sonner';
 import { authFetch } from '@/lib/auth';
+import { LoadingBlock, LoadingValue } from '@/components/admin/form-controls';
 
 type Role = 'OWNER' | 'ADMIN' | 'LENDER';
 
@@ -223,13 +224,13 @@ export default function Users() {
     <div className="bg-white p-10 border shadow-xl">
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-xl font-heading font-bold text-primary flex items-center gap-2">
-          <ShieldCheck size={20} /> Users ({list.length})
+          <ShieldCheck size={20} /> Users (<LoadingValue loading={loading} value={list.length} />)
         </h2>
         <Button onClick={() => open()} className="gap-2"><Plus size={16} /> New User</Button>
       </div>
 
       {loading ? (
-        <p className="text-center py-8 text-muted-foreground">Loading…</p>
+        <LoadingBlock />
       ) : list.length === 0 ? (
         <p className="text-center py-8 text-muted-foreground">No users yet.</p>
       ) : (

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Banknote, Calendar, TrendingUp, Receipt } from 'lucide-react';
 import { authFetch } from '@/lib/auth';
+import { LoadingBlock } from '@/components/admin/form-controls';
 
 interface Me {
   borrower: { id: string; full_name: string; email: string };
@@ -47,7 +48,7 @@ export default function Overview() {
   }, []);
 
   if (loading || !me) {
-    return <div className="bg-white p-12 border shadow-xl text-center text-muted-foreground">Loading…</div>;
+    return <div className="bg-white p-12 border shadow-xl"><LoadingBlock /></div>;
   }
 
   return (

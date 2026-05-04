@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { ChevronRight, X } from 'lucide-react';
 import { authFetch } from '@/lib/auth';
+import { LoadingBlock, LoadingValue } from '@/components/admin/form-controls';
 
 interface Loan {
   id: string;
@@ -153,10 +154,12 @@ export default function MyLoans() {
 
   return (
     <div className="bg-white p-10 border shadow-xl">
-      <h2 className="text-xl font-heading font-bold text-primary mb-6">My Loans ({list.length})</h2>
+      <h2 className="text-xl font-heading font-bold text-primary mb-6">
+        My Loans (<LoadingValue loading={loading} value={list.length} />)
+      </h2>
 
       {loading ? (
-        <p className="text-center py-8 text-muted-foreground">Loading…</p>
+        <LoadingBlock />
       ) : list.length === 0 ? (
         <p className="text-center py-8 text-muted-foreground">You have no loans on record yet.</p>
       ) : (

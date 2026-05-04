@@ -2,7 +2,11 @@ import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Plus, Edit, Trash2, X, Search } from 'lucide-react';
 import { toast } from 'sonner';
-import { authFetch, hasPermission, type SessionUser } from '@/lib/auth';
+import { authFetch, hasPermission } from '@/lib/auth';
+import { useAdminUser } from '../AdminLayout';
+import {
+  Field, TextInput, TextArea, Select, NumericInput, DatePicker, LoadingBlock, LoadingValue,
+} from '@/components/admin/form-controls';
 
 interface Project {
   id: string;
@@ -29,7 +33,8 @@ const empty = {
   custom_fields_text: '',
 };
 
-export default function Projects({ user }: { user: SessionUser }) {
+export default function Projects() {
+  const user = useAdminUser();
   const [list, setList] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -129,43 +134,58 @@ export default function Projects({ user }: { user: SessionUser }) {
         </div>
         <form onSubmit={submit} className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <Field label="Name" required value={form.name} onChange={(v) => setForm({ ...form, name: v })} />
-            <div className="space-y-2">
-              <label className="text-[10px] uppercase tracking-widest font-bold text-primary">Status</label>
-              <select
-                value={form.status}
-                onChange={(e) => setForm({ ...form, status: e.target.value })}
-                className="w-full bg-secondary/30 border border-border p-4 focus:outline-none focus:ring-2 focus:ring-accent"
-              >
+            <Field label="Name" required>
+              <TextInput value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} required />
+            </Field>
+            <Field label="Status">
+              <Select value={form.status} onChange={(e) => setForm({ ...form, status: e.target.value })}>
                 {STATUSES.map((s) => <option key={s} value={s}>{s}</option>)}
-              </select>
-            </div>
-            <Field label="Address" value={form.address} onChange={(v) => setForm({ ...form, address: v })} />
-            <Field label="Description" textarea value={form.description} onChange={(v) => setForm({ ...form, description: v })} />
+              </Select>
+            </Field>
+            <Field label="Address">
+              <TextInput value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} />
+            </Field>
+            <Field label="Description">
+              <TextArea rows={3} value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />
+            </Field>
           </div>
+
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <Field label="Total Cost (AUD)" type="number" value={form.total_cost} onChange={(v) => setForm({ ...form, total_cost: v })} />
-            <Field label="Total Revenue (AUD)" type="number" value={form.total_revenue} onChange={(v) => setForm({ ...form, total_revenue: v })} />
-            <Field label="Total Profit (AUD)" type="number" value={form.total_profit} onChange={(v) => setForm({ ...form, total_profit: v })} />
+            <Field label="Total Cost (AUD)">
+              <NumericInput prefix="$" value={form.total_cost} onChange={(v) => setForm({ ...form, total_cost: v })} placeholder="0" />
+            </Field>
+            <Field label="Total Revenue (AUD)">
+              <NumericInput prefix="$" value={form.total_revenue} onChange={(v) => setForm({ ...form, total_revenue: v })} placeholder="0" />
+            </Field>
+            <Field label="Total Profit (AUD)">
+              <NumericInput prefix="$" value={form.total_profit} onChange={(v) => setForm({ ...form, total_profit: v })} placeholder="0" />
+            </Field>
           </div>
+
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <Field label="Start Date" type="date" value={form.start_date} onChange={(v) => setForm({ ...form, start_date: v })} />
-            <Field label="Estimated Completion" type="date" value={form.estimated_completion} onChange={(v) => setForm({ ...form, estimated_completion: v })} />
-            <Field label="Actual Completion" type="date" value={form.actual_completion} onChange={(v) => setForm({ ...form, actual_completion: v })} />
+            <Field label="Start Date">
+              <DatePicker value={form.start_date} onChange={(v) => setForm({ ...form, start_date: v })} />
+            </Field>
+            <Field label="Estimated Completion">
+              <DatePicker value={form.estimated_completion} onChange={(v) => setForm({ ...form, estimated_completion: v })} />
+            </Field>
+            <Field label="Actual Completion">
+              <DatePicker value={form.actual_completion} onChange={(v) => setForm({ ...form, actual_completion: v })} />
+            </Field>
           </div>
-          <div className="space-y-2">
-            <label className="text-[10px] uppercase tracking-widest font-bold text-primary">Custom Fields (JSON)</label>
-            <textarea
+
+          <Field label="Custom Fields (JSON)">
+            <TextArea
               value={form.custom_fields_text}
               onChange={(e) => setForm({ ...form, custom_fields_text: e.target.value })}
               placeholder={'{\n  "councilApproval": "VCAT 2026/01234"\n}'}
               rows={6}
-              className="w-full bg-secondary/30 border border-border p-4 focus:outline-none focus:ring-2 focus:ring-accent font-mono text-sm"
+              className="font-mono text-sm"
             />
-          </div>
+          </Field>
+
           <Button
-            type="submit"
-            disabled={saving}
+            type="submit" disabled={saving}
             className="w-full rounded-none bg-accent hover:bg-accent/90 text-white py-6 font-heading font-bold uppercase tracking-wider"
           >
             {saving ? 'Saving...' : (editing ? 'Update Project' : 'Create Project')}
@@ -179,7 +199,7 @@ export default function Projects({ user }: { user: SessionUser }) {
     <div className="bg-white p-10 border shadow-xl">
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-xl font-heading font-bold text-primary">
-          Projects ({filtered.length})
+          Projects (<LoadingValue loading={loading} value={filtered.length} />)
         </h2>
         {canCreate && (
           <Button onClick={() => open()} className="gap-2"><Plus size={16} /> New Project</Button>
@@ -189,16 +209,14 @@ export default function Projects({ user }: { user: SessionUser }) {
       <div className="relative mb-6">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={18} />
         <input
-          type="text"
-          placeholder="Search by name..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
+          type="text" placeholder="Search by name..."
+          value={search} onChange={(e) => setSearch(e.target.value)}
           className="w-full pl-10 pr-4 py-2 border border-border focus:outline-none focus:ring-2 focus:ring-accent"
         />
       </div>
 
       {loading ? (
-        <p className="text-center py-8 text-muted-foreground">Loading...</p>
+        <LoadingBlock />
       ) : filtered.length === 0 ? (
         <p className="text-center py-8 text-muted-foreground">No projects yet.</p>
       ) : (
@@ -249,35 +267,4 @@ function fmt(v: string | null) {
 
 function Th({ children }: { children: React.ReactNode }) {
   return <th className="text-left py-3 px-4 font-bold text-[10px] uppercase tracking-widest text-primary">{children}</th>;
-}
-
-function Field({
-  label, value, onChange, required, type = 'text', placeholder, textarea,
-}: {
-  label: string; value: string; onChange: (v: string) => void; required?: boolean;
-  type?: string; placeholder?: string; textarea?: boolean;
-}) {
-  return (
-    <div className="space-y-2">
-      <label className="text-[10px] uppercase tracking-widest font-bold text-primary">{label}{required ? ' *' : ''}</label>
-      {textarea ? (
-        <textarea
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-          placeholder={placeholder}
-          rows={3}
-          className="w-full bg-secondary/30 border border-border p-4 focus:outline-none focus:ring-2 focus:ring-accent"
-        />
-      ) : (
-        <input
-          type={type}
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-          required={required}
-          placeholder={placeholder}
-          className="w-full bg-secondary/30 border border-border p-4 focus:outline-none focus:ring-2 focus:ring-accent"
-        />
-      )}
-    </div>
-  );
 }

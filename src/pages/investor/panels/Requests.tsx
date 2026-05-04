@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Plus, X, Inbox } from 'lucide-react';
 import { toast } from 'sonner';
 import { authFetch } from '@/lib/auth';
+import { LoadingBlock, LoadingValue, NumericInput } from '@/components/admin/form-controls';
 
 type Status = 'PENDING' | 'APPROVED' | 'REJECTED' | 'COMPLETED';
 
@@ -121,10 +122,7 @@ export default function InvestorRequests() {
           </div>
           <div className="space-y-2">
             <label className="text-[10px] uppercase tracking-widest font-bold text-primary">Amount (AUD) *</label>
-            <input
-              type="number" value={form.amount} onChange={(e) => setForm({ ...form, amount: e.target.value })} required
-              className="w-full bg-secondary/30 border border-border p-4 focus:outline-none focus:ring-2 focus:ring-accent"
-            />
+            <NumericInput prefix="$" value={form.amount} onChange={(v) => setForm({ ...form, amount: v })} required placeholder="0" />
           </div>
 
           {tab === 'repayment' ? (
@@ -178,10 +176,10 @@ export default function InvestorRequests() {
     <div className="space-y-6">
       <div className="bg-white p-2 border shadow-md flex gap-1">
         <TabBtn active={tab === 'repayment'} onClick={() => setTab('repayment')}>
-          Early Repayment ({repayments.filter((r) => r.status === 'PENDING').length})
+          Early Repayment (<LoadingValue loading={loading} value={repayments.filter((r) => r.status === 'PENDING').length} />)
         </TabBtn>
         <TabBtn active={tab === 'topup'} onClick={() => setTab('topup')}>
-          Top-Up ({topups.filter((t) => t.status === 'PENDING').length})
+          Top-Up (<LoadingValue loading={loading} value={topups.filter((t) => t.status === 'PENDING').length} />)
         </TabBtn>
       </div>
 
@@ -194,7 +192,7 @@ export default function InvestorRequests() {
         </div>
 
         {loading ? (
-          <p className="text-center py-8 text-muted-foreground">Loading…</p>
+          <LoadingBlock />
         ) : list.length === 0 ? (
           <p className="text-center py-8 text-muted-foreground">No requests yet.</p>
         ) : (

@@ -4,6 +4,7 @@ import {
   Bar, Line,
 } from 'recharts';
 import { authFetch } from '@/lib/auth';
+import { LoadingBlock } from '@/components/admin/form-controls';
 
 interface DashboardData {
   summary: {
@@ -50,7 +51,7 @@ export default function Dashboard() {
   useEffect(() => { load(); }, [months]);
 
   if (loading || !data) {
-    return <div className="bg-white p-12 border shadow-xl text-center text-muted-foreground">Loading dashboard…</div>;
+    return <div className="bg-white p-12 border shadow-xl"><LoadingBlock label="Loading dashboard" /></div>;
   }
 
   const chartData = data.months.map((m, i) => ({

@@ -7,6 +7,9 @@ import OpenAI from 'openai';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import cookieParser from 'cookie-parser';
+import rateLimit from 'express-rate-limit';
+import { authenticator } from 'otplib';
+import crypto from 'crypto';
 
 const app = express();
 
@@ -105,30 +108,166 @@ async function logAction(req, action, entityType, entityId, details) {
   } catch {}
 }
 
-app.post('/api/auth/login', async (req, res) => {
+// Rate limiters
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, max: 5,
+  standardHeaders: true, legacyHeaders: false,
+  message: { error: 'Too many attempts. Please try again later.' },
+});
+const totpLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, max: 10,
+  standardHeaders: true, legacyHeaders: false,
+  message: { error: 'Too many 2FA attempts. Please try again later.' },
+});
+
+authenticator.options = { window: 1 };
+
+function signPending2FAToken(userId) {
+  return jwt.sign({ sub: userId, purpose: '2fa-pending' }, JWT_SECRET, { expiresIn: '5m' });
+}
+function verifyPending2FAToken(token) {
+  try {
+    const decoded = jwt.verify(token, JWT_SECRET);
+    if (decoded.purpose !== '2fa-pending') return null;
+    return decoded.sub;
+  } catch { return null; }
+}
+
+app.post('/api/auth/login', authLimiter, async (req, res) => {
   if (!supabase) return res.status(500).json({ error: 'Database not configured' });
   const { email, password } = req.body || {};
   if (!email || !password) return res.status(400).json({ error: 'Email and password required' });
   const { data: user, error } = await supabase.from('users')
-    .select('id, email, name, password_hash, role, borrower_id, permissions, active')
+    .select('id, email, name, password_hash, role, borrower_id, permissions, active, totp_enabled')
     .eq('email', String(email).toLowerCase()).maybeSingle();
   if (error || !user || !user.active) return res.status(401).json({ error: 'Invalid credentials' });
   const ok = await bcrypt.compare(password, user.password_hash);
   if (!ok) return res.status(401).json({ error: 'Invalid credentials' });
+  if (user.totp_enabled) {
+    return res.json({ success: true, requires2FA: true, pendingToken: signPending2FAToken(user.id) });
+  }
   await supabase.from('users').update({ last_login: new Date().toISOString() }).eq('id', user.id);
   setSessionCookie(res, signSession(user));
   const redirect = user.role === 'LENDER' ? '/investor' : '/admin';
   res.json({ success: true, user: { id: user.id, email: user.email, name: user.name, role: user.role }, redirect });
 });
 
+app.post('/api/auth/2fa/challenge', totpLimiter, async (req, res) => {
+  if (!supabase) return res.status(500).json({ error: 'Database not configured' });
+  const { pendingToken, code } = req.body || {};
+  if (!pendingToken || !code) return res.status(400).json({ error: 'pendingToken and code required' });
+  const userId = verifyPending2FAToken(pendingToken);
+  if (!userId) return res.status(401).json({ error: 'Pending token expired or invalid. Please log in again.' });
+  const { data: user } = await supabase.from('users')
+    .select('id, email, name, role, borrower_id, permissions, active, totp_secret, totp_enabled')
+    .eq('id', userId).maybeSingle();
+  if (!user || !user.active || !user.totp_enabled || !user.totp_secret) {
+    return res.status(401).json({ error: 'Invalid 2FA state' });
+  }
+  const valid = authenticator.verify({ token: String(code).replace(/\s+/g, ''), secret: user.totp_secret });
+  if (!valid) return res.status(401).json({ error: 'Invalid 2FA code' });
+  await supabase.from('users').update({ last_login: new Date().toISOString() }).eq('id', user.id);
+  setSessionCookie(res, signSession(user));
+  const redirect = user.role === 'LENDER' ? '/investor' : '/admin';
+  res.json({ success: true, user: { id: user.id, email: user.email, name: user.name, role: user.role }, redirect });
+});
+
+app.post('/api/auth/2fa/setup', requireAuth(), async (req, res) => {
+  if (!supabase) return res.status(500).json({ error: 'Database not configured' });
+  const { data: user } = await supabase.from('users').select('email, totp_enabled').eq('id', req.user.sub).maybeSingle();
+  if (!user) return res.status(404).json({ error: 'User not found' });
+  if (user.totp_enabled) return res.status(400).json({ error: '2FA already enabled. Disable it first to re-setup.' });
+  const secret = authenticator.generateSecret();
+  await supabase.from('users').update({ totp_secret: secret, totp_enabled: false }).eq('id', req.user.sub);
+  const otpauthUrl = authenticator.keyuri(user.email, 'Ghan Projects', secret);
+  res.json({ secret, otpauthUrl });
+});
+
+app.post('/api/auth/2fa/enable', requireAuth(), async (req, res) => {
+  if (!supabase) return res.status(500).json({ error: 'Database not configured' });
+  const { code } = req.body || {};
+  if (!code) return res.status(400).json({ error: 'code required' });
+  const { data: user } = await supabase.from('users').select('totp_secret, totp_enabled').eq('id', req.user.sub).maybeSingle();
+  if (!user || !user.totp_secret) return res.status(400).json({ error: 'Run setup first' });
+  if (user.totp_enabled) return res.status(400).json({ error: '2FA already enabled' });
+  const valid = authenticator.verify({ token: String(code).replace(/\s+/g, ''), secret: user.totp_secret });
+  if (!valid) return res.status(401).json({ error: 'Invalid code' });
+  await supabase.from('users').update({ totp_enabled: true }).eq('id', req.user.sub);
+  await logAction(req, '2FA_ENABLED', 'User', req.user.sub);
+  res.json({ success: true });
+});
+
+app.post('/api/auth/2fa/disable', requireAuth(), async (req, res) => {
+  if (!supabase) return res.status(500).json({ error: 'Database not configured' });
+  const { password } = req.body || {};
+  if (!password) return res.status(400).json({ error: 'password required' });
+  const { data: user } = await supabase.from('users').select('password_hash').eq('id', req.user.sub).maybeSingle();
+  if (!user) return res.status(404).json({ error: 'User not found' });
+  const ok = await bcrypt.compare(password, user.password_hash);
+  if (!ok) return res.status(401).json({ error: 'Incorrect password' });
+  await supabase.from('users').update({ totp_enabled: false, totp_secret: null }).eq('id', req.user.sub);
+  await logAction(req, '2FA_DISABLED', 'User', req.user.sub);
+  res.json({ success: true });
+});
+
+app.post('/api/auth/forgot-password', authLimiter, async (req, res) => {
+  if (!supabase) return res.status(500).json({ error: 'Database not configured' });
+  const { email } = req.body || {};
+  if (!email) return res.status(400).json({ error: 'email required' });
+  const { data: user } = await supabase.from('users')
+    .select('id, email, name, active').eq('email', String(email).toLowerCase()).maybeSingle();
+  if (user && user.active) {
+    const token = crypto.randomBytes(32).toString('base64url');
+    const expires = new Date(Date.now() + 60 * 60 * 1000).toISOString();
+    await supabase.from('users').update({ reset_token: token, reset_token_expires: expires }).eq('id', user.id);
+    const baseUrl = process.env.WEBSITE_URL || 'http://localhost:5173';
+    const resetUrl = `${baseUrl}/reset-password?token=${encodeURIComponent(token)}`;
+    try {
+      await resend.emails.send({
+        from: process.env.RESEND_FROM_EMAIL,
+        to: user.email,
+        subject: 'Reset your Ghan Projects password',
+        html: `<div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;"><h2 style="color:#002B49;">Password reset</h2><p>Hi ${user.name},</p><p>We received a request to reset your Ghan Projects portal password. Click the button below to set a new one. This link expires in 1 hour.</p><p style="margin:24px 0;"><a href="${resetUrl}" style="display:inline-block;background:#002B49;color:#fff;padding:14px 28px;text-decoration:none;font-weight:bold;">Reset password</a></p><p style="color:#666;font-size:12px;">If you didn't request this, you can safely ignore this email.</p></div>`,
+      });
+      await logAction(req, 'PASSWORD_RESET_REQUESTED', 'User', user.id);
+    } catch (e) { console.error('Failed to send reset email:', e); }
+  }
+  res.json({ success: true });
+});
+
+app.post('/api/auth/reset-password', authLimiter, async (req, res) => {
+  if (!supabase) return res.status(500).json({ error: 'Database not configured' });
+  const { token, newPassword } = req.body || {};
+  if (!token || !newPassword) return res.status(400).json({ error: 'token and newPassword required' });
+  if (String(newPassword).length < 8) return res.status(400).json({ error: 'Password must be at least 8 characters' });
+  const { data: user } = await supabase.from('users')
+    .select('id, reset_token_expires, active').eq('reset_token', token).maybeSingle();
+  if (!user || !user.active) return res.status(400).json({ error: 'Invalid or expired reset token' });
+  if (!user.reset_token_expires || new Date(user.reset_token_expires) < new Date()) {
+    return res.status(400).json({ error: 'Reset token expired. Please request a new one.' });
+  }
+  const password_hash = await bcrypt.hash(newPassword, 12);
+  await supabase.from('users').update({
+    password_hash, reset_token: null, reset_token_expires: null,
+  }).eq('id', user.id);
+  await logAction(req, 'PASSWORD_RESET_COMPLETED', 'User', user.id);
+  res.json({ success: true });
+});
+
 app.post('/api/auth/logout', (req, res) => { clearSessionCookie(res); res.json({ success: true }); });
 
-app.get('/api/auth/me', (req, res) => {
+app.get('/api/auth/me', async (req, res) => {
   const session = readSession(req);
   if (!session) return res.status(401).json({ error: 'Unauthorized' });
+  let totp_enabled = false;
+  if (supabase) {
+    const { data } = await supabase.from('users').select('totp_enabled').eq('id', session.sub).maybeSingle();
+    totp_enabled = !!data?.totp_enabled;
+  }
   res.json({
     id: session.sub, email: session.email, name: session.name, role: session.role,
     borrowerId: session.borrowerId, permissions: session.permissions,
+    totpEnabled: totp_enabled,
   });
 });
 

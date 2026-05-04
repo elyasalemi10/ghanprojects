@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Users, Search, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { authFetch } from '@/lib/auth';
+import { LoadingBlock, LoadingValue } from '@/components/admin/form-controls';
 
 interface Signup {
   id: number;
@@ -58,7 +59,7 @@ export default function MembersPanel() {
     <div className="bg-white p-10 border shadow-xl">
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-xl font-heading font-bold text-primary flex items-center gap-2">
-          <Users size={20} /> Email Signups ({filtered.length})
+          <Users size={20} /> Email Signups (<LoadingValue loading={loading} value={filtered.length} />)
         </h2>
         <Button onClick={load} variant="outline" size="sm">Refresh</Button>
       </div>
@@ -82,7 +83,7 @@ export default function MembersPanel() {
       </div>
 
       {loading ? (
-        <p className="text-center py-8 text-muted-foreground">Loading...</p>
+        <LoadingBlock />
       ) : filtered.length === 0 ? (
         <p className="text-center py-8 text-muted-foreground">No signups found.</p>
       ) : (

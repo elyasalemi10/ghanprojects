@@ -1,8 +1,13 @@
 import { useEffect, useMemo, useState } from 'react';
+import { Link } from '@tanstack/react-router';
 import { Button } from '@/components/ui/button';
-import { Plus, Edit, Trash2, X, Search } from 'lucide-react';
+import { Plus, Edit, Trash2, X, Search, ChevronRight } from 'lucide-react';
 import { toast } from 'sonner';
-import { authFetch, hasPermission, type SessionUser } from '@/lib/auth';
+import { authFetch, hasPermission } from '@/lib/auth';
+import { useAdminUser } from '../AdminLayout';
+import {
+  Field, TextArea, Select, NumericInput, DatePicker, LoadingBlock, LoadingValue,
+} from '@/components/admin/form-controls';
 
 type LoanType = 'FIXED_MONTHLY' | 'FIXED_END' | 'PROFIT_SHARE';
 type LoanStatus = 'PENDING' | 'ACTIVE' | 'COMPLETED' | 'CANCELLED' | 'DEFAULTED';
@@ -49,7 +54,8 @@ const STATUS_COLORS: Record<LoanStatus, string> = {
   DEFAULTED: 'bg-red-100 text-red-800',
 };
 
-export default function Loans({ user }: { user: SessionUser }) {
+export default function Loans() {
+  const user = useAdminUser();
   const [list, setList] = useState<Loan[]>([]);
   const [borrowers, setBorrowers] = useState<BorrowerLite[]>([]);
   const [projects, setProjects] = useState<ProjectLite[]>([]);
@@ -180,74 +186,73 @@ export default function Loans({ user }: { user: SessionUser }) {
         </div>
         <form onSubmit={submit} className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="space-y-2">
-              <label className="text-[10px] uppercase tracking-widest font-bold text-primary">Borrower *</label>
-              <select
-                value={form.borrower_id} onChange={(e) => setForm({ ...form, borrower_id: e.target.value })} required
-                className="w-full bg-secondary/30 border border-border p-4 focus:outline-none focus:ring-2 focus:ring-accent"
-              >
+            <Field label="Borrower" required>
+              <Select value={form.borrower_id} onChange={(e) => setForm({ ...form, borrower_id: e.target.value })} required>
                 <option value="">— Select borrower —</option>
                 {borrowers.map((b) => <option key={b.id} value={b.id}>{b.full_name} ({b.email})</option>)}
-              </select>
-            </div>
-            <div className="space-y-2">
-              <label className="text-[10px] uppercase tracking-widest font-bold text-primary">
-                Project {isProfitShare ? '*' : '(optional)'}
-              </label>
-              <select
-                value={form.project_id} onChange={(e) => setForm({ ...form, project_id: e.target.value })}
-                required={isProfitShare}
-                className="w-full bg-secondary/30 border border-border p-4 focus:outline-none focus:ring-2 focus:ring-accent"
-              >
+              </Select>
+            </Field>
+            <Field label={isProfitShare ? 'Project *' : 'Project (optional)'}>
+              <Select value={form.project_id} onChange={(e) => setForm({ ...form, project_id: e.target.value })} required={isProfitShare}>
                 <option value="">— None / general loan —</option>
                 {projects.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
-              </select>
-            </div>
-            <div className="space-y-2">
-              <label className="text-[10px] uppercase tracking-widest font-bold text-primary">Loan Type *</label>
-              <select
-                value={form.loan_type} onChange={(e) => setForm({ ...form, loan_type: e.target.value as LoanType })}
-                className="w-full bg-secondary/30 border border-border p-4 focus:outline-none focus:ring-2 focus:ring-accent"
-              >
+              </Select>
+            </Field>
+            <Field label="Loan Type" required>
+              <Select value={form.loan_type} onChange={(e) => setForm({ ...form, loan_type: e.target.value as LoanType })}>
                 <option value="FIXED_MONTHLY">Fixed monthly interest</option>
                 <option value="FIXED_END">Fixed lump sum at end</option>
                 <option value="PROFIT_SHARE">Profit share</option>
-              </select>
-            </div>
-            <div className="space-y-2">
-              <label className="text-[10px] uppercase tracking-widest font-bold text-primary">Status *</label>
-              <select
-                value={form.status} onChange={(e) => setForm({ ...form, status: e.target.value as LoanStatus })}
-                className="w-full bg-secondary/30 border border-border p-4 focus:outline-none focus:ring-2 focus:ring-accent"
-              >
+              </Select>
+            </Field>
+            <Field label="Status" required>
+              <Select value={form.status} onChange={(e) => setForm({ ...form, status: e.target.value as LoanStatus })}>
                 {(['PENDING','ACTIVE','COMPLETED','CANCELLED','DEFAULTED'] as LoanStatus[]).map((s) => <option key={s} value={s}>{s}</option>)}
-              </select>
-            </div>
+              </Select>
+            </Field>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <Field label="Principal (AUD)" required type="number" value={form.principal} onChange={(v) => setForm({ ...form, principal: v })} />
-            <Field label="Annual Interest Rate (%)" required type="number" value={form.interest_rate} onChange={(v) => setForm({ ...form, interest_rate: v })} />
-            <Field label="Term (months)" required type="number" value={form.term_months} onChange={(v) => setForm({ ...form, term_months: v })} />
+            <Field label="Principal (AUD)" required>
+              <NumericInput prefix="$" value={form.principal} onChange={(v) => setForm({ ...form, principal: v })} required placeholder="0" />
+            </Field>
+            <Field label="Annual Interest Rate (%)" required>
+              <NumericInput value={form.interest_rate} onChange={(v) => setForm({ ...form, interest_rate: v })} required placeholder="9.00" />
+            </Field>
+            <Field label="Term (months)" required>
+              <NumericInput value={form.term_months} onChange={(v) => setForm({ ...form, term_months: v })} required decimals={0} placeholder="12" />
+            </Field>
           </div>
 
           {isProfitShare && (
-            <Field label="Profit Share %" type="number" value={form.profit_share_percent} onChange={(v) => setForm({ ...form, profit_share_percent: v })} />
+            <Field label="Profit Share %">
+              <NumericInput value={form.profit_share_percent} onChange={(v) => setForm({ ...form, profit_share_percent: v })} placeholder="20.00" />
+            </Field>
           )}
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <Field label="Start Date" required type="date" value={form.start_date} onChange={(v) => setForm({ ...form, start_date: v })} />
-            <Field label="Maturity Date" required type="date" value={form.maturity_date} onChange={(v) => setForm({ ...form, maturity_date: v })} />
+            <Field label="Start Date" required>
+              <DatePicker value={form.start_date} onChange={(v) => setForm({ ...form, start_date: v })} required />
+            </Field>
+            <Field label="Maturity Date" required>
+              <DatePicker value={form.maturity_date} onChange={(v) => setForm({ ...form, maturity_date: v })} required />
+            </Field>
           </div>
 
           {isMonthly && (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <Field label="Monthly Payment Amount" type="number" value={form.payment_amount} onChange={(v) => setForm({ ...form, payment_amount: v })} />
-              <Field label="Payment Day of Month (1-28)" type="number" value={form.payment_day} onChange={(v) => setForm({ ...form, payment_day: v })} />
+              <Field label="Monthly Payment Amount">
+                <NumericInput prefix="$" value={form.payment_amount} onChange={(v) => setForm({ ...form, payment_amount: v })} placeholder="0" />
+              </Field>
+              <Field label="Payment Day of Month (1-28)">
+                <NumericInput value={form.payment_day} onChange={(v) => setForm({ ...form, payment_day: v })} decimals={0} placeholder="15" />
+              </Field>
             </div>
           )}
 
-          <Field label="Notes" textarea value={form.notes} onChange={(v) => setForm({ ...form, notes: v })} />
+          <Field label="Notes">
+            <TextArea rows={3} value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} />
+          </Field>
 
           <Button
             type="submit" disabled={saving}
@@ -263,14 +268,16 @@ export default function Loans({ user }: { user: SessionUser }) {
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Kpi label="Total Outstanding" value={totalOutstanding.toLocaleString('en-AU', { style: 'currency', currency: 'AUD', maximumFractionDigits: 0 })} />
-        <Kpi label="Total Loans" value={String(list.length)} />
-        <Kpi label="Active" value={String(list.filter((l) => l.status === 'ACTIVE').length)} />
+        <Kpi label="Total Outstanding" value={loading ? '—' : totalOutstanding.toLocaleString('en-AU', { style: 'currency', currency: 'AUD', maximumFractionDigits: 0 })} loading={loading} />
+        <Kpi label="Total Loans" value={loading ? '—' : String(list.length)} loading={loading} />
+        <Kpi label="Active" value={loading ? '—' : String(list.filter((l) => l.status === 'ACTIVE').length)} loading={loading} />
       </div>
 
       <div className="bg-white p-10 border shadow-xl">
         <div className="flex flex-wrap justify-between items-center gap-4 mb-6">
-          <h2 className="text-xl font-heading font-bold text-primary">Loans ({filtered.length})</h2>
+          <h2 className="text-xl font-heading font-bold text-primary">
+            Loans (<LoadingValue loading={loading} value={filtered.length} />)
+          </h2>
           {canCreate && (
             <Button onClick={() => open()} className="gap-2"><Plus size={16} /> New Loan</Button>
           )}
@@ -295,7 +302,7 @@ export default function Loans({ user }: { user: SessionUser }) {
         </div>
 
         {loading ? (
-          <p className="text-center py-8 text-muted-foreground">Loading...</p>
+          <LoadingBlock />
         ) : filtered.length === 0 ? (
           <p className="text-center py-8 text-muted-foreground">No loans yet.</p>
         ) : (
@@ -311,7 +318,11 @@ export default function Loans({ user }: { user: SessionUser }) {
               <tbody>
                 {filtered.map((l) => (
                   <tr key={l.id} className="border-b hover:bg-secondary/20">
-                    <td className="py-3 px-4 font-mono text-xs">{l.reference}</td>
+                    <td className="py-3 px-4 font-mono text-xs">
+                      <Link to="/admin/loans/$id" params={{ id: l.id }} className="hover:text-accent inline-flex items-center gap-1">
+                        {l.reference} <ChevronRight size={12} />
+                      </Link>
+                    </td>
                     <td className="py-3 px-4 text-sm">{l.borrower?.full_name || '—'}</td>
                     <td className="py-3 px-4 text-sm">{l.project?.name || <span className="text-muted-foreground">General</span>}</td>
                     <td className="py-3 px-4 text-xs">{l.loan_type.replace('_', ' ')}</td>
@@ -354,42 +365,13 @@ function Th({ children }: { children: React.ReactNode }) {
   return <th className="text-left py-3 px-4 font-bold text-[10px] uppercase tracking-widest text-primary">{children}</th>;
 }
 
-function Kpi({ label, value }: { label: string; value: string }) {
+function Kpi({ label, value, loading }: { label: string; value: string; loading: boolean }) {
   return (
     <div className="bg-white p-6 border-l-4 border-accent shadow-md">
       <p className="text-[10px] uppercase tracking-widest font-bold text-muted-foreground">{label}</p>
-      <p className="text-2xl font-heading font-bold text-primary mt-2">{value}</p>
-    </div>
-  );
-}
-
-function Field({
-  label, value, onChange, required, type = 'text', placeholder, textarea,
-}: {
-  label: string; value: string; onChange: (v: string) => void; required?: boolean;
-  type?: string; placeholder?: string; textarea?: boolean;
-}) {
-  return (
-    <div className="space-y-2">
-      <label className="text-[10px] uppercase tracking-widest font-bold text-primary">{label}{required ? ' *' : ''}</label>
-      {textarea ? (
-        <textarea
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-          placeholder={placeholder}
-          rows={3}
-          className="w-full bg-secondary/30 border border-border p-4 focus:outline-none focus:ring-2 focus:ring-accent"
-        />
-      ) : (
-        <input
-          type={type}
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-          required={required}
-          placeholder={placeholder}
-          className="w-full bg-secondary/30 border border-border p-4 focus:outline-none focus:ring-2 focus:ring-accent"
-        />
-      )}
+      <p className="text-2xl font-heading font-bold text-primary mt-2">
+        <LoadingValue loading={loading} value={value} />
+      </p>
     </div>
   );
 }
