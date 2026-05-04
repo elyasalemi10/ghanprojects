@@ -7,6 +7,9 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import { createClient } from '@supabase/supabase-js';
 import OpenAI from 'openai';
+import bcrypt from 'bcryptjs';
+import jwt from 'jsonwebtoken';
+import cookieParser from 'cookie-parser';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -60,27 +63,172 @@ async function saveEmailSignup(email, source) {
   }
 }
 
-app.use(cors());
+app.use(cors({
+  origin: (origin, cb) => cb(null, true),
+  credentials: true,
+}));
 app.use(express.json());
+app.use(cookieParser());
 
-// Admin authentication middleware
-const authenticateAdmin = (req, res, next) => {
-  const { username, password } = req.body;
-  if (username === process.env.ADMIN_USERNAME && password === process.env.ADMIN_PASSWORD) {
+// ============================================
+// AUTH (cookie session, bcrypt, role-based)
+// ============================================
+
+const JWT_SECRET = process.env.JWT_SECRET || process.env.NEXTAUTH_SECRET || 'CHANGE_ME_IN_PRODUCTION';
+const SESSION_COOKIE = 'gp_session';
+const SESSION_MAX_AGE_MS = 30 * 24 * 60 * 60 * 1000; // 30 days
+
+function signSession(user) {
+  return jwt.sign(
+    {
+      sub: user.id,
+      email: user.email,
+      name: user.name,
+      role: user.role,
+      borrowerId: user.borrower_id || null,
+      permissions: user.permissions || null,
+    },
+    JWT_SECRET,
+    { expiresIn: '30d' }
+  );
+}
+
+function setSessionCookie(res, token) {
+  res.cookie(SESSION_COOKIE, token, {
+    httpOnly: true,
+    sameSite: 'lax',
+    secure: process.env.NODE_ENV === 'production',
+    maxAge: SESSION_MAX_AGE_MS,
+    path: '/',
+  });
+}
+
+function clearSessionCookie(res) {
+  res.clearCookie(SESSION_COOKIE, { path: '/' });
+}
+
+function readSession(req) {
+  const token = req.cookies?.[SESSION_COOKIE];
+  if (!token) return null;
+  try {
+    return jwt.verify(token, JWT_SECRET);
+  } catch {
+    return null;
+  }
+}
+
+function requireAuth(roles) {
+  return (req, res, next) => {
+    const session = readSession(req);
+    if (!session) return res.status(401).json({ error: 'Unauthorized' });
+    if (roles && roles.length > 0 && !roles.includes(session.role)) {
+      return res.status(403).json({ error: 'Forbidden' });
+    }
+    req.user = session;
     next();
-  } else {
-    res.status(401).json({ error: 'Invalid credentials' });
-  }
-};
+  };
+}
 
-// Verify admin credentials
-app.post('/api/admin/login', (req, res) => {
-  const { username, password } = req.body;
-  if (username === process.env.ADMIN_USERNAME && password === process.env.ADMIN_PASSWORD) {
-    res.json({ success: true });
-  } else {
-    res.status(401).json({ error: 'Invalid credentials' });
+function hasPermission(user, resource, action) {
+  if (!user) return false;
+  if (user.role === 'OWNER') return true;
+  if (user.role === 'ADMIN') {
+    const perms = user.permissions?.[resource] || [];
+    return perms.includes(action);
   }
+  return false;
+}
+
+function requestMeta(req) {
+  return {
+    ip_address: (req.headers['x-forwarded-for']?.split(',')[0] || req.ip || '').trim() || null,
+    user_agent: req.headers['user-agent'] || null,
+  };
+}
+
+async function logAction(req, action, entityType, entityId, details) {
+  if (!supabase) return;
+  try {
+    const meta = requestMeta(req);
+    await supabase.from('audit_log').insert({
+      user_id: req.user?.sub || null,
+      action,
+      entity_type: entityType,
+      entity_id: entityId ? String(entityId) : null,
+      details: details || null,
+      ip_address: meta.ip_address,
+      user_agent: meta.user_agent,
+    });
+  } catch (err) {
+    console.error('Audit log failed:', err);
+  }
+}
+
+// POST /api/auth/login — email + password, sets cookie, returns role + redirect
+app.post('/api/auth/login', async (req, res) => {
+  if (!supabase) return res.status(500).json({ error: 'Database not configured' });
+  const { email, password } = req.body || {};
+  if (!email || !password) return res.status(400).json({ error: 'Email and password required' });
+
+  const { data: user, error } = await supabase
+    .from('users')
+    .select('id, email, name, password_hash, role, borrower_id, permissions, active')
+    .eq('email', String(email).toLowerCase())
+    .maybeSingle();
+
+  if (error || !user || !user.active) return res.status(401).json({ error: 'Invalid credentials' });
+  const ok = await bcrypt.compare(password, user.password_hash);
+  if (!ok) return res.status(401).json({ error: 'Invalid credentials' });
+
+  await supabase.from('users').update({ last_login: new Date().toISOString() }).eq('id', user.id);
+
+  const token = signSession(user);
+  setSessionCookie(res, token);
+
+  const redirect = user.role === 'LENDER' ? '/investor' : '/admin';
+  res.json({
+    success: true,
+    user: { id: user.id, email: user.email, name: user.name, role: user.role },
+    redirect,
+  });
+});
+
+// POST /api/auth/logout
+app.post('/api/auth/logout', (req, res) => {
+  clearSessionCookie(res);
+  res.json({ success: true });
+});
+
+// GET /api/auth/me
+app.get('/api/auth/me', (req, res) => {
+  const session = readSession(req);
+  if (!session) return res.status(401).json({ error: 'Unauthorized' });
+  res.json({
+    id: session.sub,
+    email: session.email,
+    name: session.name,
+    role: session.role,
+    borrowerId: session.borrowerId,
+    permissions: session.permissions,
+  });
+});
+
+// Legacy admin login — kept temporarily for backwards compat with the existing
+// frontend, but now refuses unless no users exist (i.e. before seed). New
+// frontend uses /api/auth/login and the session cookie.
+app.post('/api/admin/login', async (req, res) => {
+  if (!supabase) return res.status(500).json({ error: 'Database not configured' });
+  const check = await supabase.from('users').select('id', { count: 'exact', head: true });
+  const userCount = check.count ?? 0;
+  if (userCount > 0) {
+    return res.status(410).json({ error: 'This endpoint is deprecated. Use /api/auth/login.' });
+  }
+  // Bootstrap fallback: only works if no users have been seeded yet.
+  const { username, password } = req.body || {};
+  if (username === process.env.ADMIN_USERNAME && password === process.env.ADMIN_PASSWORD) {
+    return res.json({ success: true, bootstrap: true });
+  }
+  return res.status(401).json({ error: 'Invalid credentials' });
 });
 
 // Send resource unlock email
@@ -394,7 +542,7 @@ app.post('/api/newsletter', async (req, res) => {
 });
 
 // Admin send custom email
-app.post('/api/admin/send-email', upload.array('attachments', 10), async (req, res) => {
+app.post('/api/admin/send-email', requireAuth(['OWNER','ADMIN']), upload.array('attachments', 10), async (req, res) => {
   const { senderName, senderPrefix, recipientEmail, subject, body, isHtml } = req.body;
   
   const fromEmail = `${senderName} <${senderPrefix}@ghanprojects.com.au>`;
@@ -460,7 +608,7 @@ app.get('/api/posts', async (req, res) => {
 });
 
 // Get all blog posts (admin - includes drafts)
-app.get('/api/admin/posts', async (req, res) => {
+app.get('/api/admin/posts', requireAuth(['OWNER','ADMIN']), async (req, res) => {
   if (!supabase) {
     return res.status(500).json({ error: 'Database not configured' });
   }
@@ -501,7 +649,7 @@ app.get('/api/posts/:id', async (req, res) => {
 });
 
 // Create blog post
-app.post('/api/admin/posts', async (req, res) => {
+app.post('/api/admin/posts', requireAuth(['OWNER','ADMIN']), async (req, res) => {
   if (!supabase) {
     return res.status(500).json({ error: 'Database not configured' });
   }
@@ -533,7 +681,7 @@ app.post('/api/admin/posts', async (req, res) => {
 });
 
 // Update blog post
-app.put('/api/admin/posts/:id', async (req, res) => {
+app.put('/api/admin/posts/:id', requireAuth(['OWNER','ADMIN']), async (req, res) => {
   if (!supabase) {
     return res.status(500).json({ error: 'Database not configured' });
   }
@@ -566,7 +714,7 @@ app.put('/api/admin/posts/:id', async (req, res) => {
 });
 
 // Delete blog post
-app.delete('/api/admin/posts/:id', async (req, res) => {
+app.delete('/api/admin/posts/:id', requireAuth(['OWNER','ADMIN']), async (req, res) => {
   if (!supabase) {
     return res.status(500).json({ error: 'Database not configured' });
   }
@@ -590,7 +738,7 @@ app.delete('/api/admin/posts/:id', async (req, res) => {
 // ============================================
 
 // Get all email signups
-app.get('/api/admin/signups', async (req, res) => {
+app.get('/api/admin/signups', requireAuth(['OWNER','ADMIN']), async (req, res) => {
   if (!supabase) {
     return res.status(500).json({ error: 'Database not configured' });
   }
@@ -610,7 +758,7 @@ app.get('/api/admin/signups', async (req, res) => {
 });
 
 // Delete signup
-app.delete('/api/admin/signups/:id', async (req, res) => {
+app.delete('/api/admin/signups/:id', requireAuth(['OWNER','ADMIN']), async (req, res) => {
   if (!supabase) {
     return res.status(500).json({ error: 'Database not configured' });
   }
@@ -630,7 +778,7 @@ app.delete('/api/admin/signups/:id', async (req, res) => {
 });
 
 // Upload image for blog
-app.post('/api/admin/upload', upload.single('image'), async (req, res) => {
+app.post('/api/admin/upload', requireAuth(['OWNER','ADMIN']), upload.single('image'), async (req, res) => {
   if (!supabase) {
     return res.status(500).json({ error: 'Database not configured' });
   }
@@ -1214,6 +1362,1032 @@ app.post('/api/chat', async (req, res) => {
     console.error('Chat error:', error);
     res.status(500).json({ error: 'Failed to process chat message' });
   }
+});
+
+// ============================================
+// LENDING PLATFORM — Borrowers, Projects, Loans, Transactions
+// ============================================
+
+const dbReady = (req, res) => {
+  if (!supabase) {
+    res.status(500).json({ error: 'Database not configured' });
+    return false;
+  }
+  return true;
+};
+
+// ---------- BORROWERS ----------
+app.get('/api/admin/borrowers', requireAuth(['OWNER','ADMIN']), async (req, res) => {
+  if (!dbReady(req, res)) return;
+  if (req.user.role === 'ADMIN' && !hasPermission(req.user, 'borrowers', 'view')) {
+    return res.status(403).json({ error: 'Forbidden' });
+  }
+  const { data, error } = await supabase
+    .from('borrowers')
+    .select('*')
+    .order('created_at', { ascending: false });
+  if (error) return res.status(500).json({ error: error.message });
+  res.json(data);
+});
+
+app.post('/api/admin/borrowers', requireAuth(['OWNER','ADMIN']), async (req, res) => {
+  if (!dbReady(req, res)) return;
+  if (req.user.role === 'ADMIN' && !hasPermission(req.user, 'borrowers', 'create')) {
+    return res.status(403).json({ error: 'Forbidden' });
+  }
+  const { full_name, email, phone, address, id_number, id_type, notes, custom_fields } = req.body || {};
+  if (!full_name || !email) return res.status(400).json({ error: 'full_name and email required' });
+  const { data, error } = await supabase.from('borrowers').insert({
+    full_name, email: String(email).toLowerCase(), phone, address, id_number, id_type, notes,
+    custom_fields: custom_fields || null,
+  }).select().single();
+  if (error) return res.status(400).json({ error: error.message });
+  await logAction(req, 'BORROWER_CREATED', 'Borrower', data.id, { full_name, email });
+  res.status(201).json(data);
+});
+
+app.put('/api/admin/borrowers/:id', requireAuth(['OWNER','ADMIN']), async (req, res) => {
+  if (!dbReady(req, res)) return;
+  if (req.user.role === 'ADMIN' && !hasPermission(req.user, 'borrowers', 'edit')) {
+    return res.status(403).json({ error: 'Forbidden' });
+  }
+  const { full_name, email, phone, address, id_number, id_type, notes, custom_fields, active } = req.body || {};
+  const update = {
+    full_name, email: email ? String(email).toLowerCase() : undefined, phone, address,
+    id_number, id_type, notes, custom_fields, active,
+  };
+  Object.keys(update).forEach((k) => update[k] === undefined && delete update[k]);
+  const { data, error } = await supabase.from('borrowers').update(update).eq('id', req.params.id).select().single();
+  if (error) return res.status(400).json({ error: error.message });
+  await logAction(req, 'BORROWER_UPDATED', 'Borrower', req.params.id, update);
+  res.json(data);
+});
+
+app.delete('/api/admin/borrowers/:id', requireAuth(['OWNER']), async (req, res) => {
+  if (!dbReady(req, res)) return;
+  const { count } = await supabase.from('loans').select('id', { count: 'exact', head: true }).eq('borrower_id', req.params.id);
+  if ((count ?? 0) > 0) return res.status(400).json({ error: 'Cannot delete borrower with loans' });
+  const { error } = await supabase.from('borrowers').delete().eq('id', req.params.id);
+  if (error) return res.status(400).json({ error: error.message });
+  await logAction(req, 'BORROWER_DELETED', 'Borrower', req.params.id);
+  res.json({ success: true });
+});
+
+// ---------- PROJECTS ----------
+app.get('/api/admin/projects', requireAuth(['OWNER','ADMIN']), async (req, res) => {
+  if (!dbReady(req, res)) return;
+  if (req.user.role === 'ADMIN' && !hasPermission(req.user, 'projects', 'view')) {
+    return res.status(403).json({ error: 'Forbidden' });
+  }
+  const { data, error } = await supabase.from('projects').select('*').order('created_at', { ascending: false });
+  if (error) return res.status(500).json({ error: error.message });
+  res.json(data);
+});
+
+app.post('/api/admin/projects', requireAuth(['OWNER','ADMIN']), async (req, res) => {
+  if (!dbReady(req, res)) return;
+  if (req.user.role === 'ADMIN' && !hasPermission(req.user, 'projects', 'create')) {
+    return res.status(403).json({ error: 'Forbidden' });
+  }
+  const {
+    name, description, address, status,
+    total_cost, total_revenue, total_profit,
+    start_date, estimated_completion, actual_completion, custom_fields,
+  } = req.body || {};
+  if (!name) return res.status(400).json({ error: 'name required' });
+  const { data, error } = await supabase.from('projects').insert({
+    name, description, address, status: status || 'PLANNING',
+    total_cost: total_cost ?? null, total_revenue: total_revenue ?? null, total_profit: total_profit ?? null,
+    start_date: start_date || null, estimated_completion: estimated_completion || null,
+    actual_completion: actual_completion || null, custom_fields: custom_fields || null,
+  }).select().single();
+  if (error) return res.status(400).json({ error: error.message });
+  await logAction(req, 'PROJECT_CREATED', 'Project', data.id, { name });
+  res.status(201).json(data);
+});
+
+app.put('/api/admin/projects/:id', requireAuth(['OWNER','ADMIN']), async (req, res) => {
+  if (!dbReady(req, res)) return;
+  if (req.user.role === 'ADMIN' && !hasPermission(req.user, 'projects', 'edit')) {
+    return res.status(403).json({ error: 'Forbidden' });
+  }
+  const update = { ...req.body };
+  delete update.id; delete update.created_at; delete update.updated_at;
+  const { data, error } = await supabase.from('projects').update(update).eq('id', req.params.id).select().single();
+  if (error) return res.status(400).json({ error: error.message });
+  await logAction(req, 'PROJECT_UPDATED', 'Project', req.params.id, update);
+  res.json(data);
+});
+
+app.delete('/api/admin/projects/:id', requireAuth(['OWNER']), async (req, res) => {
+  if (!dbReady(req, res)) return;
+  const { count } = await supabase.from('loans').select('id', { count: 'exact', head: true }).eq('project_id', req.params.id);
+  if ((count ?? 0) > 0) return res.status(400).json({ error: 'Cannot delete project with loans attached' });
+  const { error } = await supabase.from('projects').delete().eq('id', req.params.id);
+  if (error) return res.status(400).json({ error: error.message });
+  await logAction(req, 'PROJECT_DELETED', 'Project', req.params.id);
+  res.json({ success: true });
+});
+
+// ---------- LOANS ----------
+app.get('/api/admin/loans', requireAuth(['OWNER','ADMIN']), async (req, res) => {
+  if (!dbReady(req, res)) return;
+  if (req.user.role === 'ADMIN' && !hasPermission(req.user, 'loans', 'view')) {
+    return res.status(403).json({ error: 'Forbidden' });
+  }
+  const { status, projectId, borrowerId } = req.query;
+  let q = supabase.from('loans').select('*, borrower:borrowers(id, full_name, email), project:projects(id, name, status)').order('created_at', { ascending: false });
+  if (status) q = q.eq('status', String(status));
+  if (projectId) q = q.eq('project_id', String(projectId));
+  if (borrowerId) q = q.eq('borrower_id', String(borrowerId));
+  const { data, error } = await q;
+  if (error) return res.status(500).json({ error: error.message });
+  res.json(data);
+});
+
+app.get('/api/admin/loans/:id', requireAuth(['OWNER','ADMIN']), async (req, res) => {
+  if (!dbReady(req, res)) return;
+  const { data, error } = await supabase
+    .from('loans')
+    .select('*, borrower:borrowers(*), project:projects(*), transactions(*)')
+    .eq('id', req.params.id)
+    .maybeSingle();
+  if (error) return res.status(500).json({ error: error.message });
+  if (!data) return res.status(404).json({ error: 'Not found' });
+  res.json(data);
+});
+
+app.post('/api/admin/loans', requireAuth(['OWNER','ADMIN']), async (req, res) => {
+  if (!dbReady(req, res)) return;
+  if (req.user.role === 'ADMIN' && !hasPermission(req.user, 'loans', 'create')) {
+    return res.status(403).json({ error: 'Forbidden' });
+  }
+  const {
+    borrower_id, project_id, loan_type, principal, interest_rate, profit_share_percent,
+    start_date, maturity_date, term_months, payment_amount, payment_day, notes, custom_fields, status,
+  } = req.body || {};
+  if (!borrower_id || !loan_type || principal == null || interest_rate == null || !start_date || !maturity_date || !term_months) {
+    return res.status(400).json({ error: 'Missing required fields' });
+  }
+  if (!['FIXED_MONTHLY','FIXED_END','PROFIT_SHARE'].includes(loan_type)) {
+    return res.status(400).json({ error: 'Invalid loan_type' });
+  }
+  if (loan_type === 'PROFIT_SHARE' && !project_id) {
+    return res.status(400).json({ error: 'PROFIT_SHARE loans must be linked to a project' });
+  }
+  const { data, error } = await supabase.from('loans').insert({
+    borrower_id,
+    project_id: project_id || null,
+    loan_type,
+    principal,
+    current_balance: principal,
+    interest_rate,
+    profit_share_percent: profit_share_percent ?? null,
+    start_date, maturity_date, term_months,
+    payment_amount: payment_amount ?? null,
+    payment_day: payment_day ?? null,
+    notes: notes ?? null,
+    custom_fields: custom_fields ?? null,
+    status: status || 'PENDING',
+  }).select('*, borrower:borrowers(id, full_name, email), project:projects(id, name)').single();
+  if (error) return res.status(400).json({ error: error.message });
+  await logAction(req, 'LOAN_CREATED', 'Loan', data.id, { principal, borrower_id, loan_type });
+  res.status(201).json(data);
+});
+
+app.put('/api/admin/loans/:id', requireAuth(['OWNER','ADMIN']), async (req, res) => {
+  if (!dbReady(req, res)) return;
+  if (req.user.role === 'ADMIN' && !hasPermission(req.user, 'loans', 'edit')) {
+    return res.status(403).json({ error: 'Forbidden' });
+  }
+  const update = { ...req.body };
+  delete update.id; delete update.created_at; delete update.updated_at; delete update.reference;
+  delete update.borrower; delete update.project; delete update.transactions;
+  const { data, error } = await supabase.from('loans').update(update).eq('id', req.params.id)
+    .select('*, borrower:borrowers(id, full_name, email), project:projects(id, name)').single();
+  if (error) return res.status(400).json({ error: error.message });
+  await logAction(req, 'LOAN_UPDATED', 'Loan', req.params.id, update);
+  res.json(data);
+});
+
+app.delete('/api/admin/loans/:id', requireAuth(['OWNER']), async (req, res) => {
+  if (!dbReady(req, res)) return;
+  const { count } = await supabase.from('transactions').select('id', { count: 'exact', head: true }).eq('loan_id', req.params.id);
+  if ((count ?? 0) > 0) return res.status(400).json({ error: 'Cannot delete loan with transactions' });
+  const { error } = await supabase.from('loans').delete().eq('id', req.params.id);
+  if (error) return res.status(400).json({ error: error.message });
+  await logAction(req, 'LOAN_DELETED', 'Loan', req.params.id);
+  res.json({ success: true });
+});
+
+// ---------- TRANSACTIONS ----------
+app.get('/api/admin/transactions', requireAuth(['OWNER','ADMIN']), async (req, res) => {
+  if (!dbReady(req, res)) return;
+  if (req.user.role === 'ADMIN' && !hasPermission(req.user, 'transactions', 'view')) {
+    return res.status(403).json({ error: 'Forbidden' });
+  }
+  const { loanId, from, to } = req.query;
+  let q = supabase.from('transactions')
+    .select('*, loan:loans(id, reference, borrower:borrowers(id, full_name), project:projects(id, name))')
+    .order('payment_date', { ascending: false });
+  if (loanId) q = q.eq('loan_id', String(loanId));
+  if (from) q = q.gte('payment_date', String(from));
+  if (to) q = q.lte('payment_date', String(to));
+  const { data, error } = await q;
+  if (error) return res.status(500).json({ error: error.message });
+  res.json(data);
+});
+
+app.post('/api/admin/transactions', requireAuth(['OWNER','ADMIN']), async (req, res) => {
+  if (!dbReady(req, res)) return;
+  if (req.user.role === 'ADMIN' && !hasPermission(req.user, 'transactions', 'create')) {
+    return res.status(403).json({ error: 'Forbidden' });
+  }
+  const { loan_id, type, amount, payment_date, reference, notes, interest_portion, principal_portion } = req.body || {};
+  if (!loan_id || !type || amount == null || !payment_date) {
+    return res.status(400).json({ error: 'loan_id, type, amount, payment_date required' });
+  }
+  if (!['INTEREST_PAYMENT','PRINCIPAL_PAYMENT','PROFIT_DISTRIBUTION','DISBURSEMENT','TOP_UP','EARLY_REPAYMENT'].includes(type)) {
+    return res.status(400).json({ error: 'Invalid transaction type' });
+  }
+
+  const { data: loan, error: loanErr } = await supabase.from('loans').select('id, principal, current_balance').eq('id', loan_id).maybeSingle();
+  if (loanErr || !loan) return res.status(404).json({ error: 'Loan not found' });
+
+  const amt = Number(amount);
+  const balance = Number(loan.current_balance);
+  const principal = Number(loan.principal);
+  let nextBalance = balance;
+  let nextPrincipal = principal;
+  if (type === 'TOP_UP') { nextBalance = balance + amt; nextPrincipal = principal + amt; }
+  else if (type === 'PRINCIPAL_PAYMENT' || type === 'EARLY_REPAYMENT') { nextBalance = Math.max(0, balance - amt); }
+  // INTEREST_PAYMENT, PROFIT_DISTRIBUTION, DISBURSEMENT do not change balance
+
+  const { data: tx, error: txErr } = await supabase.from('transactions').insert({
+    loan_id, type, amount: amt, payment_date, reference: reference ?? null, notes: notes ?? null,
+    interest_portion: interest_portion ?? null, principal_portion: principal_portion ?? null,
+    created_by_id: req.user.sub,
+  }).select().single();
+  if (txErr) return res.status(400).json({ error: txErr.message });
+
+  if (nextBalance !== balance || nextPrincipal !== principal) {
+    await supabase.from('loans').update({ current_balance: nextBalance, principal: nextPrincipal }).eq('id', loan_id);
+  }
+
+  await logAction(req, 'TRANSACTION_CREATED', 'Transaction', tx.id, { loan_id, type, amount: amt });
+  res.status(201).json(tx);
+});
+
+// ============================================
+// LENDING — Dashboard, Inflows, Statements, Requests, Users, Audit
+// ============================================
+
+// ---------- DASHBOARD (owner only) ----------
+app.get('/api/admin/dashboard', requireAuth(['OWNER']), async (req, res) => {
+  if (!dbReady(req, res)) return;
+  const monthsAhead = Math.max(1, Math.min(24, Number(req.query.months || '12')));
+
+  const { data: activeLoans, error: loansErr } = await supabase
+    .from('loans')
+    .select('id, reference, loan_type, principal, current_balance, interest_rate, term_months, payment_amount, payment_day, maturity_date, status, borrower:borrowers(id, full_name), project:projects(id, name)')
+    .in('status', ['ACTIVE', 'PENDING']);
+  if (loansErr) return res.status(500).json({ error: loansErr.message });
+
+  const totalOutstanding = (activeLoans || []).reduce((s, l) => s + Number(l.current_balance), 0);
+
+  const today = new Date(); today.setHours(0, 0, 0, 0);
+  const horizon = new Date(today); horizon.setMonth(horizon.getMonth() + monthsAhead);
+
+  const { data: inflows, error: infErr } = await supabase
+    .from('estimated_inflows')
+    .select('id, description, amount, expected_date, confidence, project:projects(id, name)')
+    .gte('expected_date', today.toISOString().split('T')[0])
+    .lte('expected_date', horizon.toISOString().split('T')[0])
+    .order('expected_date', { ascending: true });
+  if (infErr) return res.status(500).json({ error: infErr.message });
+
+  const months = [];
+  for (let i = 0; i < monthsAhead; i++) {
+    const monthStart = new Date(today.getFullYear(), today.getMonth() + i, 1);
+    const monthEnd = new Date(today.getFullYear(), today.getMonth() + i + 1, 0);
+    monthEnd.setHours(23, 59, 59, 999);
+
+    const monthInflows = (inflows || []).filter((inf) => {
+      const d = new Date(inf.expected_date);
+      return d >= monthStart && d <= monthEnd;
+    });
+    const inflowTotal = monthInflows.reduce((s, inf) => s + Number(inf.amount), 0);
+
+    let outflowTotal = 0;
+    const outflowDetail = [];
+
+    for (const loan of activeLoans || []) {
+      if (loan.loan_type === 'FIXED_MONTHLY') {
+        const paymentAmount = Number(loan.payment_amount || 0);
+        if (paymentAmount > 0) {
+          const paymentDate = new Date(monthStart.getFullYear(), monthStart.getMonth(), loan.payment_day || 1);
+          if (paymentDate < today) continue;
+          if (paymentDate > new Date(loan.maturity_date)) continue;
+          outflowTotal += paymentAmount;
+          outflowDetail.push({
+            loanId: loan.id,
+            borrower: loan.borrower?.full_name,
+            date: paymentDate.toISOString(),
+            amount: paymentAmount,
+          });
+        }
+      } else if (loan.loan_type === 'FIXED_END' || loan.loan_type === 'PROFIT_SHARE') {
+        const maturity = new Date(loan.maturity_date);
+        if (maturity >= monthStart && maturity <= monthEnd) {
+          const annualInterest = Number(loan.principal) * (Number(loan.interest_rate) / 100);
+          const total = annualInterest * (Number(loan.term_months) / 12) + Number(loan.principal);
+          outflowTotal += total;
+          outflowDetail.push({
+            loanId: loan.id,
+            borrower: loan.borrower?.full_name,
+            date: maturity.toISOString(),
+            amount: total,
+            note: loan.loan_type === 'PROFIT_SHARE' ? 'Maturity payout (excludes profit share)' : 'Maturity payout',
+          });
+        }
+      }
+    }
+
+    months.push({
+      year: monthStart.getFullYear(),
+      month: monthStart.getMonth() + 1,
+      label: monthStart.toLocaleDateString('en-AU', { month: 'short', year: '2-digit' }),
+      expectedInflows: inflowTotal,
+      scheduledOutflows: outflowTotal,
+      net: inflowTotal - outflowTotal,
+      inflows: monthInflows.map((inf) => ({
+        id: inf.id, description: inf.description, amount: Number(inf.amount),
+        expectedDate: inf.expected_date, confidence: inf.confidence, project: inf.project,
+      })),
+      outflowDetail,
+    });
+  }
+
+  let running = 0;
+  const projection = months.map((m) => {
+    running += m.net;
+    return { label: m.label, runningPosition: running };
+  });
+
+  const loansByType = (activeLoans || []).reduce((acc, l) => {
+    acc[l.loan_type] = (acc[l.loan_type] || 0) + 1;
+    return acc;
+  }, {});
+
+  res.json({
+    summary: {
+      totalOutstanding,
+      activeLoanCount: (activeLoans || []).length,
+      loansByType,
+      forecastWindow: { from: today.toISOString(), to: horizon.toISOString(), months: monthsAhead },
+      totalExpectedInflows: months.reduce((s, m) => s + m.expectedInflows, 0),
+      totalScheduledOutflows: months.reduce((s, m) => s + m.scheduledOutflows, 0),
+      netForecast: months.reduce((s, m) => s + m.net, 0),
+    },
+    months,
+    projection,
+    activeLoans: (activeLoans || []).map((l) => ({
+      id: l.id, reference: l.reference, borrower: l.borrower, project: l.project,
+      loanType: l.loan_type, currentBalance: Number(l.current_balance),
+      interestRate: Number(l.interest_rate), maturityDate: l.maturity_date,
+    })),
+  });
+});
+
+// ---------- ESTIMATED INFLOWS (owner only) ----------
+app.get('/api/admin/inflows', requireAuth(['OWNER']), async (req, res) => {
+  if (!dbReady(req, res)) return;
+  const { data, error } = await supabase
+    .from('estimated_inflows')
+    .select('*, project:projects(id, name)')
+    .order('expected_date', { ascending: true });
+  if (error) return res.status(500).json({ error: error.message });
+  res.json(data);
+});
+app.post('/api/admin/inflows', requireAuth(['OWNER']), async (req, res) => {
+  if (!dbReady(req, res)) return;
+  const { description, amount, expected_date, project_id, confidence, notes } = req.body || {};
+  if (!description || amount == null || !expected_date) return res.status(400).json({ error: 'description, amount, expected_date required' });
+  const { data, error } = await supabase.from('estimated_inflows').insert({
+    description, amount: Number(amount), expected_date,
+    project_id: project_id || null, confidence: confidence || 'LIKELY', notes: notes || null,
+  }).select('*, project:projects(id, name)').single();
+  if (error) return res.status(400).json({ error: error.message });
+  await logAction(req, 'INFLOW_CREATED', 'EstimatedInflow', data.id, { description, amount });
+  res.status(201).json(data);
+});
+app.put('/api/admin/inflows/:id', requireAuth(['OWNER']), async (req, res) => {
+  if (!dbReady(req, res)) return;
+  const update = { ...req.body }; delete update.id; delete update.created_at; delete update.updated_at; delete update.project;
+  const { data, error } = await supabase.from('estimated_inflows').update(update).eq('id', req.params.id)
+    .select('*, project:projects(id, name)').single();
+  if (error) return res.status(400).json({ error: error.message });
+  await logAction(req, 'INFLOW_UPDATED', 'EstimatedInflow', req.params.id, update);
+  res.json(data);
+});
+app.delete('/api/admin/inflows/:id', requireAuth(['OWNER']), async (req, res) => {
+  if (!dbReady(req, res)) return;
+  const { error } = await supabase.from('estimated_inflows').delete().eq('id', req.params.id);
+  if (error) return res.status(400).json({ error: error.message });
+  await logAction(req, 'INFLOW_DELETED', 'EstimatedInflow', req.params.id);
+  res.json({ success: true });
+});
+
+// ---------- STATEMENTS ----------
+function csvEscape(v) {
+  const s = v == null ? '' : String(v);
+  if (s.includes(',') || s.includes('"') || s.includes('\n')) {
+    return `"${s.replace(/"/g, '""')}"`;
+  }
+  return s;
+}
+async function buildInvestorStatement(borrowerId, from, to) {
+  const { data: borrower } = await supabase.from('borrowers')
+    .select('id, full_name, email, phone, address').eq('id', borrowerId).maybeSingle();
+  if (!borrower) throw new Error('Borrower not found');
+
+  const { data: loans } = await supabase.from('loans')
+    .select('*, project:projects(id, name, status), transactions(*)')
+    .eq('borrower_id', borrowerId);
+
+  const loanSummaries = (loans || []).map((l) => {
+    const txs = (l.transactions || []).filter((t) => t.payment_date >= from && t.payment_date <= to);
+    const interestPaid = txs.filter((t) => t.type === 'INTEREST_PAYMENT').reduce((s, t) => s + Number(t.amount), 0);
+    const principalPaid = txs.filter((t) => t.type === 'PRINCIPAL_PAYMENT' || t.type === 'EARLY_REPAYMENT').reduce((s, t) => s + Number(t.amount), 0);
+    const profitDist = txs.filter((t) => t.type === 'PROFIT_DISTRIBUTION').reduce((s, t) => s + Number(t.amount), 0);
+    const topUps = txs.filter((t) => t.type === 'TOP_UP').reduce((s, t) => s + Number(t.amount), 0);
+    return {
+      loanId: l.id, reference: l.reference, project: l.project, loanType: l.loan_type,
+      principal: Number(l.principal), currentBalance: Number(l.current_balance),
+      interestRate: Number(l.interest_rate),
+      profitSharePercent: l.profit_share_percent ? Number(l.profit_share_percent) : null,
+      startDate: l.start_date, maturityDate: l.maturity_date, status: l.status,
+      periodTotals: { interestPaid, principalPaid, profitDistributions: profitDist, topUps, totalReceived: interestPaid + principalPaid + profitDist },
+      transactions: txs.sort((a, b) => a.payment_date.localeCompare(b.payment_date)).map((t) => ({
+        date: t.payment_date, type: t.type, amount: Number(t.amount), reference: t.reference,
+      })),
+    };
+  });
+
+  const totals = loanSummaries.reduce((acc, l) => ({
+    interestPaid: acc.interestPaid + l.periodTotals.interestPaid,
+    principalPaid: acc.principalPaid + l.periodTotals.principalPaid,
+    profitDistributions: acc.profitDistributions + l.periodTotals.profitDistributions,
+    totalReceived: acc.totalReceived + l.periodTotals.totalReceived,
+    currentBalance: acc.currentBalance + l.currentBalance,
+  }), { interestPaid: 0, principalPaid: 0, profitDistributions: 0, totalReceived: 0, currentBalance: 0 });
+
+  return {
+    type: 'investor', period: { from, to },
+    investor: borrower,
+    totals, loans: loanSummaries, generatedAt: new Date().toISOString(),
+  };
+}
+async function buildProjectStatement(projectId, from, to) {
+  const { data: project } = await supabase.from('projects').select('*').eq('id', projectId).maybeSingle();
+  if (!project) throw new Error('Project not found');
+  const { data: loans } = await supabase.from('loans')
+    .select('*, borrower:borrowers(id, full_name, email), transactions(*)')
+    .eq('project_id', projectId);
+  const loanSummaries = (loans || []).map((l) => {
+    const txs = (l.transactions || []).filter((t) => t.payment_date >= from && t.payment_date <= to);
+    const interestPaid = txs.filter((t) => t.type === 'INTEREST_PAYMENT').reduce((s, t) => s + Number(t.amount), 0);
+    const principalPaid = txs.filter((t) => t.type === 'PRINCIPAL_PAYMENT' || t.type === 'EARLY_REPAYMENT').reduce((s, t) => s + Number(t.amount), 0);
+    const profitDist = txs.filter((t) => t.type === 'PROFIT_DISTRIBUTION').reduce((s, t) => s + Number(t.amount), 0);
+    return {
+      borrower: l.borrower, loanRef: l.reference,
+      principal: Number(l.principal), currentBalance: Number(l.current_balance),
+      interestRate: Number(l.interest_rate),
+      profitSharePercent: l.profit_share_percent ? Number(l.profit_share_percent) : null,
+      periodTotals: { interestPaid, principalPaid, profitDist, total: interestPaid + principalPaid + profitDist },
+    };
+  });
+  const totals = loanSummaries.reduce((acc, l) => ({
+    interestPaid: acc.interestPaid + l.periodTotals.interestPaid,
+    principalPaid: acc.principalPaid + l.periodTotals.principalPaid,
+    profitDistributions: acc.profitDistributions + l.periodTotals.profitDist,
+    totalDistributed: acc.totalDistributed + l.periodTotals.total,
+    totalCapital: acc.totalCapital + l.currentBalance,
+  }), { interestPaid: 0, principalPaid: 0, profitDistributions: 0, totalDistributed: 0, totalCapital: 0 });
+  return {
+    type: 'project', period: { from, to },
+    project: { id: project.id, name: project.name, status: project.status,
+      totalCost: project.total_cost ? Number(project.total_cost) : null,
+      totalRevenue: project.total_revenue ? Number(project.total_revenue) : null,
+      totalProfit: project.total_profit ? Number(project.total_profit) : null },
+    investorCount: loanSummaries.length, totals, investors: loanSummaries,
+    generatedAt: new Date().toISOString(),
+  };
+}
+async function buildCombinedStatement(from, to) {
+  const { data: txs } = await supabase.from('transactions')
+    .select('*, loan:loans(reference, borrower:borrowers(id, full_name, email), project:projects(id, name))')
+    .gte('payment_date', from).lte('payment_date', to)
+    .order('payment_date', { ascending: true });
+
+  const byInvestor = {};
+  const byProject = {};
+  const generalLoans = { interestPaid: 0, principalPaid: 0, profitDistributions: 0, total: 0, count: 0 };
+  const grand = { interestPaid: 0, principalPaid: 0, profitDistributions: 0, topUps: 0, total: 0, transactionCount: (txs || []).length };
+
+  for (const t of txs || []) {
+    const amt = Number(t.amount);
+    const k = t.loan?.borrower?.id;
+    if (k) {
+      const v = byInvestor[k] = byInvestor[k] || {
+        borrower: t.loan.borrower, interestPaid: 0, principalPaid: 0, profitDistributions: 0, topUps: 0, total: 0, count: 0,
+      };
+      v.count++;
+      if (t.type === 'INTEREST_PAYMENT') { v.interestPaid += amt; v.total += amt; }
+      else if (t.type === 'PRINCIPAL_PAYMENT' || t.type === 'EARLY_REPAYMENT') { v.principalPaid += amt; v.total += amt; }
+      else if (t.type === 'PROFIT_DISTRIBUTION') { v.profitDistributions += amt; v.total += amt; }
+      else if (t.type === 'TOP_UP') { v.topUps += amt; }
+    }
+    const projKey = t.loan?.project?.id;
+    const target = projKey
+      ? (byProject[projKey] = byProject[projKey] || {
+          project: t.loan.project, interestPaid: 0, principalPaid: 0, profitDistributions: 0, total: 0, count: 0 })
+      : generalLoans;
+    target.count++;
+    if (t.type === 'INTEREST_PAYMENT') { target.interestPaid += amt; target.total += amt; }
+    else if (t.type === 'PRINCIPAL_PAYMENT' || t.type === 'EARLY_REPAYMENT') { target.principalPaid += amt; target.total += amt; }
+    else if (t.type === 'PROFIT_DISTRIBUTION') { target.profitDistributions += amt; target.total += amt; }
+
+    if (t.type === 'INTEREST_PAYMENT') { grand.interestPaid += amt; grand.total += amt; }
+    else if (t.type === 'PRINCIPAL_PAYMENT' || t.type === 'EARLY_REPAYMENT') { grand.principalPaid += amt; grand.total += amt; }
+    else if (t.type === 'PROFIT_DISTRIBUTION') { grand.profitDistributions += amt; grand.total += amt; }
+    else if (t.type === 'TOP_UP') { grand.topUps += amt; }
+  }
+
+  return {
+    type: 'combined', period: { from, to },
+    grandTotals: grand,
+    byInvestor: Object.values(byInvestor),
+    byProject: Object.values(byProject),
+    generalCompanyLoans: generalLoans,
+    transactions: (txs || []).map((t) => ({
+      date: t.payment_date, type: t.type, amount: Number(t.amount),
+      borrower: t.loan?.borrower?.full_name || '—',
+      project: t.loan?.project?.name || 'General',
+      loanRef: t.loan?.reference, reference: t.reference,
+    })),
+    generatedAt: new Date().toISOString(),
+  };
+}
+function statementToCsv(statement, type) {
+  const rows = [];
+  if (type === 'combined') {
+    rows.push('Date,Type,Borrower,Project,Loan Reference,Amount (AUD),Bank Reference');
+    for (const t of statement.transactions) {
+      rows.push([
+        t.date, t.type, csvEscape(t.borrower), csvEscape(t.project),
+        t.loanRef, t.amount.toFixed(2), csvEscape(t.reference || ''),
+      ].join(','));
+    }
+    rows.push('', 'SUMMARY');
+    rows.push(`Total Interest Paid,${statement.grandTotals.interestPaid.toFixed(2)}`);
+    rows.push(`Total Principal Paid,${statement.grandTotals.principalPaid.toFixed(2)}`);
+    rows.push(`Total Profit Distributions,${statement.grandTotals.profitDistributions.toFixed(2)}`);
+    rows.push(`Total Top-Ups Received,${statement.grandTotals.topUps.toFixed(2)}`);
+  } else if (type === 'investor') {
+    rows.push(`Investor Statement: ${statement.investor.full_name}`);
+    rows.push(`Period: ${statement.period.from} to ${statement.period.to}`);
+    rows.push('', 'Loan Reference,Project,Type,Principal,Current Balance,Interest Paid,Principal Paid,Profit Distributed');
+    for (const l of statement.loans) {
+      rows.push([
+        l.reference, csvEscape(l.project?.name || 'General'), l.loanType,
+        l.principal.toFixed(2), l.currentBalance.toFixed(2),
+        l.periodTotals.interestPaid.toFixed(2),
+        l.periodTotals.principalPaid.toFixed(2),
+        l.periodTotals.profitDistributions.toFixed(2),
+      ].join(','));
+    }
+  } else if (type === 'project') {
+    rows.push(`Project Statement: ${statement.project.name}`);
+    rows.push(`Period: ${statement.period.from} to ${statement.period.to}`);
+    rows.push('', 'Investor,Loan Reference,Principal,Current Balance,Interest Paid,Principal Paid,Profit Distributed');
+    for (const inv of statement.investors) {
+      rows.push([
+        csvEscape(inv.borrower.full_name), inv.loanRef,
+        inv.principal.toFixed(2), inv.currentBalance.toFixed(2),
+        inv.periodTotals.interestPaid.toFixed(2),
+        inv.periodTotals.principalPaid.toFixed(2),
+        inv.periodTotals.profitDist.toFixed(2),
+      ].join(','));
+    }
+  }
+  return rows.join('\n');
+}
+
+app.get('/api/admin/statements', requireAuth(['OWNER','ADMIN']), async (req, res) => {
+  if (!dbReady(req, res)) return;
+  if (req.user.role === 'ADMIN' && !hasPermission(req.user, 'statements', 'generate')) return res.status(403).json({ error: 'Forbidden' });
+
+  const { type = 'investor', borrowerId, projectId, from, to, format = 'json' } = req.query;
+  if (!from || !to) return res.status(400).json({ error: 'from and to are required (YYYY-MM-DD)' });
+
+  try {
+    let statement;
+    if (type === 'investor') {
+      if (!borrowerId) return res.status(400).json({ error: 'borrowerId required' });
+      statement = await buildInvestorStatement(String(borrowerId), String(from), String(to));
+    } else if (type === 'project') {
+      if (!projectId) return res.status(400).json({ error: 'projectId required' });
+      statement = await buildProjectStatement(String(projectId), String(from), String(to));
+    } else if (type === 'combined') {
+      statement = await buildCombinedStatement(String(from), String(to));
+    } else {
+      return res.status(400).json({ error: 'Invalid statement type' });
+    }
+
+    if (format === 'csv') {
+      const csv = statementToCsv(statement, String(type));
+      res.set('Content-Type', 'text/csv');
+      res.set('Content-Disposition', `attachment; filename="statement_${type}_${from}_to_${to}.csv"`);
+      return res.send(csv);
+    }
+    res.json(statement);
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ error: e?.message || 'Statement generation failed' });
+  }
+});
+
+// ---------- REPAYMENT REQUESTS ----------
+app.get('/api/admin/repayment-requests', requireAuth(['OWNER','ADMIN']), async (req, res) => {
+  if (!dbReady(req, res)) return;
+  const { data, error } = await supabase.from('repayment_requests')
+    .select('*, loan:loans(id, reference, current_balance, borrower:borrowers(id, full_name))')
+    .order('requested_at', { ascending: false });
+  if (error) return res.status(500).json({ error: error.message });
+  res.json(data);
+});
+app.put('/api/admin/repayment-requests/:id', requireAuth(['OWNER','ADMIN']), async (req, res) => {
+  if (!dbReady(req, res)) return;
+  const { status, review_notes } = req.body || {};
+  if (!['APPROVED', 'REJECTED', 'COMPLETED'].includes(status)) return res.status(400).json({ error: 'Invalid status' });
+
+  const { data: existing } = await supabase.from('repayment_requests')
+    .select('id, loan_id, requested_amount, status').eq('id', req.params.id).maybeSingle();
+  if (!existing) return res.status(404).json({ error: 'Not found' });
+
+  let transaction_id = null;
+
+  if (status === 'COMPLETED') {
+    const { data: loan } = await supabase.from('loans').select('id, current_balance').eq('id', existing.loan_id).maybeSingle();
+    if (!loan) return res.status(404).json({ error: 'Loan not found' });
+    const amt = Number(existing.requested_amount);
+    const newBal = Math.max(0, Number(loan.current_balance) - amt);
+    const { data: tx, error: txErr } = await supabase.from('transactions').insert({
+      loan_id: existing.loan_id, type: 'EARLY_REPAYMENT',
+      amount: amt, payment_date: new Date().toISOString().split('T')[0],
+      notes: 'Auto-created from repayment request',
+      created_by_id: req.user.sub,
+    }).select().single();
+    if (txErr) return res.status(400).json({ error: txErr.message });
+    await supabase.from('loans').update({ current_balance: newBal }).eq('id', existing.loan_id);
+    transaction_id = tx.id;
+  }
+
+  const update = {
+    status, review_notes: review_notes || null,
+    reviewed_at: new Date().toISOString(), reviewed_by_id: req.user.sub,
+  };
+  if (status === 'COMPLETED') {
+    update.completed_at = new Date().toISOString();
+    update.transaction_id = transaction_id;
+  }
+
+  const { data, error } = await supabase.from('repayment_requests').update(update).eq('id', req.params.id)
+    .select('*, loan:loans(id, reference, borrower:borrowers(id, full_name))').single();
+  if (error) return res.status(400).json({ error: error.message });
+  await logAction(req, `REPAYMENT_REQUEST_${status}`, 'RepaymentRequest', req.params.id, { transaction_id });
+  res.json(data);
+});
+
+// ---------- TOP-UP REQUESTS ----------
+app.get('/api/admin/topup-requests', requireAuth(['OWNER','ADMIN']), async (req, res) => {
+  if (!dbReady(req, res)) return;
+  const { data, error } = await supabase.from('topup_requests')
+    .select('*, loan:loans(id, reference, current_balance, borrower:borrowers(id, full_name))')
+    .order('requested_at', { ascending: false });
+  if (error) return res.status(500).json({ error: error.message });
+  res.json(data);
+});
+app.put('/api/admin/topup-requests/:id', requireAuth(['OWNER','ADMIN']), async (req, res) => {
+  if (!dbReady(req, res)) return;
+  const { status, review_notes } = req.body || {};
+  if (!['APPROVED', 'REJECTED', 'COMPLETED'].includes(status)) return res.status(400).json({ error: 'Invalid status' });
+
+  const { data: existing } = await supabase.from('topup_requests')
+    .select('id, loan_id, amount, status').eq('id', req.params.id).maybeSingle();
+  if (!existing) return res.status(404).json({ error: 'Not found' });
+
+  let transaction_id = null;
+  if (status === 'COMPLETED') {
+    const { data: loan } = await supabase.from('loans').select('id, principal, current_balance').eq('id', existing.loan_id).maybeSingle();
+    if (!loan) return res.status(404).json({ error: 'Loan not found' });
+    const amt = Number(existing.amount);
+    const newPrincipal = Number(loan.principal) + amt;
+    const newBal = Number(loan.current_balance) + amt;
+    const { data: tx, error: txErr } = await supabase.from('transactions').insert({
+      loan_id: existing.loan_id, type: 'TOP_UP',
+      amount: amt, payment_date: new Date().toISOString().split('T')[0],
+      notes: 'Auto-created from top-up request', created_by_id: req.user.sub,
+    }).select().single();
+    if (txErr) return res.status(400).json({ error: txErr.message });
+    await supabase.from('loans').update({ principal: newPrincipal, current_balance: newBal }).eq('id', existing.loan_id);
+    transaction_id = tx.id;
+  }
+
+  const update = {
+    status, review_notes: review_notes || null,
+    reviewed_at: new Date().toISOString(), reviewed_by_id: req.user.sub,
+  };
+  if (status === 'COMPLETED') {
+    update.completed_at = new Date().toISOString();
+    update.transaction_id = transaction_id;
+  }
+
+  const { data, error } = await supabase.from('topup_requests').update(update).eq('id', req.params.id)
+    .select('*, loan:loans(id, reference, borrower:borrowers(id, full_name))').single();
+  if (error) return res.status(400).json({ error: error.message });
+  await logAction(req, `TOPUP_REQUEST_${status}`, 'TopUpRequest', req.params.id, { transaction_id });
+  res.json(data);
+});
+
+// ---------- USERS (owner only) ----------
+app.get('/api/admin/users', requireAuth(['OWNER']), async (req, res) => {
+  if (!dbReady(req, res)) return;
+  const { data, error } = await supabase.from('users')
+    .select('id, email, name, role, phone, active, borrower_id, permissions, last_login, created_at, borrower:borrowers(id, full_name)')
+    .order('created_at', { ascending: false });
+  if (error) return res.status(500).json({ error: error.message });
+  res.json(data);
+});
+app.post('/api/admin/users', requireAuth(['OWNER']), async (req, res) => {
+  if (!dbReady(req, res)) return;
+  const { email, name, password, role, phone, borrower_id, permissions } = req.body || {};
+  if (!email || !name || !password || !role) return res.status(400).json({ error: 'email, name, password, role required' });
+  if (!['OWNER', 'ADMIN', 'LENDER'].includes(role)) return res.status(400).json({ error: 'Invalid role' });
+  if (role === 'LENDER' && !borrower_id) return res.status(400).json({ error: 'LENDER accounts require borrower_id' });
+
+  const password_hash = await bcrypt.hash(password, 12);
+  const { data, error } = await supabase.from('users').insert({
+    email: String(email).toLowerCase(), name, password_hash, role,
+    phone: phone || null, borrower_id: borrower_id || null,
+    permissions: role === 'ADMIN' ? (permissions || null) : null,
+    active: true,
+  }).select('id, email, name, role, phone, active, borrower_id, permissions, last_login, created_at').single();
+  if (error) return res.status(400).json({ error: error.message });
+  await logAction(req, 'USER_CREATED', 'User', data.id, { email, role });
+  res.status(201).json(data);
+});
+app.put('/api/admin/users/:id', requireAuth(['OWNER']), async (req, res) => {
+  if (!dbReady(req, res)) return;
+  const { email, name, password, role, phone, borrower_id, permissions, active } = req.body || {};
+  const update = {};
+  if (email != null) update.email = String(email).toLowerCase();
+  if (name != null) update.name = name;
+  if (role != null) update.role = role;
+  if (phone !== undefined) update.phone = phone || null;
+  if (borrower_id !== undefined) update.borrower_id = borrower_id || null;
+  if (permissions !== undefined) update.permissions = permissions || null;
+  if (active != null) update.active = active;
+  if (password) update.password_hash = await bcrypt.hash(password, 12);
+
+  const { data, error } = await supabase.from('users').update(update).eq('id', req.params.id)
+    .select('id, email, name, role, phone, active, borrower_id, permissions, last_login, created_at').single();
+  if (error) return res.status(400).json({ error: error.message });
+  await logAction(req, 'USER_UPDATED', 'User', req.params.id, Object.keys(update));
+  res.json(data);
+});
+app.delete('/api/admin/users/:id', requireAuth(['OWNER']), async (req, res) => {
+  if (!dbReady(req, res)) return;
+  if (req.params.id === req.user.sub) return res.status(400).json({ error: 'Cannot delete your own account' });
+  // Soft delete — preserves audit trail
+  const { error } = await supabase.from('users').update({ active: false }).eq('id', req.params.id);
+  if (error) return res.status(400).json({ error: error.message });
+  await logAction(req, 'USER_DEACTIVATED', 'User', req.params.id);
+  res.json({ success: true });
+});
+
+// ---------- AUDIT LOG (owner only) ----------
+app.get('/api/admin/audit-log', requireAuth(['OWNER']), async (req, res) => {
+  if (!dbReady(req, res)) return;
+  const limit = Math.min(500, Number(req.query.limit || '100'));
+  const { entityType, action } = req.query;
+  let q = supabase.from('audit_log')
+    .select('*, user:users(id, email, name)')
+    .order('created_at', { ascending: false })
+    .limit(limit);
+  if (entityType) q = q.eq('entity_type', String(entityType));
+  if (action) q = q.ilike('action', `%${String(action)}%`);
+  const { data, error } = await q;
+  if (error) return res.status(500).json({ error: error.message });
+  res.json(data);
+});
+
+// ============================================
+// INVESTOR PORTAL — lenders see only their own data
+// ============================================
+
+const requireLenderWithBorrower = (req, res, next) => {
+  if (req.user.role !== 'LENDER') return res.status(403).json({ error: 'Forbidden' });
+  if (!req.user.borrowerId) return res.status(403).json({ error: 'Account is not linked to a borrower record' });
+  next();
+};
+
+// GET /api/investor/me — borrower profile + summary
+app.get('/api/investor/me', requireAuth(['LENDER']), requireLenderWithBorrower, async (req, res) => {
+  if (!dbReady(req, res)) return;
+  const { data: borrower, error } = await supabase.from('borrowers')
+    .select('id, full_name, email, phone, address, id_number, id_type, notes, custom_fields, active, created_at')
+    .eq('id', req.user.borrowerId).maybeSingle();
+  if (error) return res.status(500).json({ error: error.message });
+  if (!borrower) return res.status(404).json({ error: 'Borrower record not found' });
+
+  const { data: loans } = await supabase.from('loans')
+    .select('id, status, current_balance, principal, loan_type, interest_rate, maturity_date, payment_amount, payment_day')
+    .eq('borrower_id', req.user.borrowerId);
+
+  const totalInvested = (loans || []).reduce((s, l) => s + Number(l.current_balance), 0);
+  const activeCount = (loans || []).filter((l) => l.status === 'ACTIVE' || l.status === 'PENDING').length;
+
+  // Compute next scheduled payment for FIXED_MONTHLY loans
+  let nextPayment = null;
+  const today = new Date();
+  for (const l of loans || []) {
+    if (l.loan_type !== 'FIXED_MONTHLY' || !l.payment_day || !l.payment_amount) continue;
+    if (l.status !== 'ACTIVE' && l.status !== 'PENDING') continue;
+    const candidate = new Date(today.getFullYear(), today.getMonth(), l.payment_day);
+    if (candidate < today) candidate.setMonth(candidate.getMonth() + 1);
+    if (candidate > new Date(l.maturity_date)) continue;
+    if (!nextPayment || candidate < new Date(nextPayment.date)) {
+      nextPayment = { date: candidate.toISOString().split('T')[0], amount: Number(l.payment_amount) };
+    }
+  }
+
+  res.json({
+    borrower,
+    summary: { totalInvested, activeCount, totalLoans: (loans || []).length, nextPayment },
+  });
+});
+
+// PUT /api/investor/me — limited self-edit (phone only) + password change
+app.put('/api/investor/me', requireAuth(['LENDER']), requireLenderWithBorrower, async (req, res) => {
+  if (!dbReady(req, res)) return;
+  const { phone, currentPassword, newPassword } = req.body || {};
+
+  if (newPassword) {
+    if (!currentPassword) return res.status(400).json({ error: 'Current password required to change password' });
+    const { data: user } = await supabase.from('users').select('password_hash').eq('id', req.user.sub).maybeSingle();
+    if (!user) return res.status(404).json({ error: 'User not found' });
+    const ok = await bcrypt.compare(currentPassword, user.password_hash);
+    if (!ok) return res.status(401).json({ error: 'Current password is incorrect' });
+    const password_hash = await bcrypt.hash(newPassword, 12);
+    await supabase.from('users').update({ password_hash }).eq('id', req.user.sub);
+    await logAction(req, 'PASSWORD_CHANGED', 'User', req.user.sub);
+  }
+
+  if (phone !== undefined) {
+    await supabase.from('borrowers').update({ phone: phone || null }).eq('id', req.user.borrowerId);
+    await logAction(req, 'BORROWER_SELF_UPDATED', 'Borrower', req.user.borrowerId, { phone });
+  }
+  res.json({ success: true });
+});
+
+// GET /api/investor/loans
+app.get('/api/investor/loans', requireAuth(['LENDER']), requireLenderWithBorrower, async (req, res) => {
+  if (!dbReady(req, res)) return;
+  const { data, error } = await supabase.from('loans')
+    .select('*, project:projects(id, name, status), borrower:borrowers(id, full_name)')
+    .eq('borrower_id', req.user.borrowerId)
+    .order('created_at', { ascending: false });
+  if (error) return res.status(500).json({ error: error.message });
+  res.json(data);
+});
+
+// GET /api/investor/loans/:id
+app.get('/api/investor/loans/:id', requireAuth(['LENDER']), requireLenderWithBorrower, async (req, res) => {
+  if (!dbReady(req, res)) return;
+  const { data, error } = await supabase.from('loans')
+    .select('*, project:projects(id, name, status), transactions(*)')
+    .eq('id', req.params.id).eq('borrower_id', req.user.borrowerId).maybeSingle();
+  if (error) return res.status(500).json({ error: error.message });
+  if (!data) return res.status(404).json({ error: 'Not found' });
+  res.json(data);
+});
+
+// GET /api/investor/transactions
+app.get('/api/investor/transactions', requireAuth(['LENDER']), requireLenderWithBorrower, async (req, res) => {
+  if (!dbReady(req, res)) return;
+  const { from, to, loanId } = req.query;
+  // First fetch the lender's loan ids — we filter transactions by them
+  const { data: ownLoans } = await supabase.from('loans').select('id').eq('borrower_id', req.user.borrowerId);
+  const ownIds = (ownLoans || []).map((l) => l.id);
+  if (ownIds.length === 0) return res.json([]);
+
+  let q = supabase.from('transactions')
+    .select('*, loan:loans(id, reference, project:projects(id, name))')
+    .in('loan_id', loanId ? [String(loanId)] : ownIds)
+    .order('payment_date', { ascending: false });
+
+  // Defence in depth: if a specific loanId was passed, ensure it's owned
+  if (loanId && !ownIds.includes(String(loanId))) return res.status(403).json({ error: 'Forbidden' });
+
+  if (from) q = q.gte('payment_date', String(from));
+  if (to) q = q.lte('payment_date', String(to));
+  const { data, error } = await q;
+  if (error) return res.status(500).json({ error: error.message });
+  res.json(data);
+});
+
+// GET /api/investor/statements — auto-locks to self
+app.get('/api/investor/statements', requireAuth(['LENDER']), requireLenderWithBorrower, async (req, res) => {
+  if (!dbReady(req, res)) return;
+  const { from, to, format = 'json' } = req.query;
+  if (!from || !to) return res.status(400).json({ error: 'from and to are required (YYYY-MM-DD)' });
+  try {
+    const statement = await buildInvestorStatement(req.user.borrowerId, String(from), String(to));
+    if (format === 'csv') {
+      const csv = statementToCsv(statement, 'investor');
+      res.set('Content-Type', 'text/csv');
+      res.set('Content-Disposition', `attachment; filename="my-statement_${from}_to_${to}.csv"`);
+      return res.send(csv);
+    }
+    res.json(statement);
+  } catch (e) {
+    res.status(500).json({ error: e?.message || 'Statement generation failed' });
+  }
+});
+
+// REPAYMENT REQUESTS — investor side
+app.get('/api/investor/repayment-requests', requireAuth(['LENDER']), requireLenderWithBorrower, async (req, res) => {
+  if (!dbReady(req, res)) return;
+  const { data: ownLoans } = await supabase.from('loans').select('id').eq('borrower_id', req.user.borrowerId);
+  const ownIds = (ownLoans || []).map((l) => l.id);
+  if (ownIds.length === 0) return res.json([]);
+  const { data, error } = await supabase.from('repayment_requests')
+    .select('*, loan:loans(id, reference, current_balance, project:projects(id, name))')
+    .in('loan_id', ownIds)
+    .order('requested_at', { ascending: false });
+  if (error) return res.status(500).json({ error: error.message });
+  res.json(data);
+});
+
+app.post('/api/investor/repayment-requests', requireAuth(['LENDER']), requireLenderWithBorrower, async (req, res) => {
+  if (!dbReady(req, res)) return;
+  const { loan_id, requested_amount, is_partial, reason } = req.body || {};
+  if (!loan_id || requested_amount == null) return res.status(400).json({ error: 'loan_id and requested_amount required' });
+
+  // Verify ownership
+  const { data: loan } = await supabase.from('loans').select('id, borrower_id, current_balance').eq('id', loan_id).maybeSingle();
+  if (!loan || loan.borrower_id !== req.user.borrowerId) return res.status(403).json({ error: 'Forbidden' });
+
+  const { data, error } = await supabase.from('repayment_requests').insert({
+    loan_id, requested_amount: Number(requested_amount),
+    is_partial: is_partial !== false,
+    reason: reason || null, status: 'PENDING',
+  }).select('*, loan:loans(id, reference, current_balance, project:projects(id, name))').single();
+  if (error) return res.status(400).json({ error: error.message });
+  await logAction(req, 'REPAYMENT_REQUEST_CREATED', 'RepaymentRequest', data.id, { loan_id, requested_amount });
+  res.status(201).json(data);
+});
+
+// TOP-UP REQUESTS — investor side
+app.get('/api/investor/topup-requests', requireAuth(['LENDER']), requireLenderWithBorrower, async (req, res) => {
+  if (!dbReady(req, res)) return;
+  const { data: ownLoans } = await supabase.from('loans').select('id').eq('borrower_id', req.user.borrowerId);
+  const ownIds = (ownLoans || []).map((l) => l.id);
+  if (ownIds.length === 0) return res.json([]);
+  const { data, error } = await supabase.from('topup_requests')
+    .select('*, loan:loans(id, reference, current_balance, project:projects(id, name))')
+    .in('loan_id', ownIds)
+    .order('requested_at', { ascending: false });
+  if (error) return res.status(500).json({ error: error.message });
+  res.json(data);
+});
+
+app.post('/api/investor/topup-requests', requireAuth(['LENDER']), requireLenderWithBorrower, async (req, res) => {
+  if (!dbReady(req, res)) return;
+  const { loan_id, amount, notes } = req.body || {};
+  if (!loan_id || amount == null) return res.status(400).json({ error: 'loan_id and amount required' });
+
+  const { data: loan } = await supabase.from('loans').select('id, borrower_id').eq('id', loan_id).maybeSingle();
+  if (!loan || loan.borrower_id !== req.user.borrowerId) return res.status(403).json({ error: 'Forbidden' });
+
+  const { data, error } = await supabase.from('topup_requests').insert({
+    loan_id, amount: Number(amount), notes: notes || null, status: 'PENDING',
+  }).select('*, loan:loans(id, reference, current_balance, project:projects(id, name))').single();
+  if (error) return res.status(400).json({ error: error.message });
+  await logAction(req, 'TOPUP_REQUEST_CREATED', 'TopUpRequest', data.id, { loan_id, amount });
+  res.status(201).json(data);
 });
 
 // ============================================

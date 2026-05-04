@@ -1,0 +1,403 @@
+// PDCON Lending Platform - Prisma Schema
+// Database: PostgreSQL (swap provider for MySQL/SQLite if needed)
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================
+// ENUMS
+// ============================================
+
+enum Role {
+  OWNER
+  ADMIN
+  LENDER
+}
+
+enum LoanType {
+  FIXED_MONTHLY      // Fixed return paid monthly
+  FIXED_END          // Fixed return paid at project/loan end
+  PROFIT_SHARE       // Guaranteed return + profit share at project end
+}
+
+enum LoanStatus {
+  PENDING
+  ACTIVE
+  COMPLETED
+  CANCELLED
+  DEFAULTED
+}
+
+enum TransactionType {
+  INTEREST_PAYMENT
+  PRINCIPAL_PAYMENT
+  PROFIT_DISTRIBUTION
+  DISBURSEMENT       // Money paid OUT to start the loan
+  TOP_UP             // Lender adds more funds
+  EARLY_REPAYMENT    // Partial or full early payback
+}
+
+enum RequestStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  COMPLETED
+}
+
+enum DocumentType {
+  CONTRACT
+  TERMS
+  STATEMENT
+  ID_VERIFICATION
+  SIGNATURE_RECORD
+  OTHER
+}
+
+// ============================================
+// USERS & AUTH
+// ============================================
+
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  name          String
+  password      String    // hashed with bcrypt
+  role          Role      @default(LENDER)
+  phone         String?
+  active        Boolean   @default(true)
+
+  // For lender accounts: link to their borrower record
+  borrowerId    String?   @unique
+  borrower      Borrower? @relation(fields: [borrowerId], references: [id])
+
+  // Granular permissions for ADMIN role (JSON for flexibility)
+  permissions   Json?     // e.g. { "loans": ["view","edit"], "projects": ["view"] }
+
+  // Password reset
+  resetToken        String?
+  resetTokenExpires DateTime?
+
+  // Audit
+  lastLogin     DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  // Relations
+  auditLogs     AuditLog[]
+  signatures    Signature[]
+
+  @@index([email])
+  @@index([role])
+}
+
+// ============================================
+// BORROWERS (the lenders/investors)
+// ============================================
+
+model Borrower {
+  id            String    @id @default(cuid())
+  fullName      String
+  email         String    @unique
+  phone         String?
+  address       String?
+  idNumber      String?   // passport, license, etc.
+  idType        String?   // "passport", "license", "abn"
+  notes         String?
+
+  // Custom fields - flexible JSON for anything extra
+  customFields  Json?
+
+  active        Boolean   @default(true)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  // Relations
+  user          User?
+  loans         Loan[]
+  documents     Document[]
+
+  @@index([email])
+}
+
+// ============================================
+// PROJECTS (real estate developments)
+// ============================================
+
+model Project {
+  id              String    @id @default(cuid())
+  name            String
+  description     String?
+  address         String?
+  status          String    @default("PLANNING") // PLANNING, ACTIVE, COMPLETED, ON_HOLD
+
+  // Financials - all simple, manually entered
+  totalCost       Decimal?  @db.Decimal(14, 2)
+  totalRevenue    Decimal?  @db.Decimal(14, 2)
+  totalProfit     Decimal?  @db.Decimal(14, 2)
+
+  startDate       DateTime?
+  estimatedCompletion DateTime?
+  actualCompletion    DateTime?
+
+  // Custom fields - flexible
+  customFields    Json?
+
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  // Relations
+  loans           Loan[]
+  estimatedInflows EstimatedInflow[]
+
+  @@index([status])
+}
+
+// ============================================
+// LOANS
+// ============================================
+
+model Loan {
+  id              String    @id @default(cuid())
+  reference       String    @unique @default(cuid()) // human-readable ref
+
+  // Parties
+  borrowerId      String
+  borrower        Borrower  @relation(fields: [borrowerId], references: [id])
+
+  // Optional project link (null = general company loan)
+  projectId       String?
+  project         Project?  @relation(fields: [projectId], references: [id])
+
+  // Terms
+  loanType        LoanType
+  principal       Decimal   @db.Decimal(14, 2)
+  currentBalance  Decimal   @db.Decimal(14, 2) // updates with top-ups / repayments
+  interestRate    Decimal   @db.Decimal(5, 2)  // annual %, e.g. 9.00
+
+  // For PROFIT_SHARE loans only
+  profitSharePercent Decimal? @db.Decimal(5, 2) // % of project profit
+
+  // Term
+  startDate       DateTime
+  maturityDate    DateTime
+  termMonths      Int
+
+  // Repayment schedule (only meaningful for FIXED_MONTHLY)
+  paymentAmount   Decimal?  @db.Decimal(14, 2)
+  paymentDay      Int?      // day of month, 1-28
+
+  status          LoanStatus @default(PENDING)
+  notes           String?
+
+  // Custom fields - flexible JSON
+  customFields    Json?
+
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  // Relations
+  transactions       Transaction[]
+  documents          Document[]
+  repaymentRequests  RepaymentRequest[]
+  topUpRequests      TopUpRequest[]
+  signatures         Signature[]
+
+  @@index([borrowerId])
+  @@index([projectId])
+  @@index([status])
+}
+
+// ============================================
+// TRANSACTIONS (payments in/out)
+// ============================================
+
+model Transaction {
+  id              String    @id @default(cuid())
+  loanId          String
+  loan            Loan      @relation(fields: [loanId], references: [id], onDelete: Cascade)
+
+  type            TransactionType
+  amount          Decimal   @db.Decimal(14, 2)
+  paymentDate     DateTime
+  reference       String?   // bank reference, etc.
+  notes           String?
+
+  // For interest payments: how much was interest vs principal
+  interestPortion  Decimal? @db.Decimal(14, 2)
+  principalPortion Decimal? @db.Decimal(14, 2)
+
+  createdAt       DateTime  @default(now())
+  createdById     String?   // who recorded it
+
+  @@index([loanId])
+  @@index([paymentDate])
+  @@index([type])
+}
+
+// ============================================
+// ESTIMATED INFLOWS (manual cash flow forecast)
+// ============================================
+
+model EstimatedInflow {
+  id              String    @id @default(cuid())
+  description     String    // e.g. "Project A profit"
+  amount          Decimal   @db.Decimal(14, 2)
+  expectedDate    DateTime
+
+  // Optional project link
+  projectId       String?
+  project         Project?  @relation(fields: [projectId], references: [id])
+
+  // Confidence level
+  confidence      String    @default("LIKELY") // LIKELY, POSSIBLE, CONFIRMED
+
+  notes           String?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  @@index([expectedDate])
+}
+
+// ============================================
+// REPAYMENT REQUESTS (early payback)
+// ============================================
+
+model RepaymentRequest {
+  id              String    @id @default(cuid())
+  loanId          String
+  loan            Loan      @relation(fields: [loanId], references: [id], onDelete: Cascade)
+
+  requestedAmount Decimal   @db.Decimal(14, 2)
+  isPartial       Boolean   @default(true)
+  reason          String?
+
+  status          RequestStatus @default(PENDING)
+  requestedAt     DateTime  @default(now())
+
+  reviewedAt      DateTime?
+  reviewedById    String?
+  reviewNotes     String?
+
+  completedAt     DateTime?
+  transactionId   String?   // link to Transaction once paid
+
+  @@index([loanId])
+  @@index([status])
+}
+
+// ============================================
+// TOP-UP REQUESTS (add more funds)
+// ============================================
+
+model TopUpRequest {
+  id              String    @id @default(cuid())
+  loanId          String
+  loan            Loan      @relation(fields: [loanId], references: [id], onDelete: Cascade)
+
+  amount          Decimal   @db.Decimal(14, 2)
+  notes           String?
+
+  status          RequestStatus @default(PENDING)
+  requestedAt     DateTime  @default(now())
+
+  reviewedAt      DateTime?
+  reviewedById    String?
+  reviewNotes     String?
+
+  completedAt     DateTime?
+  transactionId   String?
+
+  @@index([loanId])
+  @@index([status])
+}
+
+// ============================================
+// DOCUMENTS (contracts, T&Cs, statements)
+// ============================================
+
+model Document {
+  id              String    @id @default(cuid())
+  name            String
+  type            DocumentType
+
+  // File storage - can be S3 URL, local path, or external link
+  url             String
+  fileSize        Int?
+  mimeType        String?
+
+  // Optional links - a doc can belong to a loan, borrower, or both
+  loanId          String?
+  loan            Loan?     @relation(fields: [loanId], references: [id], onDelete: Cascade)
+
+  borrowerId      String?
+  borrower        Borrower? @relation(fields: [borrowerId], references: [id], onDelete: Cascade)
+
+  // For generated statements
+  periodStart     DateTime?
+  periodEnd       DateTime?
+
+  uploadedById    String?
+  createdAt       DateTime  @default(now())
+
+  @@index([loanId])
+  @@index([borrowerId])
+  @@index([type])
+}
+
+// ============================================
+// E-SIGNATURES (with audit trail)
+// ============================================
+
+model Signature {
+  id              String    @id @default(cuid())
+  loanId          String
+  loan            Loan      @relation(fields: [loanId], references: [id])
+
+  userId          String
+  user            User      @relation(fields: [userId], references: [id])
+
+  // The signature itself
+  signatureData   String    // base64 of drawn signature
+  photoUrl        String?   // URL to identity photo taken at signing
+
+  // Audit trail
+  ipAddress       String
+  userAgent       String
+  signedAt        DateTime  @default(now())
+
+  // What was signed
+  documentHash    String    // SHA256 of the document at signing time
+  documentName    String
+
+  @@index([loanId])
+  @@index([userId])
+}
+
+// ============================================
+// AUDIT LOG (every important action)
+// ============================================
+
+model AuditLog {
+  id              String    @id @default(cuid())
+  userId          String?
+  user            User?     @relation(fields: [userId], references: [id])
+
+  action          String    // e.g. "LOAN_CREATED", "PAYMENT_RECORDED"
+  entityType      String    // "Loan", "Transaction", etc.
+  entityId        String?
+  details         Json?     // arbitrary details
+
+  ipAddress       String?
+  userAgent       String?
+  createdAt       DateTime  @default(now())
+
+  @@index([userId])
+  @@index([entityType, entityId])
+  @@index([createdAt])
+}

@@ -12,24 +12,24 @@ import Resources from '@/pages/Resources';
 import ResourcePage from '@/pages/ResourcePage';
 import Invest from '@/pages/Invest';
 import BookConsultation from '@/pages/BookConsultation';
-import Admin from '@/pages/Admin';
+import Login from '@/pages/Login';
+import AdminLayout from '@/pages/admin/AdminLayout';
+import InvestorLayout from '@/pages/investor/InvestorLayout';
 import NotFound from '@/pages/NotFound';
+
+const NO_CHROME_PREFIXES = ['/admin', '/investor', '/login'];
 
 function ScrollToTop() {
   const location = useLocation();
-  
-  useEffect(() => {
-    window.scrollTo(0, 0);
-  }, [location.pathname]);
-  
+  useEffect(() => { window.scrollTo(0, 0); }, [location.pathname]);
   return null;
 }
 
 function RootLayout() {
   const location = useLocation();
-  const isAdmin = location.pathname === '/admin';
-  
-  if (isAdmin) {
+  const noChrome = NO_CHROME_PREFIXES.some((p) => location.pathname === p || location.pathname.startsWith(`${p}/`));
+
+  if (noChrome) {
     return (
       <div className="min-h-screen flex flex-col">
         <ScrollToTop />
@@ -37,7 +37,7 @@ function RootLayout() {
       </div>
     );
   }
-  
+
   return (
     <div className="min-h-screen flex flex-col">
       <ScrollToTop />
@@ -55,71 +55,19 @@ const rootRoute = createRootRoute({
   notFoundComponent: NotFound,
 });
 
-const indexRoute = createRoute({
-  getParentRoute: () => rootRoute,
-  path: '/',
-  component: Home,
-});
-
-const aboutRoute = createRoute({
-  getParentRoute: () => rootRoute,
-  path: '/about',
-  component: About,
-});
-
-const servicesRoute = createRoute({
-  getParentRoute: () => rootRoute,
-  path: '/services',
-  component: Services,
-});
-
-const portfolioRoute = createRoute({
-  getParentRoute: () => rootRoute,
-  path: '/portfolio',
-  component: Portfolio,
-});
-
-const insightsRoute = createRoute({
-  getParentRoute: () => rootRoute,
-  path: '/insights',
-  component: Insights,
-});
-
-const insightPostRoute = createRoute({
-  getParentRoute: () => rootRoute,
-  path: '/insights/$id',
-  component: InsightPost,
-});
-
-const resourcesRoute = createRoute({
-  getParentRoute: () => rootRoute,
-  path: '/resources',
-  component: Resources,
-});
-
-const resourcePageRoute = createRoute({
-  getParentRoute: () => rootRoute,
-  path: '/resources/$slug',
-  component: ResourcePage,
-});
-
-const investRoute = createRoute({
-  getParentRoute: () => rootRoute,
-  path: '/invest',
-  component: Invest,
-});
-
-const bookConsultationRoute = createRoute({
-  getParentRoute: () => rootRoute,
-  path: '/book-consultation',
-  component: BookConsultation,
-});
-
-const adminRoute = createRoute({
-  getParentRoute: () => rootRoute,
-  path: '/admin',
-  component: Admin,
-});
+const indexRoute = createRoute({ getParentRoute: () => rootRoute, path: '/', component: Home });
+const aboutRoute = createRoute({ getParentRoute: () => rootRoute, path: '/about', component: About });
+const servicesRoute = createRoute({ getParentRoute: () => rootRoute, path: '/services', component: Services });
+const portfolioRoute = createRoute({ getParentRoute: () => rootRoute, path: '/portfolio', component: Portfolio });
+const insightsRoute = createRoute({ getParentRoute: () => rootRoute, path: '/insights', component: Insights });
+const insightPostRoute = createRoute({ getParentRoute: () => rootRoute, path: '/insights/$id', component: InsightPost });
+const resourcesRoute = createRoute({ getParentRoute: () => rootRoute, path: '/resources', component: Resources });
+const resourcePageRoute = createRoute({ getParentRoute: () => rootRoute, path: '/resources/$slug', component: ResourcePage });
+const investRoute = createRoute({ getParentRoute: () => rootRoute, path: '/invest', component: Invest });
+const bookConsultationRoute = createRoute({ getParentRoute: () => rootRoute, path: '/book-consultation', component: BookConsultation });
+const loginRoute = createRoute({ getParentRoute: () => rootRoute, path: '/login', component: Login });
+const adminRoute = createRoute({ getParentRoute: () => rootRoute, path: '/admin', component: AdminLayout });
+const investorRoute = createRoute({ getParentRoute: () => rootRoute, path: '/investor', component: InvestorLayout });
 
 const routeTree = rootRoute.addChildren([
   indexRoute,
@@ -132,7 +80,9 @@ const routeTree = rootRoute.addChildren([
   resourcePageRoute,
   investRoute,
   bookConsultationRoute,
+  loginRoute,
   adminRoute,
+  investorRoute,
 ]);
 
 export const router = createRouter({ routeTree });
