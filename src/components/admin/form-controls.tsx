@@ -1,5 +1,5 @@
 import { useState, useId } from 'react';
-import { Calendar as CalendarIcon, ChevronDown, HelpCircle } from 'lucide-react';
+import { Calendar as CalendarIcon, ChevronDown, HelpCircle, Check } from 'lucide-react';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -308,6 +308,67 @@ export function DateRangePicker({
         />
       </PopoverContent>
     </Popover>
+  );
+}
+
+// ============================================================================
+// Stepper — numbered dots + labels for multi-step forms. Click a completed
+// step to jump back to it; future steps are not clickable.
+// ============================================================================
+export function Stepper({
+  steps, current, onJump,
+}: {
+  steps: string[];
+  current: number; // 1-based
+  onJump?: (step: number) => void;
+}) {
+  return (
+    <ol className="flex items-center w-full gap-2 sm:gap-4">
+      {steps.map((labelText, i) => {
+        const idx = i + 1;
+        const done = idx < current;
+        const active = idx === current;
+        const clickable = done && onJump;
+        return (
+          <li key={labelText} className="flex items-center flex-1 min-w-0">
+            <button
+              type="button"
+              onClick={clickable ? () => onJump(idx) : undefined}
+              disabled={!clickable}
+              className={cn(
+                'flex items-center gap-3 min-w-0',
+                clickable && 'cursor-pointer hover:opacity-80'
+              )}
+            >
+              <span
+                className={cn(
+                  'flex items-center justify-center w-8 h-8 rounded-full text-xs font-bold shrink-0',
+                  done && 'bg-accent text-white',
+                  active && 'bg-primary text-white ring-4 ring-primary/15',
+                  !done && !active && 'bg-secondary text-muted-foreground'
+                )}
+              >
+                {done ? <Check size={14} /> : idx}
+              </span>
+              <span
+                className={cn(
+                  'text-xs uppercase tracking-widest font-bold truncate hidden sm:block',
+                  active ? 'text-primary' : done ? 'text-accent' : 'text-muted-foreground'
+                )}
+              >
+                {labelText}
+              </span>
+            </button>
+            {i < steps.length - 1 && (
+              <span className={cn(
+                'flex-1 h-px mx-2 sm:mx-3 bg-border',
+                done && 'bg-accent/40'
+              )} />
+            )}
+          </li>
+        );
+      })}
+    </ol>
   );
 }
 

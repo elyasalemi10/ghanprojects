@@ -1,18 +1,18 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Plus, Edit, Trash2, X, Search } from 'lucide-react';
+import { Plus, Edit, Trash2, X, Search, ArrowLeft, ArrowRight } from 'lucide-react';
 import { toast } from 'sonner';
 import { authFetch, hasPermission } from '@/lib/auth';
 import { useAdminUser } from '../AdminLayout';
 import { label, PROJECT_STATUS_LABELS } from '@/lib/format';
 import {
   Field, TextInput, TextArea, Select, NumericInput, DatePicker, DateRangePicker,
-  LoadingBlock, LoadingValue, Section, AdvancedSettings,
+  LoadingBlock, LoadingValue, Section, AdvancedSettings, Stepper,
 } from '@/components/admin/form-controls';
 import { BankSelect, bankByKey } from '@/components/admin/bank-select';
 import {
   LineItemsEditor, lineItemsToStorage, lineItemsFromStorage, lineItemsTotal,
-  type LineItem,
+  oneEmptyLineItem, type LineItem,
 } from '@/components/admin/line-items';
 
 interface StoredLineItem { label: string; amount: number }
@@ -37,7 +37,7 @@ interface Project {
 const STATUSES: Array<Project['status']> = ['PLANNING', 'ACTIVE', 'COMPLETED', 'ON_HOLD'];
 const REPAYMENT_FREQUENCIES = ['MONTHLY', 'FORTNIGHTLY', 'WEEKLY', 'QUARTERLY', 'OTHER'];
 
-const emptyProject = {
+const buildEmptyProject = () => ({
   name: '',
   description: '',
   address: '',
@@ -45,10 +45,11 @@ const emptyProject = {
   start_date: '',
   estimated_completion: '',
   actual_completion: '',
-  cost_items: [] as LineItem[],
-  revenue_items: [] as LineItem[],
-  profit_override: '', // empty = use auto-calculated
-};
+  cost_items: oneEmptyLineItem() as LineItem[],
+  revenue_items: oneEmptyLineItem() as LineItem[],
+  profit_override: '',
+});
+type ProjectForm = ReturnType<typeof buildEmptyProject>;
 
 const emptyBankLoan = {
   enabled: false,
@@ -101,9 +102,10 @@ export default function Projects() {
   const [search, setSearch] = useState('');
   const [editing, setEditing] = useState<Project | null>(null);
   const [creating, setCreating] = useState(false);
-  const [project, setProject] = useState(emptyProject);
+  const [project, setProject] = useState<ProjectForm>(buildEmptyProject);
   const [bankLoan, setBankLoan] = useState(emptyBankLoan);
   const [saving, setSaving] = useState(false);
+  const [step, setStep] = useState(1);
 
   const canCreate = hasPermission(user, 'projects', 'create') || user.role === 'OWNER';
   const canEdit = hasPermission(user, 'projects', 'edit') || user.role === 'OWNER';
@@ -138,15 +140,17 @@ export default function Projects() {
       setBankLoan(emptyBankLoan); // editing project doesn't change bank loan here
     } else {
       setEditing(null);
-      setProject(emptyProject);
+      setProject(buildEmptyProject());
       setBankLoan(emptyBankLoan);
     }
+    setStep(1);
     setCreating(true);
   };
 
   const close = () => {
     setCreating(false); setEditing(null);
-    setProject(emptyProject); setBankLoan(emptyBankLoan);
+    setProject(buildEmptyProject()); setBankLoan(emptyBankLoan);
+    setStep(1);
   };
 
   const totalCost = useMemo(() => lineItemsTotal(project.cost_items), [project.cost_items]);
@@ -274,6 +278,42 @@ export default function Projects() {
     const showOtherLoanType = bankLoan.loan_type === 'OTHER';
     const showPeggedTo = bankLoan.interest_rate_type === 'VARIABLE';
 
+    const stepLabels = editing
+      ? ['Basics', 'Financials', 'Timeline']
+      : ['Basics', 'Financials', 'Timeline', 'Bank Facility'];
+    const totalSteps = stepLabels.length;
+    const isLastStep = step === totalSteps;
+
+    const validateStep = (s: number): string | null => {
+      if (s === 1) {
+        if (!project.name.trim()) return 'Please enter a project name';
+      }
+      if (s === 3) {
+        if (project.status === 'COMPLETED' && !project.actual_completion) {
+          return 'Please pick the actual completion date';
+        }
+      }
+      return null;
+    };
+
+    const goNext = () => {
+      const err = validateStep(step);
+      if (err) { toast.error(err); return; }
+      setStep((s) => Math.min(totalSteps, s + 1));
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
+    const goBack = () => {
+      setStep((s) => Math.max(1, s - 1));
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
+    const jumpTo = (s: number) => {
+      // only allow jumping to a previous (completed) step
+      if (s < step) {
+        setStep(s);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+    };
+
     return (
       <div className="space-y-6">
         <div className="bg-white p-6 border shadow-xl flex justify-between items-center">
@@ -283,7 +323,12 @@ export default function Projects() {
           <Button variant="outline" onClick={close}><X size={16} /> Cancel</Button>
         </div>
 
+        <div className="bg-white p-6 border shadow-md">
+          <Stepper steps={stepLabels} current={step} onJump={jumpTo} />
+        </div>
+
         <form onSubmit={submit} className="space-y-6">
+          {step === 1 && (
           <Section title="Basics">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <Field label="Name" required>
@@ -302,20 +347,20 @@ export default function Projects() {
               </Field>
             </div>
           </Section>
+          )}
 
-          <Section title="Financials" description="Break down the cost and revenue line by line. Profit auto-calculates from the difference, but you can override.">
+          {step === 2 && (
+          <Section title="Financials" description="Break down cost and revenue line by line. Profit auto-calculates; override the value if needed.">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
               <LineItemsEditor
                 label="Estimated Cost"
                 items={project.cost_items}
                 onChange={(items) => setProject({ ...project, cost_items: items })}
-                addLabel="Add cost item"
               />
               <LineItemsEditor
                 label="Estimated Revenue"
                 items={project.revenue_items}
                 onChange={(items) => setProject({ ...project, revenue_items: items })}
-                addLabel="Add revenue item"
               />
             </div>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -342,7 +387,9 @@ export default function Projects() {
               </div>
             </div>
           </Section>
+          )}
 
+          {step === 3 && (
           <Section title="Timeline">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <Field label="Start Date">
@@ -371,8 +418,9 @@ export default function Projects() {
               )}
             </div>
           </Section>
+          )}
 
-          {!editing && (
+          {step === 4 && !editing && (
             <Section title="Bank Facility" description="Optional. Link this project to a bank loan. The lender is the bank, no investor account is created.">
               <label className="flex items-center gap-3 text-sm cursor-pointer">
                 <input
@@ -560,13 +608,35 @@ export default function Projects() {
             </Section>
           )}
 
-          <div className="bg-white p-6 border shadow-xl">
+          <div className="bg-white p-4 border shadow-md flex items-center justify-between gap-3">
             <Button
-              type="submit" disabled={saving}
-              className="w-full rounded-none bg-accent hover:bg-accent/90 text-white py-6 font-heading font-bold uppercase tracking-wider"
+              type="button" variant="outline"
+              onClick={goBack} disabled={step === 1}
+              className="gap-2"
             >
-              {saving ? 'Saving...' : (editing ? 'Update Project' : (bankLoan.enabled ? 'Create Project & Bank Facility' : 'Create Project'))}
+              <ArrowLeft size={16} /> Back
             </Button>
+
+            <p className="text-xs text-muted-foreground hidden sm:block">
+              Step {step} of {totalSteps} · {stepLabels[step - 1]}
+            </p>
+
+            {isLastStep ? (
+              <Button
+                type="submit" disabled={saving}
+                className="rounded-none bg-accent hover:bg-accent/90 text-white px-8 py-5 font-heading font-bold uppercase tracking-wider"
+              >
+                {saving
+                  ? 'Saving...'
+                  : (editing
+                    ? 'Update Project'
+                    : (bankLoan.enabled ? 'Create Project & Bank Facility' : 'Create Project'))}
+              </Button>
+            ) : (
+              <Button type="button" onClick={goNext} className="gap-2">
+                Next <ArrowRight size={16} />
+              </Button>
+            )}
           </div>
         </form>
       </div>
