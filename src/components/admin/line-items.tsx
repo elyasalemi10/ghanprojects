@@ -35,12 +35,12 @@ export function LineItemsEditor({
 
       <div className="space-y-2">
         {items.map((it, i) => (
-          <div key={i} className="flex gap-2 items-center">
+          <div key={i} className="flex gap-2 items-stretch">
             <TextInput
               placeholder="e.g. Land acquisition"
               value={it.label}
               onChange={(e) => setAt(i, { label: e.target.value })}
-              className="flex-1 p-3"
+              className="flex-1"
             />
             <div className="w-44 shrink-0">
               <NumericInput
@@ -52,7 +52,7 @@ export function LineItemsEditor({
             <button
               type="button" onClick={() => removeAt(i)}
               disabled={items.length === 1}
-              className="h-[50px] w-[44px] flex items-center justify-center text-muted-foreground hover:text-destructive hover:bg-destructive/10 border border-border shrink-0 disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-muted-foreground"
+              className="self-stretch w-12 flex items-center justify-center text-muted-foreground hover:text-destructive hover:bg-destructive/10 border border-border shrink-0 disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-muted-foreground"
               aria-label="Remove line item"
             >
               <X size={16} />
