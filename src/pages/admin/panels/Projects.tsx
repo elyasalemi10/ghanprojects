@@ -160,6 +160,11 @@ export default function Projects() {
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
+    // Guard: only commit on the last step. Stops Enter-key or stray clicks
+    // mid-wizard from saving prematurely.
+    const totalSteps = editing ? 3 : 4;
+    if (step !== totalSteps) return;
+
     if (project.status === 'COMPLETED' && !project.actual_completion) {
       toast.error('Please pick the actual completion date');
       return;
@@ -288,7 +293,15 @@ export default function Projects() {
       if (s === 1) {
         if (!project.name.trim()) return 'Please enter a project name';
       }
+      if (s === 2) {
+        const validCost = project.cost_items.some((it) => it.label.trim() && Number(it.amount) > 0);
+        if (!validCost) return 'Add at least one cost line item with a label and amount';
+        const validRevenue = project.revenue_items.some((it) => it.label.trim() && Number(it.amount) > 0);
+        if (!validRevenue) return 'Add at least one revenue line item with a label and amount';
+      }
       if (s === 3) {
+        if (!project.start_date) return 'Pick a start date';
+        if (!project.estimated_completion) return 'Pick an estimated completion date';
         if (project.status === 'COMPLETED' && !project.actual_completion) {
           return 'Please pick the actual completion date';
         }
@@ -331,7 +344,7 @@ export default function Projects() {
           {step === 1 && (
           <Section title="Basics">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <Field label="Name" required>
+              <Field label="Project Name" required>
                 <TextInput value={project.name} onChange={(e) => setProject({ ...project, name: e.target.value })} required />
               </Field>
               <Field label="Status">
@@ -351,7 +364,7 @@ export default function Projects() {
 
           {step === 2 && (
           <Section title="Financials" description="Break down cost and revenue line by line. Profit auto-calculates; override the value if needed.">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <div className="space-y-6">
               <LineItemsEditor
                 label="Estimated Cost"
                 items={project.cost_items}

@@ -1,4 +1,4 @@
-import { useState, useId } from 'react';
+import { useState, useId, useRef, useLayoutEffect } from 'react';
 import { Calendar as CalendarIcon, ChevronDown, HelpCircle, Check } from 'lucide-react';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -132,20 +132,48 @@ export function NumericInput({
   prefix?: string;
   formatCommas?: boolean;
 }) {
-  const [focused, setFocused] = useState(false);
-  const display = focused || !formatCommas ? value : formatWithCommas(value);
+  const inputRef = useRef<HTMLInputElement>(null);
+  // Stash the cursor's logical position (digit-index) across re-renders so the
+  // caret stays put even as commas are added/removed during typing.
+  const pendingCaret = useRef<number | null>(null);
+
+  const display = formatCommas ? formatWithCommas(value) : value;
 
   const handle = (e: React.ChangeEvent<HTMLInputElement>) => {
-    onChange(sanitiseNumeric(e.target.value.replace(/,/g, ''), decimals));
+    const input = e.target;
+    const cursor = input.selectionStart ?? input.value.length;
+    // Logical position = how many "value" characters precede the caret,
+    // counting digits / decimal point / leading minus only.
+    const before = input.value.slice(0, cursor);
+    const logical = before.replace(/[^\d.\-]/g, '').length;
+
+    const sanitised = sanitiseNumeric(input.value.replace(/,/g, ''), decimals);
+    pendingCaret.current = logical;
+    onChange(sanitised);
   };
 
+  // After the new value is rendered, walk the formatted string and restore the
+  // caret to the spot that matches the logical position recorded above.
+  useLayoutEffect(() => {
+    if (pendingCaret.current === null || !inputRef.current) return;
+    const target = pendingCaret.current;
+    const formatted = inputRef.current.value;
+    let count = 0;
+    let pos = formatted.length;
+    for (let i = 0; i < formatted.length; i++) {
+      if (count === target) { pos = i; break; }
+      if (/[\d.\-]/.test(formatted[i])) count++;
+    }
+    inputRef.current.setSelectionRange(pos, pos);
+    pendingCaret.current = null;
+  });
+
   const inputProps = {
+    ref: inputRef,
     type: 'text' as const,
     inputMode: 'decimal' as const,
     value: display,
     onChange: handle,
-    onFocus: () => setFocused(true),
-    onBlur: () => setFocused(false),
     placeholder, required,
   };
 
@@ -182,6 +210,11 @@ function dateFromIso(iso: string | undefined | null): Date | undefined {
   if (!iso) return undefined;
   return new Date(`${iso}T00:00:00`);
 }
+
+// Sensible default range for the calendar's year-dropdown so it doesn't
+// scroll back 100 years. 5 years back, 30 years forward.
+const DEFAULT_CAL_START = new Date(new Date().getFullYear() - 5, 0, 1);
+const DEFAULT_CAL_END = new Date(new Date().getFullYear() + 30, 11, 31);
 
 export function DatePicker({
   value, onChange, placeholder = 'Pick a date', required, minISO, maxISO,
@@ -230,8 +263,8 @@ export function DatePicker({
               if (maxDate && d > maxDate) return true;
               return false;
             }}
-            startMonth={minDate}
-            endMonth={maxDate}
+            startMonth={minDate ?? DEFAULT_CAL_START}
+            endMonth={maxDate ?? DEFAULT_CAL_END}
           />
         </PopoverContent>
       </Popover>
@@ -303,8 +336,8 @@ export function DateRangePicker({
             if (maxDate && d > maxDate) return true;
             return false;
           }}
-          startMonth={minDate}
-          endMonth={maxDate}
+          startMonth={minDate ?? DEFAULT_CAL_START}
+          endMonth={maxDate ?? DEFAULT_CAL_END}
         />
       </PopoverContent>
     </Popover>
