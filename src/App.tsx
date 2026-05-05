@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { RouterProvider } from '@tanstack/react-router';
 import { router } from './router';
 import { Toaster } from '@/components/ui/sonner';
+import { TooltipProvider } from '@/components/ui/tooltip';
 import { Chatbot } from '@/components/shared/Chatbot';
 import { preloadBankLogos } from '@/components/admin/bank-select';
 
@@ -24,11 +25,11 @@ function App() {
   }, []);
 
   return (
-    <>
+    <TooltipProvider delayDuration={150}>
       <RouterProvider router={router} />
       <Toaster position="top-right" />
       {!isPortalPath(pathname) && <Chatbot />}
-    </>
+    </TooltipProvider>
   );
 }
 

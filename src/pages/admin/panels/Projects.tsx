@@ -6,7 +6,7 @@ import { authFetch, hasPermission } from '@/lib/auth';
 import { useAdminUser } from '../AdminLayout';
 import { label, PROJECT_STATUS_LABELS } from '@/lib/format';
 import {
-  Field, TextInput, TextArea, Select, NumericInput, DatePicker,
+  Field, TextInput, TextArea, Select, NumericInput, DatePicker, DateRangePicker,
   LoadingBlock, LoadingValue, Section, AdvancedSettings,
 } from '@/components/admin/form-controls';
 import { BankSelect, bankByKey } from '@/components/admin/bank-select';
@@ -63,12 +63,15 @@ const emptyBankLoan = {
   amount_available: '',
   interest_rate: '',
   interest_rate_type: 'FIXED' as 'FIXED' | 'VARIABLE',
-  interest_rate_pegged_to: '',
+  interest_rate_benchmark: 'BBSY',
+  interest_rate_margin: '',
   interest_rate_date: '',
   settlement_date: '',
   maturity_date: '',
-  io_period_months: '',
-  pi_period_months: '',
+  io_start_date: '',
+  io_end_date: '',
+  pi_start_date: '',
+  pi_end_date: '',
   repayment_frequency: 'MONTHLY',
   min_monthly_repayment: '',
   direct_debit_day: '',
@@ -83,6 +86,13 @@ const emptyBankLoan = {
   covenants: '',
   notes: '',
 };
+
+const BENCHMARKS = [
+  { key: 'BBSY', label: 'BBSY' },
+  { key: 'BBSW', label: 'BBSW' },
+  { key: 'RBA', label: 'RBA cash rate' },
+  { key: 'OTHER', label: 'Other' },
+];
 
 export default function Projects() {
   const user = useAdminUser();
@@ -205,12 +215,15 @@ export default function Projects() {
           amount_available: num(bankLoan.amount_available),
           interest_rate: num(bankLoan.interest_rate),
           interest_rate_type: bankLoan.interest_rate_type,
-          interest_rate_pegged_to: bankLoan.interest_rate_type === 'VARIABLE' ? bankLoan.interest_rate_pegged_to || null : null,
+          interest_rate_benchmark: bankLoan.interest_rate_type === 'VARIABLE' ? bankLoan.interest_rate_benchmark : null,
+          interest_rate_margin: bankLoan.interest_rate_type === 'VARIABLE' ? num(bankLoan.interest_rate_margin) : null,
           interest_rate_date: date(bankLoan.interest_rate_date),
           settlement_date: date(bankLoan.settlement_date),
           maturity_date: date(bankLoan.maturity_date),
-          io_period_months: num(bankLoan.io_period_months),
-          pi_period_months: num(bankLoan.pi_period_months),
+          io_start_date: date(bankLoan.io_start_date),
+          io_end_date: date(bankLoan.io_end_date),
+          pi_start_date: date(bankLoan.pi_start_date),
+          pi_end_date: date(bankLoan.pi_end_date),
           repayment_frequency: bankLoan.repayment_frequency,
           min_monthly_repayment: num(bankLoan.min_monthly_repayment),
           direct_debit_day: num(bankLoan.direct_debit_day),
@@ -333,14 +346,27 @@ export default function Projects() {
           <Section title="Timeline">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <Field label="Start Date">
-                <DatePicker value={project.start_date} onChange={(v) => setProject({ ...project, start_date: v })} />
+                <DatePicker
+                  value={project.start_date}
+                  onChange={(v) => setProject({ ...project, start_date: v })}
+                  maxISO={project.estimated_completion || undefined}
+                />
               </Field>
               <Field label="Estimated Completion">
-                <DatePicker value={project.estimated_completion} onChange={(v) => setProject({ ...project, estimated_completion: v })} />
+                <DatePicker
+                  value={project.estimated_completion}
+                  onChange={(v) => setProject({ ...project, estimated_completion: v })}
+                  minISO={project.start_date || undefined}
+                />
               </Field>
               {showActualCompletion && (
                 <Field label="Actual Completion" required>
-                  <DatePicker value={project.actual_completion} onChange={(v) => setProject({ ...project, actual_completion: v })} required />
+                  <DatePicker
+                    value={project.actual_completion}
+                    onChange={(v) => setProject({ ...project, actual_completion: v })}
+                    required
+                    minISO={project.start_date || undefined}
+                  />
                 </Field>
               )}
             </div>
@@ -380,22 +406,22 @@ export default function Projects() {
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <Field label="Facility Limit">
+                    <Field label="Facility Limit" help="The maximum total you're allowed to draw from this facility.">
                       <NumericInput prefix="$" value={bankLoan.facility_limit} onChange={(v) => setBankLoan({ ...bankLoan, facility_limit: v })} />
                     </Field>
-                    <Field label="Amount Drawn">
+                    <Field label="Amount Drawn" help="How much of the facility you've already used.">
                       <NumericInput prefix="$" value={bankLoan.amount_drawn} onChange={(v) => setBankLoan({ ...bankLoan, amount_drawn: v })} />
                     </Field>
-                    <Field label="Amount Available">
+                    <Field label="Amount Available" help="Facility limit minus amount drawn — what's still available to draw.">
                       <NumericInput prefix="$" value={bankLoan.amount_available} onChange={(v) => setBankLoan({ ...bankLoan, amount_available: v })} />
                     </Field>
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <Field label="Interest Rate (%)">
-                      <NumericInput value={bankLoan.interest_rate} onChange={(v) => setBankLoan({ ...bankLoan, interest_rate: v })} placeholder="7.250" />
+                    <Field label="Interest Rate (%)" help="Current applicable rate. For variable loans this is the all-in rate (benchmark + margin).">
+                      <NumericInput decimals={3} value={bankLoan.interest_rate} onChange={(v) => setBankLoan({ ...bankLoan, interest_rate: v })} placeholder="7.250" formatCommas={false} />
                     </Field>
-                    <Field label="Rate Type">
+                    <Field label="Rate Type" help="Fixed never moves; variable tracks a benchmark plus a margin.">
                       <Select value={bankLoan.interest_rate_type} onChange={(e) => setBankLoan({ ...bankLoan, interest_rate_type: e.target.value as 'FIXED' | 'VARIABLE' })}>
                         <option value="FIXED">Fixed</option>
                         <option value="VARIABLE">Variable</option>
@@ -406,43 +432,72 @@ export default function Projects() {
                     </Field>
                   </div>
                   {showPeggedTo && (
-                    <Field label="Pegged To">
-                      <TextInput value={bankLoan.interest_rate_pegged_to} onChange={(e) => setBankLoan({ ...bankLoan, interest_rate_pegged_to: e.target.value })} placeholder="e.g. BBSY + 2.5%" />
-                    </Field>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <Field label="Benchmark" help="Reference rate the variable loan tracks. BBSY/BBSW are short-term bank bill rates; the RBA cash rate is the central bank's policy rate.">
+                        <Select value={bankLoan.interest_rate_benchmark} onChange={(e) => setBankLoan({ ...bankLoan, interest_rate_benchmark: e.target.value })}>
+                          {BENCHMARKS.map((b) => <option key={b.key} value={b.key}>{b.label}</option>)}
+                        </Select>
+                      </Field>
+                      <Field label="Margin (% above benchmark)" help="The fixed margin the bank adds on top of the benchmark, e.g. 2.5 means + 2.5%.">
+                        <NumericInput value={bankLoan.interest_rate_margin} onChange={(v) => setBankLoan({ ...bankLoan, interest_rate_margin: v })} placeholder="2.50" formatCommas={false} prefix="+" />
+                      </Field>
+                    </div>
                   )}
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <Field label="Settlement Date">
-                      <DatePicker value={bankLoan.settlement_date} onChange={(v) => setBankLoan({ ...bankLoan, settlement_date: v })} />
+                    <Field label="Settlement Date" help="Date the loan funds settle / become available to draw.">
+                      <DatePicker
+                        value={bankLoan.settlement_date}
+                        onChange={(v) => setBankLoan({ ...bankLoan, settlement_date: v })}
+                        maxISO={bankLoan.maturity_date || undefined}
+                      />
                     </Field>
-                    <Field label="Maturity Date">
-                      <DatePicker value={bankLoan.maturity_date} onChange={(v) => setBankLoan({ ...bankLoan, maturity_date: v })} />
+                    <Field label="Maturity Date" help="Final date the facility must be fully repaid.">
+                      <DatePicker
+                        value={bankLoan.maturity_date}
+                        onChange={(v) => setBankLoan({ ...bankLoan, maturity_date: v })}
+                        minISO={bankLoan.settlement_date || undefined}
+                      />
                     </Field>
                   </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <label className="flex items-center gap-3 text-sm cursor-pointer mt-7">
+                  <div className="border border-border bg-secondary/20 p-3">
+                    <label className="flex items-center gap-2 text-sm cursor-pointer">
                       <input
                         type="checkbox" checked={bankLoan.secured}
                         onChange={(e) => setBankLoan({ ...bankLoan, secured: e.target.checked })}
                         className="w-4 h-4 accent-accent"
                       />
-                      <span>Secured loan</span>
+                      <span>This loan is secured</span>
                     </label>
                     {bankLoan.secured && (
-                      <Field label="Secured To" required>
-                        <TextInput value={bankLoan.secured_to} onChange={(e) => setBankLoan({ ...bankLoan, secured_to: e.target.value })} required placeholder="e.g. The development site at 123 Main St" />
-                      </Field>
+                      <div className="mt-3">
+                        <Field label="Secured To" required help="What collateral backs the loan, e.g. the development site title or a personal guarantee.">
+                          <TextInput value={bankLoan.secured_to} onChange={(e) => setBankLoan({ ...bankLoan, secured_to: e.target.value })} required placeholder="e.g. The development site at 123 Main St" />
+                        </Field>
+                      </div>
                     )}
                   </div>
 
                   <AdvancedSettings title="Repayment terms">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      <Field label="Interest-only period (months)">
-                        <NumericInput decimals={0} value={bankLoan.io_period_months} onChange={(v) => setBankLoan({ ...bankLoan, io_period_months: v })} />
+                      <Field label="Interest-only Period" help="Window where you only pay interest, not principal. Pick start and end dates.">
+                        <DateRangePicker
+                          from={bankLoan.io_start_date}
+                          to={bankLoan.io_end_date}
+                          onChange={({ from, to }) => setBankLoan({ ...bankLoan, io_start_date: from, io_end_date: to })}
+                          minISO={bankLoan.settlement_date || undefined}
+                          maxISO={bankLoan.maturity_date || undefined}
+                        />
                       </Field>
-                      <Field label="Principal & Interest period (months)">
-                        <NumericInput decimals={0} value={bankLoan.pi_period_months} onChange={(v) => setBankLoan({ ...bankLoan, pi_period_months: v })} />
+                      <Field label="Principal & Interest Period" help="Window where each payment chips away at both interest and principal.">
+                        <DateRangePicker
+                          from={bankLoan.pi_start_date}
+                          to={bankLoan.pi_end_date}
+                          onChange={({ from, to }) => setBankLoan({ ...bankLoan, pi_start_date: from, pi_end_date: to })}
+                          minISO={bankLoan.io_end_date || bankLoan.settlement_date || undefined}
+                          maxISO={bankLoan.maturity_date || undefined}
+                        />
                       </Field>
                       <Field label="Repayment Frequency">
                         <Select value={bankLoan.repayment_frequency} onChange={(e) => setBankLoan({ ...bankLoan, repayment_frequency: e.target.value })}>
@@ -452,8 +507,8 @@ export default function Projects() {
                       <Field label="Minimum Monthly Repayment">
                         <NumericInput prefix="$" value={bankLoan.min_monthly_repayment} onChange={(v) => setBankLoan({ ...bankLoan, min_monthly_repayment: v })} />
                       </Field>
-                      <Field label="Direct Debit Day of Month">
-                        <NumericInput decimals={0} value={bankLoan.direct_debit_day} onChange={(v) => setBankLoan({ ...bankLoan, direct_debit_day: v })} />
+                      <Field label="Direct Debit Day of Month" help="Day each month the bank takes the payment from your account (1–28).">
+                        <NumericInput decimals={0} value={bankLoan.direct_debit_day} onChange={(v) => setBankLoan({ ...bankLoan, direct_debit_day: v })} formatCommas={false} />
                       </Field>
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -468,14 +523,14 @@ export default function Projects() {
 
                   <AdvancedSettings title="Fees & penalties">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      <Field label="Establishment Fee">
+                      <Field label="Establishment Fee" help="One-off fee charged at setup to cover the bank's processing.">
                         <NumericInput prefix="$" value={bankLoan.establishment_fee} onChange={(v) => setBankLoan({ ...bankLoan, establishment_fee: v })} />
                       </Field>
-                      <Field label="Ongoing / Service Fees">
+                      <Field label="Ongoing / Service Fees" help="Recurring fees, e.g. annual line fees or monthly account-keeping fees.">
                         <TextInput value={bankLoan.ongoing_fees} onChange={(e) => setBankLoan({ ...bankLoan, ongoing_fees: e.target.value })} placeholder="$300/year line fee" />
                       </Field>
                     </div>
-                    <Field label="Early Repayment Penalty Terms">
+                    <Field label="Early Repayment Penalty Terms" help="Costs the bank charges if you pay the loan off before maturity.">
                       <TextArea rows={3} value={bankLoan.early_repayment_terms} onChange={(e) => setBankLoan({ ...bankLoan, early_repayment_terms: e.target.value })} />
                     </Field>
                   </AdvancedSettings>
@@ -493,8 +548,8 @@ export default function Projects() {
                   </AdvancedSettings>
 
                   <AdvancedSettings title="Covenants & notes">
-                    <Field label="Covenants">
-                      <TextArea rows={3} value={bankLoan.covenants} onChange={(e) => setBankLoan({ ...bankLoan, covenants: e.target.value })} placeholder="LVR &lt; 70%, presale of 4 of 8 apartments before drawdown, etc." />
+                    <Field label="Covenants" help="Conditions you must keep satisfying — e.g. loan-to-value ratio limits, minimum presales before drawdown, debt-service coverage ratios.">
+                      <TextArea rows={3} value={bankLoan.covenants} onChange={(e) => setBankLoan({ ...bankLoan, covenants: e.target.value })} placeholder="LVR < 70%, presale of 4 of 8 apartments before drawdown, etc." />
                     </Field>
                     <Field label="Notes">
                       <TextArea rows={3} value={bankLoan.notes} onChange={(e) => setBankLoan({ ...bankLoan, notes: e.target.value })} />

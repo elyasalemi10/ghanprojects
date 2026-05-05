@@ -1,25 +1,51 @@
 import { useState, useId } from 'react';
-import { Calendar as CalendarIcon, ChevronDown } from 'lucide-react';
+import { Calendar as CalendarIcon, ChevronDown, HelpCircle } from 'lucide-react';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
 
 // ============================================================================
+// Help — small ? icon with a tooltip explanation. Place inline next to a label.
+// ============================================================================
+export function Help({ children }: { children: React.ReactNode }) {
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <button
+          type="button" tabIndex={-1}
+          className="inline-flex align-middle text-muted-foreground hover:text-primary transition-colors"
+          aria-label="More info"
+        >
+          <HelpCircle size={13} />
+        </button>
+      </TooltipTrigger>
+      <TooltipContent side="top" align="start" className="max-w-xs text-xs leading-relaxed">
+        {children}
+      </TooltipContent>
+    </Tooltip>
+  );
+}
+
+// ============================================================================
 // Field — label + control wrapper used across the admin/investor panels.
+// Optional `help` prop renders a question-mark tooltip beside the label.
 // ============================================================================
 export function Field({
-  label, required, children, className,
+  label, required, help, children, className,
 }: {
   label: string;
   required?: boolean;
+  help?: React.ReactNode;
   children: React.ReactNode;
   className?: string;
 }) {
   return (
     <div className={cn('space-y-2', className)}>
-      <label className="text-[10px] uppercase tracking-widest font-bold text-primary">
-        {label}{required ? ' *' : ''}
+      <label className="text-[10px] uppercase tracking-widest font-bold text-primary inline-flex items-center gap-1.5">
+        <span>{label}{required ? ' *' : ''}</span>
+        {help && <Help>{help}</Help>}
       </label>
       {children}
     </div>
@@ -66,12 +92,37 @@ export function Select(props: React.SelectHTMLAttributes<HTMLSelectElement>) {
 }
 
 // ============================================================================
-// NumericInput — a text input that only accepts digits and a single decimal.
-// No native browser spinner arrows. Stores the raw string; emits numeric value
-// via onChange. Optional decimals (default 2) and a leading $ prefix.
+// NumericInput — text input that only accepts digits + single decimal + minus.
+// Storage is a clean string (no commas). Display formats with commas when the
+// field is NOT focused; when focused, the user sees raw digits so cursor
+// position is stable while typing.
 // ============================================================================
+function sanitiseNumeric(raw: string, decimals: number): string {
+  // Strip anything that isn't digit / decimal / minus
+  let v = raw.replace(/[^\d.\-]/g, '');
+  // Only one decimal
+  const parts = v.split('.');
+  if (parts.length > 2) v = parts[0] + '.' + parts.slice(1).join('');
+  // Cap decimals
+  if (decimals === 0) v = v.replace(/\..*/, '');
+  else if (parts[1] && parts[1].length > decimals) {
+    v = parts[0] + '.' + parts[1].slice(0, decimals);
+  }
+  // Only leading minus
+  if (v.indexOf('-') > 0) v = v.replace(/-/g, '');
+  return v;
+}
+function formatWithCommas(v: string): string {
+  if (!v) return '';
+  const negative = v.startsWith('-');
+  const body = negative ? v.slice(1) : v;
+  const [intPart, decPart] = body.split('.');
+  const intFmt = intPart.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+  return (negative ? '-' : '') + (decPart != null ? `${intFmt}.${decPart}` : intFmt);
+}
+
 export function NumericInput({
-  value, onChange, placeholder, required, decimals = 2, prefix,
+  value, onChange, placeholder, required, decimals = 2, prefix, formatCommas = true,
 }: {
   value: string;
   onChange: (v: string) => void;
@@ -79,22 +130,23 @@ export function NumericInput({
   required?: boolean;
   decimals?: number;
   prefix?: string;
+  formatCommas?: boolean;
 }) {
+  const [focused, setFocused] = useState(false);
+  const display = focused || !formatCommas ? value : formatWithCommas(value);
+
   const handle = (e: React.ChangeEvent<HTMLInputElement>) => {
-    let raw = e.target.value;
-    // Strip anything that isn't digit/decimal point/minus
-    raw = raw.replace(/[^\d.-]/g, '');
-    // Only one decimal
-    const parts = raw.split('.');
-    if (parts.length > 2) raw = parts[0] + '.' + parts.slice(1).join('');
-    // Cap decimals
-    if (decimals === 0) raw = raw.replace(/\..*/, '');
-    else if (parts[1] && parts[1].length > decimals) {
-      raw = parts[0] + '.' + parts[1].slice(0, decimals);
-    }
-    // Only one leading minus
-    if (raw.indexOf('-') > 0) raw = raw.replace(/-/g, '');
-    onChange(raw);
+    onChange(sanitiseNumeric(e.target.value.replace(/,/g, ''), decimals));
+  };
+
+  const inputProps = {
+    type: 'text' as const,
+    inputMode: 'decimal' as const,
+    value: display,
+    onChange: handle,
+    onFocus: () => setFocused(true),
+    onBlur: () => setFocused(false),
+    placeholder, required,
   };
 
   if (prefix) {
@@ -104,8 +156,7 @@ export function NumericInput({
           {prefix}
         </span>
         <input
-          type="text" inputMode="decimal" value={value} onChange={handle}
-          placeholder={placeholder} required={required}
+          {...inputProps}
           className="flex-1 bg-secondary/30 border border-border p-4 focus:outline-none focus:ring-2 focus:ring-accent"
         />
       </div>
@@ -113,8 +164,7 @@ export function NumericInput({
   }
   return (
     <input
-      type="text" inputMode="decimal" value={value} onChange={handle}
-      placeholder={placeholder} required={required}
+      {...inputProps}
       className="w-full bg-secondary/30 border border-border p-4 focus:outline-none focus:ring-2 focus:ring-accent"
     />
   );
@@ -122,21 +172,34 @@ export function NumericInput({
 
 // ============================================================================
 // DatePicker — Popover + Calendar replacing native <input type=date>.
-// Stores ISO date string (YYYY-MM-DD) and only changes when the user picks.
+// Stores ISO date string (YYYY-MM-DD). Optional minISO / maxISO disable dates
+// outside the allowed range so a "to" date can't precede a "from" date.
 // ============================================================================
+function isoFromDate(d: Date) {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+function dateFromIso(iso: string | undefined | null): Date | undefined {
+  if (!iso) return undefined;
+  return new Date(`${iso}T00:00:00`);
+}
+
 export function DatePicker({
-  value, onChange, placeholder = 'Pick a date', required,
+  value, onChange, placeholder = 'Pick a date', required, minISO, maxISO,
 }: {
   value: string;
   onChange: (iso: string) => void;
   placeholder?: string;
   required?: boolean;
+  minISO?: string;
+  maxISO?: string;
 }) {
   const [open, setOpen] = useState(false);
   const id = useId();
 
-  const date = value ? new Date(`${value}T00:00:00`) : undefined;
+  const date = dateFromIso(value);
   const display = date ? date.toLocaleDateString('en-AU', { day: 'numeric', month: 'short', year: 'numeric' }) : placeholder;
+  const minDate = dateFromIso(minISO);
+  const maxDate = dateFromIso(maxISO);
 
   return (
     <>
@@ -158,19 +221,20 @@ export function DatePicker({
             mode="single"
             selected={date}
             onSelect={(d) => {
-              if (d) {
-                const iso = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-                onChange(iso);
-                setOpen(false);
-              } else {
-                onChange('');
-              }
+              if (d) { onChange(isoFromDate(d)); setOpen(false); }
+              else onChange('');
             }}
             captionLayout="dropdown"
+            disabled={(d) => {
+              if (minDate && d < minDate) return true;
+              if (maxDate && d > maxDate) return true;
+              return false;
+            }}
+            startMonth={minDate}
+            endMonth={maxDate}
           />
         </PopoverContent>
       </Popover>
-      {/* Hidden mirror so native HTML form `required` validation works */}
       {required && (
         <input
           type="text" tabIndex={-1} required value={value} onChange={() => { /* noop */ }}
@@ -178,6 +242,72 @@ export function DatePicker({
         />
       )}
     </>
+  );
+}
+
+// ============================================================================
+// DateRangePicker — single popover that picks a from/to range.
+// Returns ISO strings for both endpoints.
+// ============================================================================
+export function DateRangePicker({
+  from, to, onChange, fromPlaceholder = 'Start', toPlaceholder = 'End', minISO, maxISO,
+}: {
+  from: string;
+  to: string;
+  onChange: (range: { from: string; to: string }) => void;
+  fromPlaceholder?: string;
+  toPlaceholder?: string;
+  minISO?: string;
+  maxISO?: string;
+}) {
+  const [open, setOpen] = useState(false);
+  const fromDate = dateFromIso(from);
+  const toDate = dateFromIso(to);
+  const minDate = dateFromIso(minISO);
+  const maxDate = dateFromIso(maxISO);
+
+  const fmt = (d: Date | undefined, fallback: string) =>
+    d ? d.toLocaleDateString('en-AU', { day: 'numeric', month: 'short', year: 'numeric' }) : fallback;
+
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <button
+          type="button"
+          className={cn(
+            'w-full bg-secondary/30 border border-border p-4 text-left flex items-center justify-between gap-2 focus:outline-none focus:ring-2 focus:ring-accent',
+            !from && !to && 'text-muted-foreground'
+          )}
+        >
+          <span className="truncate">
+            {fmt(fromDate, fromPlaceholder)} <span className="text-muted-foreground">→</span> {fmt(toDate, toPlaceholder)}
+          </span>
+          <CalendarIcon size={16} className="shrink-0 text-muted-foreground" />
+        </button>
+      </PopoverTrigger>
+      <PopoverContent className="w-auto p-0" align="start">
+        <Calendar
+          mode="range"
+          selected={{ from: fromDate, to: toDate }}
+          onSelect={(range) => {
+            onChange({
+              from: range?.from ? isoFromDate(range.from) : '',
+              to: range?.to ? isoFromDate(range.to) : '',
+            });
+            if (range?.from && range?.to) setOpen(false);
+          }}
+          captionLayout="dropdown"
+          numberOfMonths={2}
+          disabled={(d) => {
+            if (minDate && d < minDate) return true;
+            if (maxDate && d > maxDate) return true;
+            return false;
+          }}
+          startMonth={minDate}
+          endMonth={maxDate}
+        />
+      </PopoverContent>
+    </Popover>
   );
 }
 
