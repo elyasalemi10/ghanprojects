@@ -27,7 +27,8 @@ export interface BlogPost {
   title: string;
   category: string;
   thumbnail: string;
-  date: string; // ISO date string (published_at)
+  date: string; // ISO date string (published_at) — datePublished
+  updated: string; // ISO date string (updated_at) — dateModified
   read_time: string;
   excerpt: string;
   content: string; // sanitised HTML
@@ -44,15 +45,18 @@ type PostRow = {
   thumbnail_url: string | null;
   published_at: string | null;
   created_at: string;
+  updated_at: string | null;
 };
 
 function rowToPost(row: PostRow, attachments: BlogAttachment[] = []): BlogPost {
+  const published = row.published_at ?? row.created_at;
   return {
     slug: row.slug,
     title: row.title,
     category: row.category ?? "Insights",
     thumbnail: row.thumbnail_url ?? "",
-    date: row.published_at ?? row.created_at,
+    date: published,
+    updated: row.updated_at ?? published,
     read_time: row.read_time ?? "",
     excerpt: row.excerpt ?? "",
     content: row.content ?? "",
@@ -61,7 +65,7 @@ function rowToPost(row: PostRow, attachments: BlogAttachment[] = []): BlogPost {
 }
 
 const POST_COLUMNS =
-  "slug, title, excerpt, content, category, read_time, thumbnail_url, published_at, created_at";
+  "slug, title, excerpt, content, category, read_time, thumbnail_url, published_at, created_at, updated_at";
 
 /**
  * Returns all published posts, newest first. Falls back to example posts if
@@ -129,6 +133,7 @@ function fallbackPosts(): BlogPost[] {
       title: "How to Assess a Development Site in Melbourne",
       category: "Strategy",
       date: "2024-05-12",
+      updated: "2024-05-12",
       read_time: "6 min read",
       excerpt:
         "Identifying the right site is the most critical step in property development. Here are the key factors we analyse before committing capital to a feasibility study.",

@@ -104,6 +104,8 @@ export default function InsightPost({ post }: { post: BlogPost }) {
                 [&_figure_img]:rounded-xl [&_figure_img]:shadow-lg [&_figure_img]:w-full
                 [&_figcaption]:text-center [&_figcaption]:text-sm [&_figcaption]:text-muted-foreground [&_figcaption]:mt-3 [&_figcaption]:italic
                 [&_img]:rounded-xl [&_img]:my-8 [&_img]:shadow-lg
+                [&_div[data-youtube-video]]:relative [&_div[data-youtube-video]]:my-8 [&_div[data-youtube-video]]:aspect-video [&_div[data-youtube-video]]:w-full [&_div[data-youtube-video]]:overflow-hidden [&_div[data-youtube-video]]:rounded-xl [&_div[data-youtube-video]]:shadow-lg
+                [&_div[data-youtube-video]_iframe]:absolute [&_div[data-youtube-video]_iframe]:inset-0 [&_div[data-youtube-video]_iframe]:h-full [&_div[data-youtube-video]_iframe]:w-full
                 [&_a]:text-accent [&_a]:underline [&_a]:hover:text-accent/80
                 [&_table]:w-auto [&_table]:border-collapse [&_table]:my-8 [&_table]:mx-auto
                 [&_th]:border [&_th]:border-border [&_th]:p-4 [&_th]:bg-secondary [&_th]:font-bold [&_th]:text-primary

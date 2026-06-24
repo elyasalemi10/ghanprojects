@@ -3,6 +3,8 @@ import "./globals.css";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
 import { Toaster } from "@/components/ui/sonner";
+import { JsonLd } from "@/components/shared/JsonLd";
+import { organizationLd, websiteLd } from "@/lib/seo";
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://ghanprojects.com.au"),
@@ -17,7 +19,8 @@ export const metadata: Metadata = {
     "property development Melbourne, property investment consulting, property advisory Melbourne, joint venture property development, buyer's agent Melbourne, Ghan Projects, Ghan Property Group, property consulting Melbourne",
   authors: [{ name: "Ghan Projects" }],
   icons: {
-    icon: "/images/ghanprojects-favicon.webp",
+    icon: "/favicon.png",
+    apple: "/favicon.png",
   },
   alternates: {
     canonical: "/",
@@ -61,6 +64,8 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body>
+        <JsonLd data={organizationLd()} />
+        <JsonLd data={websiteLd()} />
         <div className="min-h-screen flex flex-col">
           <Navbar />
           <main className="flex-grow pt-20">{children}</main>
