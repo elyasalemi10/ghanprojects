@@ -13,7 +13,7 @@ const categories = ['All', 'Development', 'Investment', 'Strategy', 'Finance', '
 const ARTICLES_PER_PAGE = 10;
 
 interface BlogPost {
-  id: number;
+  slug: string;
   title: string;
   category: string;
   thumbnail: string;
@@ -164,7 +164,7 @@ export default function Insights({ posts }: { posts: BlogPost[] }) {
                 <AnimatePresence mode="popLayout">
                   {paginatedArticles.map((a) => (
                     <motion.div
-                      key={a.id}
+                      key={a.slug}
                       layout
                       initial={{ opacity: 0, y: 20 }}
                       animate={{ opacity: 1, y: 0 }}
@@ -172,7 +172,7 @@ export default function Insights({ posts }: { posts: BlogPost[] }) {
                       transition={{ duration: 0.4 }}
                     >
                       <Link
-                        href={`/insights/${a.id}`}
+                        href={`/insights/${a.slug}`}
                         className="group bg-background border hover:border-accent transition-all duration-500 flex flex-col shadow-sm hover:shadow-2xl cursor-pointer block h-full"
                       >
                         <div className="relative aspect-video overflow-hidden">

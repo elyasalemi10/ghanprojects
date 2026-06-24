@@ -1,28 +1,32 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import InsightPost from "@/views/InsightPost";
-import { getPostById, getAllPosts } from "@/data/posts";
+import { getPostBySlug, getAllSlugs } from "@/data/posts";
 
-// To enable ISR once posts come from a database, uncomment:
-// export const revalidate = 60;
+// ISR: re-render at most every 60s, and on-demand when the admin app pings
+// /api/revalidate after a publish.
+export const revalidate = 60;
 
-// Pre-render known posts at build time (optional; safe to keep with a DB too).
+// Pre-render published posts at build; new slugs render on first request
+// (blocking) and are cached thereafter.
+export const dynamicParams = true;
+
 export async function generateStaticParams() {
-  const posts = await getAllPosts();
-  return posts.map((p) => ({ id: String(p.id) }));
+  const slugs = await getAllSlugs();
+  return slugs.map((slug) => ({ slug }));
 }
 
 export async function generateMetadata({
   params,
 }: {
-  params: { id: string };
+  params: { slug: string };
 }): Promise<Metadata> {
-  const post = await getPostById(params.id);
+  const post = await getPostBySlug(params.slug);
   if (!post) return { title: "Article Not Found" };
   return {
     title: post.title,
     description: post.excerpt,
-    alternates: { canonical: `/insights/${post.id}` },
+    alternates: { canonical: `/insights/${post.slug}` },
     openGraph: {
       type: "article",
       title: post.title,
@@ -36,9 +40,9 @@ export async function generateMetadata({
 export default async function InsightPostPage({
   params,
 }: {
-  params: { id: string };
+  params: { slug: string };
 }) {
-  const post = await getPostById(params.id);
+  const post = await getPostBySlug(params.slug);
   if (!post) notFound();
   return <InsightPost post={post} />;
 }

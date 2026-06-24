@@ -2,8 +2,9 @@ import type { Metadata } from "next";
 import Insights from "@/views/Insights";
 import { getAllPosts } from "@/data/posts";
 
-// To enable ISR once posts come from a database, uncomment:
-// export const revalidate = 60;
+// ISR: re-render at most every 60s, and on-demand when the admin app pings
+// /api/revalidate after a publish.
+export const revalidate = 60;
 
 export const metadata: Metadata = {
   title: "Property Development & Investment Insights",

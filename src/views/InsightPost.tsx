@@ -3,7 +3,7 @@
 import { motion } from 'framer-motion';
 import Link from "next/link";
 import { Button } from '@/components/ui/button';
-import { Clock, ChevronLeft, Calendar } from 'lucide-react';
+import { Clock, ChevronLeft, Calendar, Download } from 'lucide-react';
 import { SEO } from '@/components/shared/SEO';
 import type { BlogPost } from '@/data/posts';
 
@@ -15,9 +15,9 @@ export default function InsightPost({ post }: { post: BlogPost }) {
 
   return (
     <div className="bg-primary min-h-screen">
-      <SEO 
+      <SEO
         title={post.title}
-        url={`/insights/${post.id}`}
+        url={`/insights/${post.slug}`}
         description={post.excerpt}
         image={post.thumbnail}
         type="article"
@@ -122,6 +122,32 @@ export default function InsightPost({ post }: { post: BlogPost }) {
             <p className="text-lg text-muted-foreground leading-relaxed">{post.excerpt}</p>
           )}
         </motion.div>
+
+        {/* Attachments */}
+        {post.attachments && post.attachments.length > 0 && (
+          <div className="max-w-3xl mx-auto px-6 pb-16">
+            <h3 className="text-sm font-bold tracking-widest text-primary uppercase mb-4">
+              Downloads
+            </h3>
+            <ul className="flex flex-col gap-3">
+              {post.attachments.map((file) => (
+                <li key={file.file_url}>
+                  <a
+                    href={file.file_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="group flex items-center gap-4 border bg-background hover:border-accent transition-colors p-4"
+                  >
+                    <Download size={18} className="text-accent shrink-0" />
+                    <span className="flex-1 min-w-0 truncate text-sm font-medium text-primary group-hover:text-accent transition-colors">
+                      {file.file_name}
+                    </span>
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
 
         {/* CTA */}
         <section className="py-16 px-6 bg-secondary/30 border-t">

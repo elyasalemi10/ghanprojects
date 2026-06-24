@@ -428,9 +428,9 @@ export default function Home({ insights }: { insights: BlogPost[] }) {
             </div>
             <div className="space-y-6">
               {insights.map((article, i) => (
-                <FadeInWhenVisible key={article.id} delay={i * 0.1}>
-                  <Link 
-                    href={article.id > 0 ? `/insights/${article.id}` : "/insights"}
+                <FadeInWhenVisible key={article.slug} delay={i * 0.1}>
+                  <Link
+                    href={article.slug ? `/insights/${article.slug}` : "/insights"}
                     className="group bg-background p-6 flex gap-6 items-center border hover:border-accent transition-all duration-300 shadow-sm cursor-pointer block"
                   >
                     <div className="w-24 h-24 bg-secondary shrink-0 hidden sm:block overflow-hidden">
