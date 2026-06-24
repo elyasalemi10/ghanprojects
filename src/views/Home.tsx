@@ -28,6 +28,7 @@ import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { FadeInWhenVisible } from '@/components/shared/FadeInWhenVisible';
 import { SEO } from '@/components/shared/SEO';
+import { Honeypot } from '@/components/shared/Honeypot';
 import type { BlogPost } from '@/data/posts';
 
 // --- Data ---
@@ -159,7 +160,8 @@ export default function Home({ insights }: { insights: BlogPost[] }) {
       email,
       phone,
       budgetRange: formData.get('budgetRange'),
-      interestType: formData.get('interestType')
+      interestType: formData.get('interestType'),
+      companyWebsite: formData.get('companyWebsite')
     };
     
     try {
@@ -514,6 +516,7 @@ export default function Home({ insights }: { insights: BlogPost[] }) {
             <FadeInWhenVisible delay={0.2}>
               <div className="bg-secondary/30 p-6 sm:p-10 lg:p-14 border border-secondary shadow-2xl">
                 <form onSubmit={handleJoinNetwork} className="space-y-4 sm:space-y-6">
+                  <Honeypot />
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
                     <div className="space-y-2">
                       <label className="text-[10px] tracking-widest font-bold text-primary">Full Name</label>

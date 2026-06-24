@@ -23,6 +23,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { SEO } from '@/components/shared/SEO';
+import { Honeypot } from '@/components/shared/Honeypot';
 
 
 export default function BookConsultation() {
@@ -62,7 +63,8 @@ export default function BookConsultation() {
       phone,
       preferredDate: formData.get('preferredDate'),
       message: `Showroom Visit Request for ${formData.get('preferredDate')}`,
-      isShowroomBooking: true
+      isShowroomBooking: true,
+      companyWebsite: formData.get('companyWebsite')
     } : {
       fullName: formData.get('fullName'),
       email,
@@ -70,7 +72,8 @@ export default function BookConsultation() {
       budgetRange: formData.get('budgetRange'),
       interestType: formData.get('interestType'),
       preferredTime: formData.get('preferredTime'),
-      message: formData.get('message')
+      message: formData.get('message'),
+      companyWebsite: formData.get('companyWebsite')
     };
     
     try {
@@ -192,6 +195,7 @@ export default function BookConsultation() {
             <div className="lg:col-span-7">
               <div className="bg-white p-6 sm:p-8 lg:p-12 xl:p-16 border shadow-2xl relative">
                 <form onSubmit={handleSubmit} className="space-y-6 sm:space-y-8">
+                  <Honeypot />
                   {isShowroomBooking ? (
                     <>
                       {/* Showroom Booking - Simplified Form */}

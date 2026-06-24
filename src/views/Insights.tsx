@@ -7,6 +7,7 @@ import { Search, Clock, ChevronRight, ChevronLeft } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import Link from "next/link";
 import { SEO } from '@/components/shared/SEO';
+import { Honeypot } from '@/components/shared/Honeypot';
 import { toast } from 'sonner';
 
 const categories = ['All', 'Development', 'Investment', 'Strategy', 'Finance', 'Market Update'];
@@ -273,21 +274,22 @@ export default function Insights({ posts }: { posts: BlogPost[] }) {
               const form = e.currentTarget;
               const emailInput = form.querySelector('input[type="email"]') as HTMLInputElement;
               const email = emailInput?.value;
-              
+              const companyWebsite = (form.querySelector('input[name="companyWebsite"]') as HTMLInputElement)?.value;
+
               if (!email) {
                 toast.error('Please enter your email address');
                 return;
               }
-              
+
               const submitBtn = form.querySelector('button') as HTMLButtonElement;
               submitBtn.disabled = true;
               submitBtn.textContent = 'Subscribing...';
-              
+
               try {
                 const res = await fetch(`/api/newsletter`, {
                   method: 'POST',
                   headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({ email, source: 'insights' })
+                  body: JSON.stringify({ email, source: 'insights', companyWebsite })
                 });
                 
                 if (res.ok) {
@@ -305,9 +307,10 @@ export default function Insights({ posts }: { posts: BlogPost[] }) {
               }
             }}
           >
-            <input 
-              type="email" 
-              placeholder="Your Email Address" 
+            <Honeypot />
+            <input
+              type="email"
+              placeholder="Your Email Address"
               required
               className="flex-grow bg-white/10 border border-white/20 p-4 focus:outline-none focus:ring-2 focus:ring-accent text-white placeholder:text-white/50"
             />

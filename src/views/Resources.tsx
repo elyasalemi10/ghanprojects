@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { FileText, Download, Lock, CheckCircle2, ChevronRight, Mail, Unlock, Bot, ExternalLink, Calculator, Layers } from 'lucide-react';
 import { toast } from 'sonner';
 import { SEO } from '@/components/shared/SEO';
+import { Honeypot } from '@/components/shared/Honeypot';
 import { freeResources, lockedResources, type Resource } from '@/data/resources';
 
 const getResourceIcon = (resource: Resource) => {
@@ -32,13 +33,15 @@ export default function Resources() {
   const handleDownloadRequest = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email) return;
-    
+
+    const companyWebsite = new FormData(e.currentTarget as HTMLFormElement).get('companyWebsite');
+
     setIsSubmitting(true);
     try {
       const res = await fetch(`/api/resources/unlock`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email })
+        body: JSON.stringify({ email, companyWebsite })
       });
       
       if (res.ok) {
@@ -128,6 +131,7 @@ export default function Resources() {
                 </div>
                 <p className="text-white/60">Enter your email to unlock all premium checklists and guides, plus receive strategic updates.</p>
                 <form onSubmit={handleDownloadRequest} className="space-y-4">
+                  <Honeypot />
                   <div className="relative">
                     <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-white/30" size={20} />
                     <input 
