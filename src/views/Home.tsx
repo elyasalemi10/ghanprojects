@@ -436,7 +436,7 @@ export default function Home({ insights }: { insights: BlogPost[] }) {
                     className="group bg-background p-6 flex gap-6 items-center border hover:border-accent transition-all duration-300 shadow-sm cursor-pointer block"
                   >
                     <div className="w-24 h-24 bg-secondary shrink-0 hidden sm:block overflow-hidden">
-                      <img src={article.thumbnail || '/images/property-analysis.webp'} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" alt="" />
+                      <img src={article.thumbnail || '/images/property-analysis.webp'} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" alt={article.title} />
                     </div>
                     <div>
                       <div className="flex items-center gap-3 text-[10px] tracking-widest font-bold text-accent mb-2">

@@ -1,3 +1,5 @@
+import type { Metadata } from "next";
+
 import type { BlogPost } from "@/data/posts";
 
 // Single source of truth for SEO constants + structured-data (JSON-LD) builders.
@@ -12,6 +14,55 @@ export function abs(pathOrUrl: string): string {
   if (!pathOrUrl) return SITE_URL;
   if (/^https?:\/\//i.test(pathOrUrl)) return pathOrUrl;
   return `${SITE_URL}${pathOrUrl.startsWith("/") ? "" : "/"}${pathOrUrl}`;
+}
+
+/**
+ * Build a page's Metadata with a canonical URL plus complete Open Graph and
+ * Twitter cards, so every page is shareable and not just the blog posts. When
+ * a child segment sets `openGraph`, Next replaces (not deep-merges) the root
+ * layout's, so each page must supply the full block — this keeps them DRY.
+ *
+ * `title` is the page-specific part; Next's title.template appends the brand
+ * suffix for the document title. We mirror that suffix into the OG/Twitter
+ * titles so social cards read the same as the tab.
+ */
+export function pageMetadata({
+  title,
+  description,
+  path,
+  image = DEFAULT_OG_IMAGE,
+  type = "website",
+  keywords,
+}: {
+  title: string;
+  description: string;
+  path: string;
+  image?: string;
+  type?: "website" | "article";
+  keywords?: string;
+}): Metadata {
+  const ogTitle = `${title} | ${SITE_NAME}`;
+  return {
+    title,
+    description,
+    ...(keywords ? { keywords } : {}),
+    alternates: { canonical: path },
+    openGraph: {
+      type,
+      siteName: SITE_NAME,
+      locale: "en_AU",
+      url: path,
+      title: ogTitle,
+      description,
+      images: [{ url: image, width: 1200, height: 630 }],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: ogTitle,
+      description,
+      images: [image],
+    },
+  };
 }
 
 const publisher = {

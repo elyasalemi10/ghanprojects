@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import ResourcePage from "@/views/ResourcePage";
 import { getResourceBySlug } from "@/data/resources";
+import { pageMetadata } from "@/lib/seo";
 
 export function generateMetadata({
   params,
@@ -8,15 +9,16 @@ export function generateMetadata({
   params: { slug: string };
 }): Metadata {
   const resource = getResourceBySlug(params.slug);
-  return {
-    title: resource?.seoTitle || resource?.title || "Property Resources & Tools",
+  return pageMetadata({
+    title:
+      resource?.seoTitle || resource?.title || "Property Resources & Tools",
     description:
       resource?.seoDescription ||
       resource?.desc ||
       "Free property development tools, calculators, and guides from Ghan Projects.",
+    path: `/resources/${params.slug}`,
     keywords: resource?.seoKeywords,
-    alternates: { canonical: `/resources/${params.slug}` },
-  };
+  });
 }
 
 export default function ResourceDetailPage() {

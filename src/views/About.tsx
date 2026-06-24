@@ -23,7 +23,7 @@ export default function About() {
           <img
             src="/images/hero-about.webp"
             className="w-full h-full object-cover opacity-20"
-            alt=""
+            alt="Melbourne property development by Ghan Projects"
           />
         </div>
         <div className="max-w-7xl mx-auto relative z-10">

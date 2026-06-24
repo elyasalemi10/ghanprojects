@@ -73,7 +73,7 @@ export default function Invest() {
           <img
             src="/images/hero-about.webp"
             className="w-full h-full object-cover opacity-20"
-            alt=""
+            alt="Melbourne property investment opportunities with Ghan Projects"
           />
           <div className="absolute inset-0 bg-gradient-to-r from-primary via-primary/90 to-primary/70" />
         </div>

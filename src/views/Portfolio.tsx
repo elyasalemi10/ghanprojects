@@ -203,7 +203,7 @@ function ImageLightbox({
           >
             <img
               src={`/portfolio/${folder}/${img}`}
-              alt=""
+              alt={`${title} thumbnail ${idx + 1}`}
               className="w-full h-full object-cover"
             />
           </button>
