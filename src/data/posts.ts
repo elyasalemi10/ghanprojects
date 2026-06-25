@@ -27,6 +27,7 @@ export interface BlogPost {
   title: string;
   category: string;
   thumbnail: string;
+  thumbnail_alt: string;
   date: string; // ISO date string (published_at) — datePublished
   updated: string; // ISO date string (updated_at) — dateModified
   read_time: string;
@@ -43,6 +44,7 @@ type PostRow = {
   category: string | null;
   read_time: string | null;
   thumbnail_url: string | null;
+  thumbnail_alt: string | null;
   published_at: string | null;
   created_at: string;
   updated_at: string | null;
@@ -55,6 +57,7 @@ function rowToPost(row: PostRow, attachments: BlogAttachment[] = []): BlogPost {
     title: row.title,
     category: row.category ?? "Insights",
     thumbnail: row.thumbnail_url ?? "",
+    thumbnail_alt: row.thumbnail_alt ?? "",
     date: published,
     updated: row.updated_at ?? published,
     read_time: row.read_time ?? "",
@@ -65,7 +68,7 @@ function rowToPost(row: PostRow, attachments: BlogAttachment[] = []): BlogPost {
 }
 
 const POST_COLUMNS =
-  "slug, title, excerpt, content, category, read_time, thumbnail_url, published_at, created_at, updated_at";
+  "slug, title, excerpt, content, category, read_time, thumbnail_url, thumbnail_alt, published_at, created_at, updated_at";
 
 /**
  * Returns all published posts, newest first. Falls back to example posts if
@@ -138,6 +141,7 @@ function fallbackPosts(): BlogPost[] {
       excerpt:
         "Identifying the right site is the most critical step in property development. Here are the key factors we analyse before committing capital to a feasibility study.",
       thumbnail: "/images/property-analysis.webp",
+      thumbnail_alt: "Aerial view of a Melbourne development site",
       attachments: [],
       content: `<p>Choosing the right site is the single biggest determinant of a development project's success.</p>`,
     },

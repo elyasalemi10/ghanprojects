@@ -18,6 +18,7 @@ interface BlogPost {
   title: string;
   category: string;
   thumbnail: string;
+  thumbnail_alt?: string;
   date: string;
   read_time: string;
   content: string;
@@ -179,7 +180,7 @@ export default function Insights({ posts }: { posts: BlogPost[] }) {
                           <img
                             src={a.thumbnail || '/images/hero-about.webp'}
                             className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
-                            alt={a.title}
+                            alt={a.thumbnail_alt || a.title}
                           />
                           <div className="absolute top-4 left-4">
                             <span className="px-3 py-1 bg-accent text-white text-[10px] font-bold tracking-widest">{a.category}</span>

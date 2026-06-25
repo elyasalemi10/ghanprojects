@@ -72,9 +72,9 @@ export default function InsightPost({ post }: { post: BlogPost }) {
           className="px-6 pb-16"
         >
           <div className="max-w-4xl mx-auto">
-            <img 
-              src={post.thumbnail} 
-              alt={post.title}
+            <img
+              src={post.thumbnail}
+              alt={post.thumbnail_alt || post.title}
               className="w-full rounded-xl shadow-2xl"
             />
           </div>
