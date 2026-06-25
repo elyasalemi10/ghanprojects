@@ -26,22 +26,21 @@ interface BlogPost {
 
 function ArticleSkeleton() {
   return (
-    <div className="bg-background border flex flex-col shadow-sm animate-pulse">
-      <div className="relative aspect-video bg-secondary/50" />
-      <div className="p-10 flex flex-col flex-grow">
-        <div className="flex items-center gap-4 mb-4">
+    <div className="bg-background border flex flex-col aspect-square overflow-hidden shadow-sm animate-pulse">
+      <div className="relative basis-1/2 shrink-0 bg-secondary/50" />
+      <div className="p-6 flex flex-col flex-1 min-h-0">
+        <div className="flex items-center gap-3 mb-2">
           <div className="h-3 w-20 bg-secondary/50 rounded" />
           <div className="w-1 h-1 bg-secondary/50 rounded-full" />
           <div className="h-3 w-16 bg-secondary/50 rounded" />
         </div>
-        <div className="h-7 bg-secondary/50 rounded mb-3 w-full" />
-        <div className="h-7 bg-secondary/50 rounded mb-6 w-3/4" />
-        <div className="space-y-2 mb-10 flex-grow">
-          <div className="h-4 bg-secondary/30 rounded w-full" />
+        <div className="h-5 bg-secondary/50 rounded mb-2 w-full" />
+        <div className="h-5 bg-secondary/50 rounded mb-3 w-3/4" />
+        <div className="space-y-2 flex-grow">
           <div className="h-4 bg-secondary/30 rounded w-full" />
           <div className="h-4 bg-secondary/30 rounded w-2/3" />
         </div>
-        <div className="pt-6 border-t mt-auto">
+        <div className="pt-3 mt-auto">
           <div className="h-4 w-32 bg-secondary/50 rounded" />
         </div>
       </div>
@@ -174,20 +173,20 @@ export default function Insights({ posts }: { posts: BlogPost[] }) {
                     >
                       <Link
                         href={`/insights/${a.slug}`}
-                        className="group bg-background border hover:border-accent transition-all duration-500 flex flex-col shadow-sm hover:shadow-2xl cursor-pointer block h-full"
+                        className="group bg-background border hover:border-accent transition-all duration-500 flex flex-col aspect-square overflow-hidden shadow-sm hover:shadow-2xl cursor-pointer block"
                       >
-                        <div className="relative aspect-video overflow-hidden">
-                          <img 
-                            src={a.thumbnail || '/images/hero-about.webp'} 
-                            className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" 
+                        <div className="relative basis-1/2 shrink-0 overflow-hidden">
+                          <img
+                            src={a.thumbnail || '/images/hero-about.webp'}
+                            className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
                             alt={a.title}
                           />
-                          <div className="absolute top-6 left-6">
+                          <div className="absolute top-4 left-4">
                             <span className="px-3 py-1 bg-accent text-white text-[10px] font-bold tracking-widest">{a.category}</span>
                           </div>
                         </div>
-                        <div className="p-10 flex flex-col flex-grow">
-                          <div className="flex items-center gap-4 text-[10px] tracking-widest font-bold text-muted-foreground mb-4">
+                        <div className="p-6 flex flex-col flex-1 min-h-0">
+                          <div className="flex items-center gap-3 text-[10px] tracking-widest font-bold text-muted-foreground mb-2">
                             <span>{formatDate(a.date)}</span>
                             <span className="w-1 h-1 bg-accent rounded-full" />
                             <div className="flex items-center gap-1.5">
@@ -195,11 +194,11 @@ export default function Insights({ posts }: { posts: BlogPost[] }) {
                               {a.read_time}
                             </div>
                           </div>
-                          <h3 className="text-2xl font-heading font-bold text-primary mb-6 leading-tight group-hover:text-accent transition-colors">{a.title}</h3>
-                          <p className="text-muted-foreground text-sm leading-relaxed mb-10 flex-grow line-clamp-3">
+                          <h3 className="text-lg font-heading font-bold text-primary mb-2 leading-tight line-clamp-2 group-hover:text-accent transition-colors">{a.title}</h3>
+                          <p className="text-muted-foreground text-sm leading-relaxed line-clamp-2 flex-grow">
                             {a.excerpt}
                           </p>
-                          <div className="pt-6 border-t mt-auto">
+                          <div className="pt-3 mt-auto">
                             <span className="text-primary group-hover:text-accent font-bold tracking-widest text-xs inline-flex items-center gap-2">
                               Read Full Article <ChevronRight size={16} />
                             </span>
