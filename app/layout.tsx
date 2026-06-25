@@ -1,6 +1,22 @@
 import type { Metadata } from "next";
+import { Inter, Space_Grotesk } from "next/font/google";
 import "./globals.css";
 import { Navbar } from "@/components/layout/Navbar";
+
+// Self-hosted via next/font: no render-blocking Google Fonts request, and a
+// size-adjusted fallback font is generated automatically so text doesn't
+// resize when the web font loads (kills the first-paint flash).
+const inter = Inter({
+  subsets: ["latin"],
+  display: "swap",
+  variable: "--font-sans",
+});
+
+const spaceGrotesk = Space_Grotesk({
+  subsets: ["latin"],
+  display: "swap",
+  variable: "--font-heading",
+});
 import { Footer } from "@/components/layout/Footer";
 import { Toaster } from "@/components/ui/sonner";
 import { JsonLd } from "@/components/shared/JsonLd";
@@ -62,7 +78,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en-AU">
+    <html lang="en-AU" className={`${inter.variable} ${spaceGrotesk.variable}`}>
       <body>
         <JsonLd data={organizationLd()} />
         <JsonLd data={websiteLd()} />
